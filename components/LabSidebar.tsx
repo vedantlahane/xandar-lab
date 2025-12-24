@@ -1,5 +1,13 @@
 "use client";
 
+import type { Transition } from "framer-motion";
+
+const smoothSpring = {
+  type: "spring",
+  stiffness: 320,
+  damping: 28,
+  mass: 0.6,
+} satisfies Transition;
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -22,6 +30,7 @@ export default function LabSidebar() {
     <aside className="fixed left-0 top-0 z-40 flex h-full items-center justify-start pl-4 pointer-events-none">
       <motion.div
         layout
+        transition={{ layout: smoothSpring }}
         className="pointer-events-auto relative flex flex-col gap-3 py-4 pr-4"
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
@@ -30,41 +39,40 @@ export default function LabSidebar() {
           const isActive =
             pathname === item.href ||
             (item.href !== "/lab" && pathname.startsWith(item.href));
-          
-          // Pattern: 1st big (index 0), then 3 shorter, then 5th (index 4) big...
+
           const isBig = index % 4 === 0;
 
           return (
             <motion.button
-              layout
+              layout="position"
+              transition={{ layout: smoothSpring }}
               key={item.href}
               onClick={() => router.push(item.href)}
               className="group flex items-center gap-3"
             >
-              {/* The Slash / Indicator */}
-                      <motion.div
-                      layout
-                      className={cn(
-                        "h-1 rounded-full transition-colors duration-300",
-                        isActive
-                        ? "bg-primary"
-                        : "bg-muted-foreground/30 group-hover:bg-primary/50"
-                      )}
-                      animate={{
-                        width: isHovered ? 6 : isBig ? 24 : 12,
-                        height: isHovered ? 6 : 4,
-                        opacity: isHovered ? 0 : 1,
-                      }}
-                      />
+              <motion.div
+                layout
+                transition={smoothSpring}
+                className={cn(
+                  "h-1 rounded-full transition-colors duration-300",
+                  isActive
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30 group-hover:bg-primary/50"
+                )}
+                animate={{
+                  width: isHovered ? 6 : isBig ? 24 : 12,
+                  height: isHovered ? 6 : 4,
+                  opacity: isHovered ? 0 : 1,
+                }}
+              />
 
-                      {/* The Label */}
-              <AnimatePresence mode="wait">
+              <AnimatePresence initial={false}>
                 {isHovered && (
                   <motion.span
                     initial={{ opacity: 0, width: 0, x: -10 }}
                     animate={{ opacity: 1, width: "auto", x: 0 }}
                     exit={{ opacity: 0, width: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
+                    transition={smoothSpring}
                     className={cn(
                       "whitespace-nowrap text-sm font-medium overflow-hidden",
                       isActive ? "text-foreground" : "text-muted-foreground"
@@ -81,4 +89,3 @@ export default function LabSidebar() {
     </aside>
   );
 }
-
