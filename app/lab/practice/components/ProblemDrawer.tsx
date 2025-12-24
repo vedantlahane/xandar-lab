@@ -118,7 +118,7 @@ export function ProblemDrawer({
                             <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
                                 <h3 className="text-sm font-medium mb-2">Description</h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Solve this problem on {problem.platform}. Click the button below to open the problem statement.
+                                    {problem.description}
                                 </p>
                             </div>
 
