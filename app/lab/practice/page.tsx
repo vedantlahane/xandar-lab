@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import TopicSidebar from "./components/TopicSidebar";
 import ProblemCanvas from "./components/ProblemCanvas";
 import { ProblemDrawer } from "./components/ProblemDrawer";
@@ -11,7 +12,15 @@ import { useAuth } from "@/components/auth/AuthContext";
 export default function PracticePage() {
     const [activeProblemId, setActiveProblemId] = useState<string | null>(null);
     const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
-    const { isAuthenticated, openLoginModal } = useAuth();
+    const { isAuthenticated, openLoginModal, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            router.push("/lab");
+            openLoginModal();
+        }
+    }, [isLoading, isAuthenticated, router, openLoginModal]);
 
     const problemIndex = useMemo(() => {
         const map = new Map<string, DSAProblem>();

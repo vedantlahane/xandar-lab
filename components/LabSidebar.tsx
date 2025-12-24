@@ -29,7 +29,7 @@ export default function LabSidebar() {
   const { isAuthenticated, openLoginModal } = useAuth();
 
   const handleNavigation = (href: string) => {
-      if (href === "/lab" || href === "/lab/practice") {
+      if (href === "/lab") {
           router.push(href);
           return;
       }
