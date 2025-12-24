@@ -48,17 +48,17 @@ export default function LabHome() {
                 className={`flex flex-col ${showLogin ? "flex-1 items-end text-right" : "w-full items-center text-center"}`}
              >
                 <div className="space-y-2">
-                    <p className="text-sm text-zinc-500">Navigation lives in the lab sidebar.</p>
+                    <p className="text-sm text-zinc-500">Select a module from the sidebar.</p>
                     {isAuthenticated ? (
                         <h1 className="text-2xl font-semibold">
                             Welcome, {user?.username}
                         </h1>
                     ) : (
                         <h1 className="text-2xl font-semibold">
-                            Xandar Lab
+                            Welcome to Xandar Lab
                         </h1>
                     )}
-                    <p className="text-sm text-zinc-500">Practice is live; notes, docs, and experiments are staged.</p>
+                    <p className="text-sm text-zinc-500">Practice module is active. Others are in development.</p>
                 </div>
 
                 {/* Logged In Buttons */}
@@ -84,7 +84,7 @@ export default function LabHome() {
                         className="flex-1 w-full"
                     >
                         <AuthForm align="left" />
-                        <div className="mt-4 text-left">
+                        <div className="mt-4 pl-4 text-left">
                              <button onClick={handleCancel} className="text-xs text-zinc-500 hover:underline">
                                 Cancel
                              </button>
