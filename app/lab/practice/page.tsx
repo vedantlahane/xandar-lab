@@ -6,10 +6,12 @@ import TopicSidebar from "./components/TopicSidebar";
 import ProblemCanvas from "./components/ProblemCanvas";
 import { ProblemDrawer } from "./components/ProblemDrawer";
 import { DSAProblem, SHEET } from "./data/sheet";
+import { useAuth } from "@/components/auth/AuthContext";
 
 export default function PracticePage() {
     const [activeProblemId, setActiveProblemId] = useState<string | null>(null);
     const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
+    const { isAuthenticated, openLoginModal } = useAuth();
 
     const problemIndex = useMemo(() => {
         const map = new Map<string, DSAProblem>();
@@ -24,6 +26,10 @@ export default function PracticePage() {
         : null;
 
     const handleProblemSelect = (id: string, event: React.MouseEvent) => {
+        if (!isAuthenticated) {
+            openLoginModal();
+            return;
+        }
         setClickPosition({ x: event.clientX, y: event.clientY });
         setActiveProblemId(id);
     };
