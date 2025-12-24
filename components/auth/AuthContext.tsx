@@ -45,12 +45,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ username, inviteCode }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      throw new Error(data.error || "Login failed");
+      let errorMessage = "Login failed";
+      try {
+        const data = await res.json();
+        errorMessage = data.error || errorMessage;
+      } catch {
+        // If JSON parsing fails, it's likely an HTML error page
+        errorMessage = `Server error (${res.status})`;
+      }
+      throw new Error(errorMessage);
     }
 
+    const data = await res.json();
     setUser(data.user);
     localStorage.setItem("lab_user", JSON.stringify(data.user));
     setIsLoginModalOpen(false);
