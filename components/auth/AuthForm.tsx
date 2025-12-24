@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
-export function AuthForm({ mode = "page" }: { mode?: "page" | "modal" }) {
+export function AuthForm({ mode = "page", align = "center" }: { mode?: "page" | "modal", align?: "center" | "left" }) {
   const { login } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState("");
@@ -28,9 +28,12 @@ export function AuthForm({ mode = "page" }: { mode?: "page" | "modal" }) {
     }
   };
 
+  const alignmentClass = align === "center" ? "text-center" : "text-left";
+  const containerClass = align === "center" ? "mx-auto" : "";
+
   return (
-    <div className="w-full max-w-sm mx-auto space-y-8 px-4">
-        <div className="text-center space-y-2">
+    <div className={`w-full max-w-sm space-y-8 px-4 ${containerClass}`}>
+        <div className={`${alignmentClass} space-y-2`}>
           <h1 className="text-2xl font-semibold tracking-tight">
             {isSignUp ? "Create Account" : "Restricted Access"}
           </h1>
@@ -76,7 +79,7 @@ export function AuthForm({ mode = "page" }: { mode?: "page" | "modal" }) {
           </Button>
         </form>
 
-        <div className="text-center">
+        <div className={alignmentClass}>
             <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}

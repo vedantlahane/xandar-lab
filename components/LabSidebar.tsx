@@ -35,7 +35,7 @@ export default function LabSidebar() {
       }
 
       if (!isAuthenticated) {
-          openLoginModal();
+          router.push("/lab?mode=login");
           return;
       }
 

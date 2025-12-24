@@ -17,10 +17,9 @@ export default function PracticePage() {
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            router.push("/lab");
-            openLoginModal();
+            router.push("/lab?mode=login");
         }
-    }, [isLoading, isAuthenticated, router, openLoginModal]);
+    }, [isLoading, isAuthenticated, router]);
 
     const problemIndex = useMemo(() => {
         const map = new Map<string, DSAProblem>();
