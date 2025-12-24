@@ -13,11 +13,7 @@ export default function ProtectedPage({ children }: { children: React.ReactNode 
     }, [isAuthenticated, openLoginModal]);
 
     if (!isAuthenticated) {
-        return (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-                Please login to access this content.
-            </div>
-        );
+        return null;
     }
 
     return <>{children}</>;

@@ -12,6 +12,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/AuthContext";
 
 const NAV = [
   { href: "/lab", label: "Lab" },
@@ -25,6 +26,21 @@ export default function LabSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
+  const { isAuthenticated, openLoginModal } = useAuth();
+
+  const handleNavigation = (href: string) => {
+      if (href === "/lab" || href === "/lab/practice") {
+          router.push(href);
+          return;
+      }
+
+      if (!isAuthenticated) {
+          openLoginModal();
+          return;
+      }
+
+      router.push(href);
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-full items-center justify-start pl-4 pointer-events-none">
@@ -47,7 +63,10 @@ export default function LabSidebar() {
               layout="position"
               transition={{ layout: smoothSpring }}
               key={item.href}
-              onClick={() => router.push(item.href)}
+              onClick={(e) => {
+                  e.preventDefault();
+                  handleNavigation(item.href);
+              }}
               className="group flex items-center gap-3"
             >
               <motion.div
