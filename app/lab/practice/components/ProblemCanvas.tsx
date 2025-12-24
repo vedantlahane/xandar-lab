@@ -80,7 +80,7 @@ export default function ProblemCanvas({
                   data-topic-title={topic.topicName}
                   className="space-y-5"
                 >
-                  <div className=" top-0 z-10 bg-card/95 py-4 backdrop-blur">
+                  <div className="sticky top-0 z-10 bg-card/95 py-4 backdrop-blur">
                     <h2 className="text-lg font-semibold">{topic.topicName}</h2>
                     <p className="text-sm text-muted-foreground">
                       {topic.problems.length} problems
@@ -162,7 +162,7 @@ export default function ProblemCanvas({
       </div>
 
       {/* Bottom Fade */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-card to-transparent z-20" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-card to-transparent z-20" />
     </div>
   );
 }
