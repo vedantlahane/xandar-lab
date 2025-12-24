@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SHEET } from "../data/sheet";
 import { Check, Bookmark } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthContext";
 
 interface ProblemCanvasProps {
   activeProblemId: string | null;
@@ -20,6 +21,56 @@ export default function ProblemCanvas({
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("All");
   const [difficultyFilter, setDifficultyFilter] = useState<FilterDifficulty>("All");
   const [platformFilter, setPlatformFilter] = useState<FilterPlatform>("All");
+  const { user } = useAuth();
+  const [savedProblems, setSavedProblems] = useState<string[]>([]);
+  const [completedProblems, setCompletedProblems] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      setSavedProblems(user.savedProblems || []);
+      setCompletedProblems(user.completedProblems || []);
+    }
+  }, [user]);
+
+  const handleSaveProblem = async (problemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    try {
+      const res = await fetch('/api/problems/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user.username, problemId }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setSavedProblems(data.savedProblems);
+      }
+    } catch (error) {
+      console.error('Failed to save problem:', error);
+    }
+  };
+
+  const handleCompleteProblem = async (problemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    try {
+      const res = await fetch('/api/problems/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user.username, problemId }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setCompletedProblems(data.completedProblems);
+      }
+    } catch (error) {
+      console.error('Failed to complete problem:', error);
+    }
+  };
 
   // Filter Logic
   const filteredSheet = useMemo(() => {
@@ -27,12 +78,10 @@ export default function ProblemCanvas({
       const filteredProblems = topic.problems.filter((problem) => {
         // Status Filter
         if (statusFilter === "Saved") {
-          // TODO: Implement saved logic
-          return false; 
+          return savedProblems.includes(problem.id);
         }
         if (statusFilter === "Completed") {
-           // TODO: Implement completed logic
-           return problem.isCompleted;
+           return completedProblems.includes(problem.id);
         }
 
         // Difficulty Filter
@@ -58,7 +107,7 @@ export default function ProblemCanvas({
         problems: filteredProblems,
       };
     }).filter((topic) => topic.problems.length > 0);
-  }, [statusFilter, difficultyFilter, platformFilter]);
+  }, [statusFilter, difficultyFilter, platformFilter, savedProblems, completedProblems]);
 
   return (
     <div className="relative h-full bg-card pt-12">
@@ -190,22 +239,24 @@ export default function ProblemCanvas({
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                                 <div
                                     role="button"
-                                    onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Handle save
-                                    }}
-                                    className="rounded-md p-1.5 text-muted-foreground hover:bg-background hover:text-foreground hover:shadow-sm"
+                                    onClick={(e) => handleSaveProblem(problem.id, e)}
+                                    className={`rounded-md p-1.5 hover:bg-background hover:shadow-sm transition-colors ${
+                                      savedProblems.includes(problem.id) 
+                                        ? 'text-yellow-500' 
+                                        : 'text-muted-foreground hover:text-foreground'
+                                    }`}
                                     title="Save for later"
                                 >
-                                    <Bookmark className="h-4 w-4" />
+                                    <Bookmark className={`h-4 w-4 ${savedProblems.includes(problem.id) ? 'fill-current' : ''}`} />
                                 </div>
                                 <div
                                     role="button"
-                                    onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Handle complete
-                                    }}
-                                    className="rounded-md p-1.5 text-muted-foreground hover:bg-background hover:text-green-500 hover:shadow-sm"
+                                    onClick={(e) => handleCompleteProblem(problem.id, e)}
+                                    className={`rounded-md p-1.5 hover:bg-background hover:shadow-sm transition-colors ${
+                                      completedProblems.includes(problem.id) 
+                                        ? 'text-green-500' 
+                                        : 'text-muted-foreground hover:text-green-500'
+                                    }`}
                                     title="Mark as completed"
                                 >
                                     <Check className="h-4 w-4" />

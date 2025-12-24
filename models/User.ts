@@ -7,6 +7,12 @@ const UserSchema = new Schema({
     unique: true,
     trim: true,
   },
+  savedProblems: [{
+    type: String,
+  }],
+  completedProblems: [{
+    type: String,
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

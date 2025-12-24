@@ -20,11 +20,11 @@ export default function TopicSidebar() {
   return (
     <div className="flex h-full items-center justify-end pr-6">
       <motion.div
-        layout
-        className={cn(
-          "relative flex flex-col gap-3 py-4 pl-6 rounded-2xl transition-all duration-500 ease-out",
-          isHovered ? "bg-card/80 backdrop-blur-xl shadow-2xl pr-6 border border-border/50" : "pr-0"
-        )}
+        layout="position"
+        transition={{
+          layout: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+        }}
+        className="relative flex flex-col gap-3 py-4 pl-6"
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
       >
@@ -41,9 +41,8 @@ export default function TopicSidebar() {
             >
               {/* The Slash / Indicator */}
               <motion.div
-                layout
                 className={cn(
-                  "h-1 rounded-full transition-colors duration-300",
+                  "h-1 rounded-full transition-colors duration-300 ease-out",
                   isActive
                     ? "bg-primary"
                     : "bg-muted-foreground/30 group-hover:bg-primary/50"
@@ -53,19 +52,26 @@ export default function TopicSidebar() {
                   height: isHovered ? 4 : 4,
                   opacity: isHovered ? 0 : 1,
                 }}
+                transition={{
+                  duration: 0.35,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
               />
 
               {/* The Label */}
-              <AnimatePresence mode="wait">
+              <AnimatePresence initial={false}>
                 {isHovered && (
                   <motion.span
-                    initial={{ opacity: 0, x: 10, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, x: 10, filter: "blur(4px)" }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 8 }}
+                    transition={{ 
+                      duration: 0.25,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                     className={cn(
-                      "whitespace-nowrap text-sm font-medium",
-                      isActive ? "text-foreground" : "text-muted-foreground"
+                      "whitespace-nowrap text-sm font-medium transition-colors duration-200",
+                      isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                     )}
                   >
                     {topic.topicName}
