@@ -1,0 +1,84 @@
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+const NAV = [
+  { href: "/lab", label: "Lab" },
+  { href: "/lab/practice", label: "Practice" },
+  { href: "/lab/notes", label: "Notes" },
+  { href: "/lab/docs", label: "Docs" },
+  { href: "/lab/experiments", label: "Experiments" },
+];
+
+export default function LabSidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <aside className="fixed left-0 top-0 z-40 flex h-full items-center justify-start pl-4 pointer-events-none">
+      <motion.div
+        layout
+        className="pointer-events-auto relative flex flex-col gap-3 py-4 pr-4"
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+      >
+        {NAV.map((item, index) => {
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/lab" && pathname.startsWith(item.href));
+          
+          // Pattern: 1st big (index 0), then 3 shorter, then 5th (index 4) big...
+          const isBig = index % 4 === 0;
+
+          return (
+            <motion.button
+              layout
+              key={item.href}
+              onClick={() => router.push(item.href)}
+              className="group flex items-center gap-3"
+            >
+              {/* The Slash / Indicator */}
+                      <motion.div
+                      layout
+                      className={cn(
+                        "h-1 rounded-full transition-colors duration-300",
+                        isActive
+                        ? "bg-primary"
+                        : "bg-muted-foreground/30 group-hover:bg-primary/50"
+                      )}
+                      animate={{
+                        width: isHovered ? 6 : isBig ? 24 : 12,
+                        height: isHovered ? 6 : 4,
+                        opacity: isHovered ? 0 : 1,
+                      }}
+                      />
+
+                      {/* The Label */}
+              <AnimatePresence mode="wait">
+                {isHovered && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0, x: -10 }}
+                    animate={{ opacity: 1, width: "auto", x: 0 }}
+                    exit={{ opacity: 0, width: 0, x: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn(
+                      "whitespace-nowrap text-sm font-medium overflow-hidden",
+                      isActive ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          );
+        })}
+      </motion.div>
+    </aside>
+  );
+}
+

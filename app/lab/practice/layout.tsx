@@ -4,6 +4,6 @@ export default function PracticeLayout({
     children: React.ReactNode
 }){
     return(
-        <div className="h-screen grid grid-cols-[auto_1fr_auto]">{children}</div>
+        <div className="min-h-screen bg-background text-foreground">{children}</div>
     )
 }

@@ -1,10 +1,81 @@
-export default function TopicSidebar(){
-    return(
-        <div>
+"use client";
 
-            <div>arrays</div>
-            <div>Hashing</div>
-            
-        </div>
-    )
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { SHEET } from "../data/sheet";
+import { useScrollSync } from "../hooks/useScrollSync";
+import { cn } from "@/lib/utils";
+
+export default function TopicSidebar() {
+  const { activeTopic } = useScrollSync();
+  const [isHovered, setIsHovered] = useState(false);
+
+  const scrollToTopic = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  return (
+    <div className="flex h-full items-center justify-end pr-6">
+      <motion.div
+        layout
+        className={cn(
+          "relative flex flex-col gap-3 py-4 pl-6 rounded-2xl transition-all duration-500 ease-out",
+          isHovered ? "bg-card/80 backdrop-blur-xl shadow-2xl pr-6 border border-border/50" : "pr-0"
+        )}
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+      >
+        {SHEET.map((topic, index) => {
+          const isActive = activeTopic === topic.topicName;
+          // Pattern: 1st big (index 0), then 3 shorter, then 5th (index 4) big...
+          const isBig = index % 4 === 0;
+
+          return (
+            <button
+              key={topic.topicName}
+              onClick={() => scrollToTopic(topic.topicName)}
+              className="group flex flex-row-reverse items-center gap-4"
+            >
+              {/* The Slash / Indicator */}
+              <motion.div
+                layout
+                className={cn(
+                  "h-1 rounded-full transition-colors duration-300",
+                  isActive
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30 group-hover:bg-primary/50"
+                )}
+                animate={{
+                  width: isHovered ? 4 : isBig ? 24 : 12,
+                  height: isHovered ? 4 : 4,
+                  opacity: isHovered ? 0 : 1,
+                }}
+              />
+
+              {/* The Label */}
+              <AnimatePresence mode="wait">
+                {isHovered && (
+                  <motion.span
+                    initial={{ opacity: 0, x: 10, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, x: 10, filter: "blur(4px)" }}
+                    transition={{ duration: 0.2 }}
+                    className={cn(
+                      "whitespace-nowrap text-sm font-medium",
+                      isActive ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {topic.topicName}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+          );
+        })}
+      </motion.div>
+    </div>
+  );
 }

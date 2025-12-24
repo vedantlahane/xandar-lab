@@ -5,6 +5,9 @@ It brings together structured notes, interactive documentation, and contextual p
 
 This repository currently implements the Practice module, one of the core building blocks of the Xandar-Lab ecosystem.
 
+Landing
+Minimal monochrome hero with a single CTA into the lab; marketing view sits under `(marketing)` with the same aesthetic. Copy keeps focus tight and highlights that more modules are coming.
+
 ✨ Why Xandar-Lab?
 Most learning workflows today are fragmented:
 
@@ -22,32 +25,32 @@ Concepts, notes, and practice coexist
 
 Learning is treated as a process, not a score
 
-Understanding is captured in versions
+Understanding is captured in versions, not overwrites
 
 Collaboration is intentional, contextual, and quiet
 
 🧠 Practice Module (Current Focus)
-The Practice module allows learners to work through curated problem sets inside the lab, while recording how their understanding changes over time.
+The Practice module allows learners to work through curated problem sets while recording how their understanding changes over time.
 
 Core ideas
 Problems are explored through attempts
 
 Each attempt captures intuition, not just final answers
 
-Understanding evolves via discussion
+Understanding evolves through discussion
 
 Resolution is explicit and versioned
 
-Multiple attempts are preserved, never overwritten
+Multiple attempts are preserved — never overwritten
 
 🧩 Practice Flow (High Level)
-Select a problem from the curated sheet
+Select a problem from a curated sheet
 
 Share intuition (text, pseudocode, explanation, or link)
 
 An Attempting node is automatically created
 
-Contextual discussion happens on the attempt
+Contextual discussion happens on that attempt
 
 When understanding stabilizes, a Resolved version is shared
 
@@ -55,12 +58,14 @@ Re-visiting the problem creates a new attempt, not a rewrite
 
 Xandar-Lab treats learning like version control for understanding.
 
-Key Capabilities
+🔑 Key Capabilities
 Topic-wise organization of problems
 
 Right-sidebar topic navigation (scroll-synced)
 
-Problem drawer with collaborative context
+Central problem canvas
+
+Problem drawer with contextual collaboration
 
 Attempt-based learning model
 
@@ -70,7 +75,7 @@ Resolved
 
 Multiple attempts per user, preserved as history
 
-Contextual discussions (not chat)
+Contextual discussions (not chat threads)
 
 Discussion-driven resolution
 
@@ -80,28 +85,28 @@ Local-first persistence (works offline)
 
 This module is not meant to replace platforms like LeetCode or GFG, but to act as a structured companion inside a larger learning system.
 
-🤝 Collaboration Model (Planned & Partial)
-The Practice module supports intentional collaboration, not real-time chat.
+🤝 Collaboration Model (Planned / Partial)
+Xandar-Lab supports intentional collaboration, not real-time chat.
 
-Each user has their own branch
+Each user owns their own branch
 
 Attempts form a learning tree
 
 Discussions are attached to specific attempts
 
-Resolution can reference the discussion that caused it
+Resolutions can reference the discussion that led to clarity
 
 Branches can be:
 
-Shared with selected friends
+Shared with selected collaborators
 
-Hidden or filtered
+Filtered or hidden from view
 
 Archived or deleted by their owner
 
-Comments can be hidden without breaking learning history
+Comments can be hidden without breaking learning history.
 
-Collaboration emphasizes clarity and lineage, not noise.
+Collaboration emphasizes clarity, lineage, and context — not noise.
 
 🏗️ Project Structure (High Level)
 xandar-lab/
@@ -124,7 +129,7 @@ xandar-lab/
 ├── styles/                       # Design tokens
 ├── public/
 └── README.md
-The architecture is module-first, allowing Xandar-Lab to evolve without coupling features together.
+The architecture is module-first, allowing Xandar-Lab to evolve without tightly coupling features.
 
 🚀 Getting Started
 Prerequisites
@@ -161,7 +166,7 @@ Animations: Framer Motion
 
 State Persistence: localStorage (v1)
 
-Planned: Auth, database, collaboration APIs
+Planned: Authentication, database, collaboration APIs
 
 🧭 Roadmap
 Phase 1 (Current)
