@@ -47,18 +47,27 @@ export default function LabHome() {
                 layout 
                 className={`flex flex-col ${showLogin ? "flex-1 items-end text-right" : "w-full items-center text-center"}`}
              >
-                <div className="space-y-2">
-                    <p className="text-sm text-zinc-500">Select a module from the sidebar.</p>
+                <div className="space-y-2 flex flex-col items-inherit">
+                    <p className="text-sm text-zinc-500 font-mono uppercase tracking-wider text-[10px]">System Ready</p>
                     {isAuthenticated ? (
-                        <h1 className="text-2xl font-semibold">
+                        <h1 className="text-3xl font-bold tracking-tighter">
                             Welcome, {user?.username}
                         </h1>
                     ) : (
-                        <h1 className="text-2xl font-semibold">
-                            Welcome to Xandar Lab
+                        <h1 className="text-3xl font-bold tracking-tighter">
+                            Xandar Lab
                         </h1>
                     )}
-                    <p className="text-sm text-zinc-500">Practice module is active. Others are in development.</p>
+                    <div className="flex flex-col gap-2 items-inherit">
+                        <p className="text-sm text-zinc-400 max-w-[300px]">
+                            Access modules via the sidebar menu on the left. Practice is currently active; other systems are in development.
+                        </p>
+                        <motion.div 
+                            className="h-px w-32 bg-gradient-to-r from-transparent via-zinc-500 to-transparent"
+                            animate={{ opacity: [0.3, 1, 0.3], scaleX: [0.8, 1.2, 0.8] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                    </div>
                 </div>
 
                 {/* Logged In Buttons */}

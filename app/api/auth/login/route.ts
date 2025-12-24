@@ -17,15 +17,15 @@ export async function POST(req: Request) {
     await connectDB();
 
     // Find or create user
-    const user = await User.findOneAndUpdate(
-      { username },
-      { $setOnInsert: { username } },
-      { upsert: true, new: true }
-    );
+    let user = await User.findOne({ username });
+    
+    if (!user) {
+        user = await User.create({ username });
+    }
 
     return NextResponse.json({ user });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login error:", error);
-    return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Authentication failed' }, { status: 500 });
   }
 }

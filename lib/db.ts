@@ -33,10 +33,18 @@ async function connectDB(){
         const opts = {
             bufferCommands: false,
         }
+        
+        // Fix for "appName cannot be specified with no value" error
+        // Some drivers have issues with appName in the URI
+        const uri = MONGODB_URI!.replace(/([?&])appName=[^&]+(&|$)/, '$1').replace(/[?&]$/, '');
 
-        cached.promise = mongoose.connect(MONGODB_URI!,opts).then((mongoose) => {
+        cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
+            console.log("MongoDB Connected Successfully");
             return mongoose;
-        })
+        }).catch(err => {
+            console.error("MongoDB Connection Error:", err);
+            throw err;
+        });
     }
 
     cached.conn = await cached.promise;
