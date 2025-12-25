@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthContext";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function LabHome() {
+function LabHomeContent() {
   const { user, logout, isAuthenticated } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -106,4 +106,12 @@ export default function LabHome() {
        </motion.div>
     </div>
   );
+}
+
+export default function LabHome() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading…</div>}>
+            <LabHomeContent />
+        </Suspense>
+    );
 }
