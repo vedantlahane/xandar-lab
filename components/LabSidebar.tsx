@@ -17,6 +17,7 @@ import { useAuth } from "@/components/auth/AuthContext";
 const NAV = [
   { href: "/lab", label: "Lab" },
   { href: "/lab/practice", label: "Practice" },
+  { href: "/lab/hackathons", label: "Hackathons" },
   { href: "/lab/notes", label: "Notes" },
   { href: "/lab/docs", label: "Docs" },
   { href: "/lab/experiments", label: "Experiments" },
