@@ -26,9 +26,9 @@ export default function Home() {
     <div className="relative min-h-screen overflow-hidden bg-zinc-50 text-zinc-900 selection:bg-teal-100 selection:text-teal-900">
       {/* Background Elements */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-teal-400 opacity-20 blur-[100px]" />
-        <div className="absolute right-0 top-0 -z-10 h-screen w-screen bg-gradient-to-b from-white via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]" />
+        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-77.5 w-77.5 rounded-full bg-teal-400 opacity-20 blur-[100px]" />
+        <div className="absolute right-0 top-0 -z-10 h-screen w-screen bg-linear-to-b from-white via-transparent to-transparent" />
       </div>
 
       <main className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-20 sm:py-24">
@@ -68,22 +68,8 @@ export default function Home() {
               Build understanding without the noise. Practice, notes, docs, and experiments live in one place—attempt-first and distraction-free.
             </motion.p>
 
-            {/* <motion.div variants={item} className="flex flex-wrap items-center gap-4">
-              <Button asChild size="lg" className="h-12 bg-zinc-900 px-8 text-base hover:bg-zinc-800">
-                <Link href="/lab">
-                  Enter the Lab
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
 
-              <Button asChild variant="outline" size="lg" className="h-12 border-zinc-200 bg-white px-8 text-base text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900">
-                <Link href="/marketing">
-                  See the story
-                </Link>
-              </Button>
-            </motion.div> */}
-
-            {/* Status Pills */}
+            {/* Status Pills
             <motion.div variants={item} className="pt-8">
               <div className="flex flex-wrap gap-3">
                 <StatusPill icon={FlaskConical} label="Practice" status="live" />
@@ -91,7 +77,7 @@ export default function Home() {
                 <StatusPill icon={BookOpen} label="Docs" status="planned" />
                 <StatusPill icon={Sparkles} label="Experiments" status="planned" />
               </div>
-            </motion.div>
+            </motion.div> */}
           </section>
 
           {/* Footer */}
@@ -107,20 +93,20 @@ export default function Home() {
   );
 }
 
-function StatusPill({ icon: Icon, label, status }: { icon: any; label: string; status: "live" | "planned" }) {
-  return (
-    <div className="group flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md">
-      <Icon className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-teal-500" />
-      <span>{label}</span>
-      <span
-        className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-          status === "live"
-            ? "bg-teal-50 text-teal-600"
-            : "bg-zinc-100 text-zinc-400"
-        }`}
-      >
-        {status}
-      </span>
-    </div>
-  );
-}
+// function StatusPill({ icon: Icon, label, status }: { icon: any; label: string; status: "live" | "planned" }) {
+//   return (
+//     <div className="group flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md">
+//       <Icon className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-teal-500" />
+//       <span>{label}</span>
+//       <span
+//         className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+//           status === "live"
+//             ? "bg-teal-50 text-teal-600"
+//             : "bg-zinc-100 text-zinc-400"
+//         }`}
+//       >
+//         {status}
+//       </span>
+//     </div>
+//   );
+// }

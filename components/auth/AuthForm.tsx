@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useAuth } from "./AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 export function AuthForm({ mode = "page", align = "center" }: { mode?: "page" | "modal", align?: "center" | "left" }) {

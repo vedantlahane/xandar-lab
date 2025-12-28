@@ -24,15 +24,15 @@ function LabHomeContent() {
       router.push("/lab");
   };
 
-  const handleSeed = async () => {
-      try {
-          const res = await fetch("/api/seed", { method: "POST" });
-          const data = await res.json();
-          alert(data.message || data.error);
-      } catch (e) {
-          alert("Failed to seed");
-      }
-  }
+//   const handleSeed = async () => {
+//       try {
+//           const res = await fetch("/api/seed", { method: "POST" });
+//           const data = await res.json();
+//           alert(data.message || data.error);
+//       } catch (e) {
+//           alert("Failed to seed");
+//       }
+//   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-800 dark:bg-black dark:text-zinc-200 p-4">
@@ -59,11 +59,11 @@ function LabHomeContent() {
                         </h1>
                     )}
                     <div className="flex flex-col gap-2 items-inherit">
-                        <p className="text-sm text-zinc-400 max-w-[300px]">
+                        <p className="text-sm text-zinc-400 max-w-75">
                             Access modules via the sidebar menu on the left. Practice is currently active; other systems are in development.
                         </p>
                         <motion.div 
-                            className="h-px w-32 bg-gradient-to-r from-transparent via-zinc-500 to-transparent"
+                            className="h-px w-32 bg-linear-to-r from-transparent via-zinc-500 to-transparent"
                             animate={{ opacity: [0.3, 1, 0.3], scaleX: [0.8, 1.2, 0.8] }}
                             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                         />
@@ -73,9 +73,7 @@ function LabHomeContent() {
                 {/* Logged In Buttons */}
                 {isAuthenticated && (
                     <div className="pt-4 flex gap-2">
-                        <Button variant="outline" onClick={handleSeed} size="sm">
-                            Sync Database
-                        </Button>
+
                         <Button variant="destructive" onClick={logout} size="sm">
                             Logout
                         </Button>

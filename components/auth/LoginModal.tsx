@@ -16,7 +16,7 @@ export function LoginModal() {
             animate={{ y: "0%" }}
             exit={{ y: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-md"
+            className="fixed inset-0 z-100 flex items-center justify-center bg-background/95 backdrop-blur-md"
         >
             <button
               onClick={closeLoginModal}
