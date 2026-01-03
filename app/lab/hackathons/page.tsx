@@ -3,14 +3,14 @@
 import { useMemo, useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import SectionSidebar from "./components/SectionSidebar";
-import DocumentCanvas from "./components/DocumentCanvas";
-import { DocumentDrawer } from "./components/DocumentDrawer";
-import { Document, DOCUMENTS } from "./data/documents";
+import MonthSidebar from "./components/MonthSidebar";
+import HackathonCanvas from "./components/HackathonCanvas";
+import { HackathonDrawer } from "./components/HackathonCard";
+import { Hackathon, HACKATHONS } from "./data/hackathons";
 import { useAuth } from "@/components/auth/AuthContext";
 
-export default function DocsPage() {
-    const [activeDocId, setActiveDocId] = useState<string | null>(null);
+export default function HackathonsPage() {
+    const [activeHackId, setActiveHackId] = useState<string | null>(null);
     const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
     const { isAuthenticated, openLoginModal, isLoading } = useAuth();
     const router = useRouter();
@@ -21,52 +21,52 @@ export default function DocsPage() {
         }
     }, [isLoading, isAuthenticated, router]);
 
-    const documentIndex = useMemo(() => {
-        const map = new Map<string, Document>();
-        DOCUMENTS.forEach((section) => {
-            section.documents.forEach((doc) => map.set(doc.id, doc));
+    const hackathonIndex = useMemo(() => {
+        const map = new Map<string, Hackathon>();
+        HACKATHONS.forEach((monthData) => {
+            monthData.hackathons.forEach((hack) => map.set(hack.id, hack));
         });
         return map;
     }, []);
 
-    const activeDocument = activeDocId
-        ? documentIndex.get(activeDocId) ?? null
+    const activeHackathon = activeHackId
+        ? hackathonIndex.get(activeHackId) ?? null
         : null;
 
-    const handleDocSelect = (id: string, event: React.MouseEvent) => {
+    const handleHackSelect = (id: string, event: React.MouseEvent) => {
         if (!isAuthenticated) {
             openLoginModal();
             return;
         }
         setClickPosition({ x: event.clientX, y: event.clientY });
-        setActiveDocId(id);
+        setActiveHackId(id);
     };
 
     return (
         <div className="relative h-screen w-full bg-background text-foreground overflow-hidden">
             <main className="h-full w-full">
-                <DocumentCanvas
-                    activeDocId={activeDocId}
-                    onDocSelect={handleDocSelect}
+                <HackathonCanvas
+                    activeHackId={activeHackId}
+                    onHackSelect={handleHackSelect}
                 />
             </main>
 
             {/* Sidebar */}
             <aside className="absolute right-0 top-0 h-full pointer-events-none z-40">
                 <div className="pointer-events-auto h-full">
-                    <SectionSidebar />
+                    <MonthSidebar />
                 </div>
             </aside>
 
             {/* Drawer */}
             <AnimatePresence>
-                {activeDocument && clickPosition && (
+                {activeHackathon && clickPosition && (
                     <div className="absolute inset-0 pointer-events-none z-50">
-                        <DocumentDrawer
-                            key={activeDocument.id}
-                            document={activeDocument}
+                        <HackathonDrawer
+                            key={activeHackathon.id}
+                            hackathon={activeHackathon}
                             position={clickPosition}
-                            onClose={() => setActiveDocId(null)}
+                            onClose={() => setActiveHackId(null)}
                         />
                     </div>
                 )}
