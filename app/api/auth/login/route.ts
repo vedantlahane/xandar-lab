@@ -1,51 +1,82 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
+import { signToken, setAuthCookie, verifyInviteCode, hashPassword, verifyPassword } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    console.log('=== Login Request Started ===');
-    console.log('Environment check - MONGODB_URI exists:', !!process.env.MONGODB_URI);
-    
     const body = await req.json();
-    console.log('Request body:', body);
-    
-    const { username, inviteCode } = body;
+    const { username, inviteCode, password, isSignUp } = body;
 
-    if (inviteCode !== '7447') {
-      console.log('Invalid invite code provided');
+    // Validate invite code
+    if (!verifyInviteCode(inviteCode)) {
       return NextResponse.json({ error: 'Invalid invite code' }, { status: 401 });
     }
 
-    if (!username) {
-      console.log('Username missing');
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    if (!username || username.length < 3) {
+      return NextResponse.json({ error: 'Username must be at least 3 characters' }, { status: 400 });
     }
 
-    console.log('Attempting to connect to MongoDB...');
     await connectDB();
-    console.log('MongoDB connected successfully');
 
-    // Find or create user
-    console.log('Looking for user:', username);
-    let user = await User.findOne({ username });
-    
-    if (!user) {
-      console.log('User not found, creating new user');
-      user = await User.create({ username });
-      console.log('User created:', user);
+    let user;
+
+    if (isSignUp) {
+      // Sign up flow
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return NextResponse.json({ error: 'Username already taken' }, { status: 409 });
+      }
+
+      // Hash password if provided
+      const hashedPassword = password ? await hashPassword(password) : undefined;
+
+      user = await User.create({
+        username,
+        password: hashedPassword,
+        lastLoginAt: new Date(),
+      });
     } else {
-      console.log('Existing user found:', user);
+      // Login flow
+      user = await User.findOne({ username });
+
+      if (!user) {
+        return NextResponse.json({ error: 'User not found. Please sign up first.' }, { status: 404 });
+      }
+
+      // Verify password if user has one set
+      if (user.password && password) {
+        const isValidPassword = await verifyPassword(password, user.password);
+        if (!isValidPassword) {
+          return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+        }
+      }
+
+      // Update last login
+      user.lastLoginAt = new Date();
+      await user.save();
     }
 
-    return NextResponse.json({ user });
+    // Generate JWT token
+    const token = await signToken({
+      userId: user._id.toString(),
+      username: user.username,
+    });
+
+    // Set HTTP-only cookie
+    await setAuthCookie(token);
+
+    // Return user data (without password)
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
+    return NextResponse.json({
+      user: userWithoutPassword,
+      token, // Also return token for client-side storage fallback
+    });
   } catch (error: any) {
-    console.error("=== Login error ===");
-    console.error("Error type:", error.constructor.name);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
+    console.error("Login error:", error);
     return NextResponse.json({ error: error.message || 'Authentication failed' }, { status: 500 });
   }
 }

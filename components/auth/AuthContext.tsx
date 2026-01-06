@@ -1,20 +1,23 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 interface User {
   username: string;
   _id: string;
   savedProblems?: string[];
   completedProblems?: string[];
+  lastLoginAt?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (username: string, inviteCode: string) => Promise<void>;
-  logout: () => void;
+  login: (username: string, inviteCode: string, password?: string) => Promise<void>;
+  signup: (username: string, inviteCode: string, password?: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
   closeLoginModal: () => void;
@@ -27,24 +30,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("lab_user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user from local storage");
-        localStorage.removeItem("lab_user");
+  // Check session on mount
+  const refreshSession = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/session", {
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+          // Also update localStorage as backup
+          localStorage.setItem("lab_user", JSON.stringify(data.user));
+        } else {
+          // Check localStorage fallback
+          const storedUser = localStorage.getItem("lab_user");
+          if (storedUser) {
+            try {
+              setUser(JSON.parse(storedUser));
+            } catch {
+              localStorage.removeItem("lab_user");
+            }
+          }
+        }
       }
+    } catch (error) {
+      console.error("Failed to refresh session:", error);
+      // Fallback to localStorage
+      const storedUser = localStorage.getItem("lab_user");
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          localStorage.removeItem("lab_user");
+        }
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = async (username: string, inviteCode: string) => {
+  useEffect(() => {
+    refreshSession();
+  }, [refreshSession]);
+
+  const login = async (username: string, inviteCode: string, password?: string) => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, inviteCode }),
+      credentials: 'include',
+      body: JSON.stringify({ username, inviteCode, password, isSignUp: false }),
     });
 
     if (!res.ok) {
@@ -53,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json();
         errorMessage = data.error || errorMessage;
       } catch {
-        // If JSON parsing fails, it's likely an HTML error page
         errorMessage = `Server error (${res.status})`;
       }
       throw new Error(errorMessage);
@@ -65,9 +100,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoginModalOpen(false);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("lab_user");
+  const signup = async (username: string, inviteCode: string, password?: string) => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: 'include',
+      body: JSON.stringify({ username, inviteCode, password, isSignUp: true }),
+    });
+
+    if (!res.ok) {
+      let errorMessage = "Signup failed";
+      try {
+        const data = await res.json();
+        errorMessage = data.error || errorMessage;
+      } catch {
+        errorMessage = `Server error (${res.status})`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await res.json();
+    setUser(data.user);
+    localStorage.setItem("lab_user", JSON.stringify(data.user));
+    setIsLoginModalOpen(false);
+  };
+
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("lab_user");
+    }
   };
 
   const openLoginModal = () => setIsLoginModalOpen(true);
@@ -80,7 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        signup,
         logout,
+        refreshSession,
         isLoginModalOpen,
         openLoginModal,
         closeLoginModal,

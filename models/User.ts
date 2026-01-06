@@ -1,11 +1,27 @@
 import mongoose, { Schema, model, models } from 'mongoose';
 
+export interface IUser {
+  _id: string;
+  username: string;
+  password?: string;
+  savedProblems: string[];
+  completedProblems: string[];
+  createdAt: Date;
+  lastLoginAt?: Date;
+}
+
 const UserSchema = new Schema({
   username: {
     type: String,
     required: true,
     unique: true,
     trim: true,
+    minlength: 3,
+    maxlength: 20,
+  },
+  password: {
+    type: String,
+    required: false, // Optional for backward compatibility
   },
   savedProblems: [{
     type: String,
@@ -16,6 +32,9 @@ const UserSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  lastLoginAt: {
+    type: Date,
   },
 });
 
