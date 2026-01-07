@@ -3,6 +3,8 @@ import mongoose, { Schema, model, models } from 'mongoose';
 export interface IUser {
   _id: string;
   username: string;
+  email?: string;
+  bio?: string;
   password?: string;
   savedProblems: string[];
   completedProblems: string[];
@@ -18,6 +20,17 @@ const UserSchema = new Schema({
     trim: true,
     minlength: 3,
     maxlength: 20,
+  },
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    sparse: true, // Allow null/undefined while maintaining uniqueness for actual values
+  },
+  bio: {
+    type: String,
+    maxlength: 200,
+    default: '',
   },
   password: {
     type: String,

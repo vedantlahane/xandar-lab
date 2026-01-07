@@ -13,6 +13,7 @@ const protectedRoutes = [
     '/lab/docs',
     '/lab/experiments',
     '/lab/hackathons',
+    '/lab/profile',
 ];
 
 // Protected API routes
@@ -62,6 +63,7 @@ export const config = {
         '/lab/docs/:path*',
         '/lab/experiments/:path*',
         '/lab/hackathons/:path*',
+        '/lab/profile/:path*',
         '/api/problems/:path*',
     ],
 };

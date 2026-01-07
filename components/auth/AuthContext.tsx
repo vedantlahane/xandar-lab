@@ -5,9 +5,13 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 interface User {
   username: string;
   _id: string;
+  email?: string;
+  bio?: string;
   savedProblems?: string[];
   completedProblems?: string[];
+  createdAt?: string;
   lastLoginAt?: string;
+  hasPassword?: boolean;
 }
 
 interface AuthContextType {
@@ -18,6 +22,7 @@ interface AuthContextType {
   signup: (username: string, inviteCode: string, password?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
   closeLoginModal: () => void;
@@ -142,6 +147,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => setIsLoginModalOpen(false);
 
+  const updateUser = (updates: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem("lab_user", JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -152,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signup,
         logout,
         refreshSession,
+        updateUser,
         isLoginModalOpen,
         openLoginModal,
         closeLoginModal,
