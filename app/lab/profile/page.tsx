@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Check, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { StatsDashboard } from "@/components/StatsDashboard";
 
 // Smooth spring config for organic motion
 const smoothSpring = {
@@ -76,13 +77,13 @@ interface ProfileData {
     hasPassword: boolean;
 }
 
-type TabType = "profile" | "password" | "danger";
+type TabType = "stats" | "profile" | "password" | "danger";
 
 export default function ProfilePage() {
     const { user, isLoading, isAuthenticated, logout, updateUser } = useAuth();
     const router = useRouter();
 
-    const [activeTab, setActiveTab] = useState<TabType>("profile");
+    const [activeTab, setActiveTab] = useState<TabType>("stats");
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [fetchingProfile, setFetchingProfile] = useState(true);
 
@@ -283,6 +284,7 @@ export default function ProfilePage() {
     }
 
     const tabs: { id: TabType; label: string }[] = [
+        { id: "stats", label: "Statistics" },
         { id: "profile", label: "Profile" },
         { id: "password", label: "Password" },
         { id: "danger", label: "Danger Zone" },
@@ -371,8 +373,8 @@ export default function ProfilePage() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`relative px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${activeTab === tab.id
-                                            ? "text-zinc-900 dark:text-zinc-100"
-                                            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                                        ? "text-zinc-900 dark:text-zinc-100"
+                                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                                         } ${tab.id === "danger" ? "text-destructive hover:text-destructive" : ""}`}
                                 >
                                     {tab.label}
@@ -389,6 +391,18 @@ export default function ProfilePage() {
 
                         {/* Tab Content */}
                         <AnimatePresence mode="wait">
+                            {activeTab === "stats" && (
+                                <motion.div
+                                    key="stats"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <StatsDashboard />
+                                </motion.div>
+                            )}
+
                             {activeTab === "profile" && (
                                 <motion.div
                                     key="profile"

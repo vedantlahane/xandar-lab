@@ -1,20 +1,93 @@
-import mongoose, {Schema, model, models} from 'mongoose';
+import mongoose, { Schema, model, models } from 'mongoose';
+
+export interface IAttempt {
+    _id: string;
+    problemId: string;
+    userId: string;
+    content: string;
+    status: 'attempting' | 'resolved';
+    notes?: string;
+    timestamp: Date;
+    resolvedAt?: Date;
+}
+
+export interface IDiscussion {
+    _id: string;
+    attemptId: string;
+    userId: string;
+    username: string;
+    content: string;
+    timestamp: Date;
+}
+
+const DiscussionSchema = new Schema({
+    attemptId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Attempt',
+        required: true,
+        index: true,
+    },
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    username: {
+        type: String,
+        required: true,
+    },
+    content: {
+        type: String,
+        required: true,
+        maxlength: 1000,
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now,
+    }
+});
+
 const AttemptSchema = new Schema({
-    problemId:{
+    problemId: {
         type: String,
         required: true,
         index: true,
     },
-    content:{
-        type:String,
-        required:true,
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true,
     },
-    timestamp:{
-        type:Date,
-        default:Date.now,
-    }
+    content: {
+        type: String,
+        required: true,
+        maxlength: 5000,
+    },
+    status: {
+        type: String,
+        enum: ['attempting', 'resolved'],
+        default: 'attempting',
+    },
+    notes: {
+        type: String,
+        maxlength: 2000,
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now,
+    },
+    resolvedAt: {
+        type: Date,
+    },
 });
 
+// Compound index for efficient queries
+AttemptSchema.index({ userId: 1, timestamp: -1 });
+AttemptSchema.index({ problemId: 1, userId: 1 });
 
 const Attempt = models.Attempt || model('Attempt', AttemptSchema);
+const Discussion = models.Discussion || model('Discussion', DiscussionSchema);
+
+export { Discussion };
 export default Attempt;
