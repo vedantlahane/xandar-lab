@@ -44,7 +44,7 @@ const itemVariants = {
         filter: "blur(0px)",
         transition: {
             duration: 0.6,
-            ease: [0.22, 1, 0.36, 1],
+            ease: "easeOut" as const,
         },
     },
 };
@@ -57,7 +57,7 @@ const cardVariants = {
         scale: 1,
         transition: {
             duration: 0.5,
-            ease: [0.22, 1, 0.36, 1],
+            ease: "easeOut" as const,
         },
     },
 };
@@ -212,7 +212,7 @@ function AnimatedTitle({ text, className }: { text: string; className?: string }
                     transition={{
                         duration: 0.4,
                         delay: i * 0.03,
-                        ease: [0.22, 1, 0.36, 1],
+                        ease: "easeOut",
                     }}
                 >
                     {char}
@@ -262,34 +262,58 @@ export default function LabPage() {
     };
 
     return (
-        <div className="relative min-h-screen bg-zinc-50 dark:bg-black text-zinc-800 dark:text-zinc-200 overflow-hidden">
+        <div className="relative min-h-screen bg-zinc-50 dark:bg-black text-zinc-800 dark:text-zinc-200 overflow-hidden selection:bg-teal-100 selection:text-teal-900 dark:selection:bg-teal-900 dark:selection:text-teal-100">
+            {/* Grid pattern background - matching landing page */}
+            <div className="pointer-events-none absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+                <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-teal-400 opacity-20 blur-[100px]" />
+                <div className="absolute right-0 top-0 -z-10 h-screen w-screen bg-gradient-to-b from-white via-transparent to-transparent dark:from-black" />
+            </div>
+
             {/* Subtle noise texture */}
             <div
-                className="pointer-events-none fixed inset-0 opacity-[0.015] dark:opacity-[0.03]"
+                className="pointer-events-none fixed inset-0 opacity-[0.012] dark:opacity-[0.025]"
                 style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
                 }}
             />
 
-            {/* Gradient orbs */}
+            {/* Gradient orbs with enhanced animation */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <motion.div
-                    className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-br from-teal-400/20 to-emerald-500/20 dark:from-teal-400/10 dark:to-emerald-500/10 blur-3xl"
+                    className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-teal-400/25 to-emerald-500/25 dark:from-teal-400/15 dark:to-emerald-500/15 blur-[80px]"
                     animate={{
-                        scale: [1, 1.1, 1],
-                        opacity: [0.3, 0.4, 0.3],
+                        scale: [1, 1.15, 1],
+                        opacity: [0.4, 0.5, 0.4],
+                        x: [0, 20, 0],
+                        y: [0, -20, 0],
                     }}
                     transition={{
-                        duration: 8,
+                        duration: 12,
                         repeat: Infinity,
                         ease: "easeInOut",
                     }}
                 />
                 <motion.div
-                    className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-violet-400/20 to-purple-500/20 dark:from-violet-400/10 dark:to-purple-500/10 blur-3xl"
+                    className="absolute -bottom-40 -left-40 h-[450px] w-[450px] rounded-full bg-gradient-to-tr from-violet-400/20 to-purple-500/20 dark:from-violet-400/10 dark:to-purple-500/10 blur-[80px]"
                     animate={{
-                        scale: [1, 1.15, 1],
-                        opacity: [0.25, 0.35, 0.25],
+                        scale: [1, 1.2, 1],
+                        opacity: [0.3, 0.4, 0.3],
+                        x: [0, -15, 0],
+                        y: [0, 15, 0],
+                    }}
+                    transition={{
+                        duration: 15,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 2,
+                    }}
+                />
+                <motion.div
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-gradient-to-r from-cyan-400/10 to-blue-500/10 dark:from-cyan-400/5 dark:to-blue-500/5 blur-[100px]"
+                    animate={{
+                        scale: [1, 1.1, 1],
+                        opacity: [0.2, 0.3, 0.2],
                     }}
                     transition={{
                         duration: 10,
@@ -366,7 +390,7 @@ export default function LabPage() {
                     </AnimatePresence>
 
                     {/* Section Cards Grid */}
-                    <motion.div variants={itemVariants} className="space-y-4">
+                    {/* <motion.div variants={itemVariants} className="space-y-4">
                         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                             Explore
                         </h2>
@@ -383,7 +407,7 @@ export default function LabPage() {
                     </motion.div>
 
                     {/* Footer hint */}
-                    <motion.footer variants={itemVariants} className="pt-8">
+                    {/* <motion.footer variants={itemVariants} className="pt-8">
                         <div className="flex items-center gap-3 text-sm text-zinc-400 dark:text-zinc-500">
                             <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
                             <span>
@@ -393,7 +417,7 @@ export default function LabPage() {
                             </span>
                             <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
                         </div>
-                    </motion.footer>
+                    </motion.footer> */}
                 </motion.div>
             </div>
         </div>
