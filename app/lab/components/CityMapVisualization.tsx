@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, useAnimation } from "framer-motion";
 
 // Seeded random for consistent city generation
@@ -9,6 +9,18 @@ const seededRandom = (seed: number) => {
     return x - Math.floor(x);
 };
 
+// Building colors palette
+const BUILDING_COLORS = [
+    { base: "rgb(20 184 166)", glow: "rgb(20 184 166 / 0.3)" },      // teal
+    { base: "rgb(139 92 246)", glow: "rgb(139 92 246 / 0.3)" },      // violet
+    { base: "rgb(6 182 212)", glow: "rgb(6 182 212 / 0.3)" },        // cyan
+    { base: "rgb(34 211 238)", glow: "rgb(34 211 238 / 0.3)" },      // cyan-light
+    { base: "rgb(168 85 247)", glow: "rgb(168 85 247 / 0.3)" },      // purple
+    { base: "rgb(59 130 246)", glow: "rgb(59 130 246 / 0.3)" },      // blue
+    { base: "rgb(16 185 129)", glow: "rgb(16 185 129 / 0.3)" },      // emerald
+    { base: "rgb(244 114 182)", glow: "rgb(244 114 182 / 0.3)" },    // pink
+];
+
 // City block (building) type
 interface CityBlock {
     id: number;
@@ -16,117 +28,206 @@ interface CityBlock {
     y: number;
     width: number;
     height: number;
-    maxBuildingHeight: number; // Random height when activated
-    isActive: boolean;
+    maxBuildingHeight: number;
+    color: typeof BUILDING_COLORS[0];
+    row: number;
+    col: number;
 }
 
-// Traveler dot type
+// Traveler type
 interface Traveler {
     id: number;
-    x: number;
-    y: number;
     color: string;
     speed: number;
     startDelay: number;
+    startEdge: "top" | "right" | "bottom";
+    path: { x: number; y: number }[];
 }
 
-// Generate random city blocks
-const generateCityBlocks = (count: number, seed: number): CityBlock[] => {
+// City grid configuration
+const GRID_COLS = 10;
+const GRID_ROWS = 7;
+const STREET_WIDTH = 2; // percentage
+const BLOCK_MARGIN = 0.5; // percentage
+
+// Generate proper city grid with aligned blocks and streets
+const generateCityGrid = (seed: number): { blocks: CityBlock[]; roads: { x1: number; y1: number; x2: number; y2: number; isMain: boolean }[] } => {
     const blocks: CityBlock[] = [];
-    const gridCols = 8;
-    const gridRows = 6;
-    const cellWidth = 100 / gridCols;
-    const cellHeight = 100 / gridRows;
+    const roads: { x1: number; y1: number; x2: number; y2: number; isMain: boolean }[] = [];
 
-    for (let i = 0; i < count; i++) {
-        const col = i % gridCols;
-        const row = Math.floor(i / gridCols) % gridRows;
+    // Calculate cell dimensions
+    const startX = 12; // Leave space for sidebar
+    const endX = 95;
+    const startY = 5;
+    const endY = 95;
 
-        // Add randomness to position within cell
-        const offsetX = seededRandom(seed + i * 3) * (cellWidth * 0.3);
-        const offsetY = seededRandom(seed + i * 7) * (cellHeight * 0.3);
+    const totalWidth = endX - startX;
+    const totalHeight = endY - startY;
 
-        // Random size
-        const width = cellWidth * (0.4 + seededRandom(seed + i * 11) * 0.4);
-        const height = cellHeight * (0.4 + seededRandom(seed + i * 13) * 0.4);
+    const cellWidth = (totalWidth - (GRID_COLS + 1) * STREET_WIDTH) / GRID_COLS;
+    const cellHeight = (totalHeight - (GRID_ROWS + 1) * STREET_WIDTH) / GRID_ROWS;
 
-        // Random building height when activated (for 3D effect)
-        const maxBuildingHeight = 15 + seededRandom(seed + i * 17) * 35;
+    let blockId = 0;
 
-        blocks.push({
-            id: i,
-            x: col * cellWidth + offsetX + 15, // Offset from left edge
-            y: row * cellHeight + offsetY + 8,
-            width,
-            height,
-            maxBuildingHeight,
-            isActive: false,
-        });
-    }
-
-    return blocks;
-};
-
-// Generate roads (horizontal and vertical lines between blocks)
-const generateRoads = (seed: number) => {
-    const roads: { x1: number; y1: number; x2: number; y2: number; isHorizontal: boolean }[] = [];
-
-    // Horizontal roads
-    for (let i = 0; i < 5; i++) {
-        const y = 15 + i * 18 + seededRandom(seed + i * 20) * 5;
+    // Generate horizontal roads (main streets)
+    for (let row = 0; row <= GRID_ROWS; row++) {
+        const y = startY + row * (cellHeight + STREET_WIDTH);
         roads.push({
-            x1: 10,
+            x1: startX - 2,
             y1: y,
-            x2: 95,
+            x2: endX,
             y2: y,
-            isHorizontal: true,
+            isMain: row % 2 === 0,
         });
     }
 
-    // Vertical roads
-    for (let i = 0; i < 7; i++) {
-        const x = 18 + i * 12 + seededRandom(seed + i * 30) * 4;
+    // Generate vertical roads
+    for (let col = 0; col <= GRID_COLS; col++) {
+        const x = startX + col * (cellWidth + STREET_WIDTH);
         roads.push({
             x1: x,
-            y1: 8,
+            y1: startY - 2,
             x2: x,
-            y2: 92,
-            isHorizontal: false,
+            y2: endY,
+            isMain: col % 3 === 0,
         });
     }
 
-    return roads;
+    // Generate city blocks (buildings)
+    for (let row = 0; row < GRID_ROWS; row++) {
+        for (let col = 0; col < GRID_COLS; col++) {
+            // Some cells can be empty (parks/plazas) - about 15% chance
+            if (seededRandom(seed + row * 100 + col) < 0.12) continue;
+
+            const baseX = startX + STREET_WIDTH + col * (cellWidth + STREET_WIDTH);
+            const baseY = startY + STREET_WIDTH + row * (cellHeight + STREET_WIDTH);
+
+            // Randomize building size within cell (but keep it aligned)
+            const widthVariation = seededRandom(seed + blockId * 3) * 0.3;
+            const heightVariation = seededRandom(seed + blockId * 7) * 0.3;
+
+            const width = cellWidth * (0.7 + widthVariation) - BLOCK_MARGIN * 2;
+            const height = cellHeight * (0.7 + heightVariation) - BLOCK_MARGIN * 2;
+
+            // Center the building in its cell
+            const offsetX = (cellWidth - width) / 2;
+            const offsetY = (cellHeight - height) / 2;
+
+            // Random building height and color
+            const maxBuildingHeight = 10 + seededRandom(seed + blockId * 17) * 30;
+            const colorIndex = Math.floor(seededRandom(seed + blockId * 23) * BUILDING_COLORS.length);
+
+            blocks.push({
+                id: blockId++,
+                x: baseX + offsetX,
+                y: baseY + offsetY,
+                width,
+                height,
+                maxBuildingHeight,
+                color: BUILDING_COLORS[colorIndex],
+                row,
+                col,
+            });
+        }
+    }
+
+    return { blocks, roads };
 };
 
-// Generate travelers
-const generateTravelers = (): Traveler[] => {
+// Generate path through the city (greedy pathfinding)
+const generateGreedyPath = (
+    startEdge: "top" | "right" | "bottom",
+    seed: number,
+    blocks: CityBlock[]
+): { x: number; y: number }[] => {
+    const path: { x: number; y: number }[] = [];
+    const targetX = 5; // Sidebar position
+    const targetY = 50; // Center height
+
+    // Starting position based on edge
+    let currentX: number;
+    let currentY: number;
+
+    switch (startEdge) {
+        case "top":
+            currentX = 20 + seededRandom(seed) * 60;
+            currentY = 2;
+            break;
+        case "bottom":
+            currentX = 20 + seededRandom(seed + 1) * 60;
+            currentY = 98;
+            break;
+        case "right":
+        default:
+            currentX = 98;
+            currentY = 15 + seededRandom(seed + 2) * 70;
+            break;
+    }
+
+    path.push({ x: currentX, y: currentY });
+
+    // Generate waypoints that follow streets (greedy approach)
+    const gridCellWidth = 80 / GRID_COLS;
+    const gridCellHeight = 90 / GRID_ROWS;
+
+    while (currentX > targetX + 5) {
+        // Move toward target with some randomness
+        const moveX = gridCellWidth * (0.8 + seededRandom(seed + path.length * 3) * 0.5);
+        const moveY = (targetY - currentY) * (0.15 + seededRandom(seed + path.length * 7) * 0.2);
+
+        // Add vertical movement waypoint (following streets)
+        if (Math.abs(moveY) > 2) {
+            currentY += moveY;
+            currentY = Math.max(10, Math.min(90, currentY));
+            path.push({ x: currentX, y: currentY });
+        }
+
+        // Add horizontal movement waypoint
+        currentX -= moveX;
+        currentX = Math.max(targetX, currentX);
+        path.push({ x: currentX, y: currentY });
+
+        // Prevent infinite loops
+        if (path.length > 20) break;
+    }
+
+    // Final approach to sidebar
+    path.push({ x: targetX, y: targetY });
+
+    return path;
+};
+
+// Generate travelers with different start edges
+const generateTravelers = (seed: number, blocks: CityBlock[]): Traveler[] => {
+    const edges: ("top" | "right" | "bottom")[] = ["right", "top", "bottom", "right", "top"];
     const colors = [
-        "rgb(20 184 166)", // teal
-        "rgb(139 92 246)", // violet
-        "rgb(6 182 212)",  // cyan
-        "rgb(34 211 238)", // cyan-lighter
-        "rgb(168 85 247)", // purple
+        "rgb(20 184 166)",  // teal
+        "rgb(139 92 246)",  // violet
+        "rgb(6 182 212)",   // cyan
+        "rgb(168 85 247)",  // purple
+        "rgb(34 211 238)",  // cyan-light
     ];
 
-    return [
-        { id: 0, x: 85, y: 20, color: colors[0], speed: 12, startDelay: 0 },
-        { id: 1, x: 90, y: 45, color: colors[1], speed: 15, startDelay: 2 },
-        { id: 2, x: 80, y: 70, color: colors[2], speed: 10, startDelay: 4 },
-        { id: 3, x: 95, y: 35, color: colors[3], speed: 18, startDelay: 6 },
-        { id: 4, x: 88, y: 80, color: colors[4], speed: 14, startDelay: 8 },
-    ];
+    return edges.map((edge, i) => ({
+        id: i,
+        color: colors[i],
+        speed: 10 + i * 3,
+        startDelay: i * 3,
+        startEdge: edge,
+        path: generateGreedyPath(edge, seed + i * 100, blocks),
+    }));
 };
 
-// Building component with activation animation
+// Building component
 function CityBlockComponent({
     block,
     isNearTraveler,
-    travelerColor,
 }: {
     block: CityBlock;
     isNearTraveler: boolean;
-    travelerColor: string | null;
 }) {
+    const buildingHeight = block.maxBuildingHeight;
+
     return (
         <motion.div
             className="absolute"
@@ -141,15 +242,13 @@ function CityBlockComponent({
             <motion.div
                 className="absolute inset-0 rounded-sm"
                 style={{
-                    background: travelerColor
-                        ? `${travelerColor.replace(")", " / 0.15)")}`
-                        : "transparent",
+                    background: block.color.glow,
                 }}
                 animate={{
                     opacity: isNearTraveler ? 1 : 0,
                     transform: isNearTraveler
-                        ? `translate(${block.maxBuildingHeight * 0.15}px, ${block.maxBuildingHeight * 0.15}px)`
-                        : "translate(0, 0)",
+                        ? `translate(${buildingHeight * 0.12}px, ${buildingHeight * 0.12}px)`
+                        : "translate(0px, 0px)",
                 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
             />
@@ -159,59 +258,58 @@ function CityBlockComponent({
                 className="absolute inset-0 rounded-sm border transition-colors duration-300"
                 style={{
                     borderColor: isNearTraveler
-                        ? travelerColor || "rgb(20 184 166 / 0.6)"
-                        : "rgb(161 161 170 / 0.15)",
+                        ? block.color.base
+                        : "rgb(161 161 170 / 0.2)",
                     background: isNearTraveler
-                        ? `linear-gradient(135deg, ${travelerColor?.replace(")", " / 0.25)") || "rgb(20 184 166 / 0.25)"}, transparent)`
-                        : "rgb(161 161 170 / 0.03)",
+                        ? `linear-gradient(135deg, ${block.color.glow}, transparent)`
+                        : "rgb(161 161 170 / 0.05)",
                 }}
                 animate={{
-                    scale: isNearTraveler ? 1.02 : 1,
+                    scale: isNearTraveler ? 1.03 : 1,
                     boxShadow: isNearTraveler
-                        ? `0 ${block.maxBuildingHeight * 0.3}px ${block.maxBuildingHeight * 0.5}px ${travelerColor?.replace(")", " / 0.2)") || "rgb(20 184 166 / 0.2)"}`
+                        ? `0 ${buildingHeight * 0.4}px ${buildingHeight * 0.6}px ${block.color.glow.replace("0.3", "0.25")}`
                         : "none",
                 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
             >
-                {/* Building "floors" when active */}
+                {/* Building floors when active */}
                 {isNearTraveler && (
                     <motion.div
-                        className="absolute inset-x-1 top-1 bottom-1 flex flex-col gap-px overflow-hidden"
+                        className="absolute inset-x-0.5 top-0.5 bottom-0.5 flex flex-col justify-evenly overflow-hidden"
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.5 }}
+                        animate={{ opacity: 0.6 }}
                         exit={{ opacity: 0 }}
                     >
-                        {[...Array(Math.floor(block.maxBuildingHeight / 10))].map((_, i) => (
+                        {[...Array(Math.min(4, Math.floor(buildingHeight / 8)))].map((_, i) => (
                             <motion.div
                                 key={i}
                                 className="w-full h-px"
-                                style={{ background: travelerColor || "rgb(20 184 166)" }}
+                                style={{ background: block.color.base }}
                                 initial={{ scaleX: 0 }}
                                 animate={{ scaleX: 1 }}
-                                transition={{ delay: i * 0.05, duration: 0.2 }}
+                                transition={{ delay: i * 0.04, duration: 0.15 }}
                             />
                         ))}
                     </motion.div>
                 )}
             </motion.div>
 
-            {/* 3D extrusion effect when active */}
+            {/* 3D extrusion effect */}
             <motion.div
-                className="absolute rounded-sm"
+                className="absolute rounded-sm pointer-events-none"
                 style={{
-                    left: 2,
-                    top: 2,
-                    right: -2,
-                    bottom: -2,
-                    borderRight: `2px solid ${travelerColor || "rgb(20 184 166 / 0.4)"}`,
-                    borderBottom: `2px solid ${travelerColor || "rgb(20 184 166 / 0.4)"}`,
-                    borderRadius: "0.125rem",
+                    left: "2px",
+                    top: "2px",
+                    right: "-2px",
+                    bottom: "-2px",
+                    borderRight: `2px solid ${block.color.base}`,
+                    borderBottom: `2px solid ${block.color.base}`,
                 }}
                 animate={{
-                    opacity: isNearTraveler ? 0.6 : 0,
+                    opacity: isNearTraveler ? 0.5 : 0,
                     transform: isNearTraveler
-                        ? `translate(${block.maxBuildingHeight * 0.08}px, ${block.maxBuildingHeight * 0.08}px)`
-                        : "translate(0, 0)",
+                        ? `translate(${buildingHeight * 0.06}px, ${buildingHeight * 0.06}px)`
+                        : "translate(0px, 0px)",
                 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
             />
@@ -219,7 +317,7 @@ function CityBlockComponent({
     );
 }
 
-// Traveler dot component
+// Traveler component with path-following animation
 function TravelerDot({
     traveler,
     onPositionUpdate,
@@ -227,75 +325,90 @@ function TravelerDot({
     traveler: Traveler;
     onPositionUpdate: (id: number, x: number, y: number) => void;
 }) {
-    const controls = useAnimation();
+    const [currentPos, setCurrentPos] = useState({ x: traveler.path[0].x, y: traveler.path[0].y });
+    const animationRef = useRef<number | null>(null);
 
     useEffect(() => {
-        const animate = async () => {
-            // Wait for start delay
-            await new Promise((resolve) => setTimeout(resolve, traveler.startDelay * 1000));
+        let pathIndex = 0;
+        let startTime: number | null = null;
+        let segmentStartTime: number;
 
-            // Animate toward sidebar (left-center)
-            const targetX = 3;
-            const targetY = 50 + (traveler.id - 2) * 8; // Converge near center
+        const animate = (timestamp: number) => {
+            if (startTime === null) {
+                startTime = timestamp + traveler.startDelay * 1000;
+                segmentStartTime = startTime;
+            }
 
-            await controls.start({
-                x: `${targetX - traveler.x}vw`,
-                y: `${targetY - traveler.y}vh`,
-                transition: {
-                    duration: traveler.speed,
-                    ease: "linear",
-                },
-            });
+            if (timestamp < startTime) {
+                animationRef.current = requestAnimationFrame(animate);
+                return;
+            }
 
-            // Reset and repeat
-            controls.set({ x: 0, y: 0 });
-            animate();
+            const segmentDuration = (traveler.speed / traveler.path.length) * 1000;
+            const elapsed = timestamp - segmentStartTime;
+            const progress = Math.min(elapsed / segmentDuration, 1);
+
+            if (pathIndex < traveler.path.length - 1) {
+                const from = traveler.path[pathIndex];
+                const to = traveler.path[pathIndex + 1];
+
+                const x = from.x + (to.x - from.x) * progress;
+                const y = from.y + (to.y - from.y) * progress;
+
+                setCurrentPos({ x, y });
+                onPositionUpdate(traveler.id, x, y);
+
+                if (progress >= 1) {
+                    pathIndex++;
+                    segmentStartTime = timestamp;
+                }
+
+                animationRef.current = requestAnimationFrame(animate);
+            } else {
+                // Reset and restart
+                pathIndex = 0;
+                startTime = timestamp + 2000; // Wait before restarting
+                segmentStartTime = startTime;
+                animationRef.current = requestAnimationFrame(animate);
+            }
         };
 
-        animate();
+        animationRef.current = requestAnimationFrame(animate);
 
-        // Update position periodically
-        const interval = setInterval(() => {
-            const element = document.getElementById(`traveler-${traveler.id}`);
-            if (element) {
-                const rect = element.getBoundingClientRect();
-                const x = (rect.left / window.innerWidth) * 100;
-                const y = (rect.top / window.innerHeight) * 100;
-                onPositionUpdate(traveler.id, x, y);
+        return () => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
             }
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [traveler, controls, onPositionUpdate]);
+        };
+    }, [traveler, onPositionUpdate]);
 
     return (
         <motion.div
-            id={`traveler-${traveler.id}`}
-            className="absolute rounded-full"
+            className="absolute rounded-full pointer-events-none"
             style={{
-                left: `${traveler.x}%`,
-                top: `${traveler.y}%`,
-                width: 10,
-                height: 10,
+                left: `${currentPos.x}%`,
+                top: `${currentPos.y}%`,
+                width: "12px",
+                height: "12px",
                 background: traveler.color,
-                boxShadow: `0 0 20px ${traveler.color}, 0 0 40px ${traveler.color}`,
+                boxShadow: `0 0 15px ${traveler.color}, 0 0 30px ${traveler.color}`,
+                transform: "translate(-50%, -50%)",
             }}
-            animate={controls}
         >
-            {/* Trailing glow */}
+            {/* Pulse ring */}
             <motion.div
-                className="absolute -inset-2 rounded-full"
+                className="absolute -inset-1 rounded-full"
                 style={{
-                    background: `radial-gradient(circle, ${traveler.color.replace(")", " / 0.3)")}, transparent 70%)`,
+                    border: `1px solid ${traveler.color}`,
                 }}
                 animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.5, 0.2, 0.5],
+                    scale: [1, 1.8, 1],
+                    opacity: [0.6, 0, 0.6],
                 }}
                 transition={{
-                    duration: 2,
+                    duration: 1.5,
                     repeat: Infinity,
-                    ease: "easeInOut",
+                    ease: "easeOut",
                 }}
             />
         </motion.div>
@@ -306,23 +419,19 @@ export default function CityMapVisualization() {
     const [seed] = useState(() => Date.now());
     const [travelerPositions, setTravelerPositions] = useState<{ [id: number]: { x: number; y: number } }>({});
 
-    const cityBlocks = useMemo(() => generateCityBlocks(40, seed), [seed]);
-    const roads = useMemo(() => generateRoads(seed), [seed]);
-    const travelers = useMemo(() => generateTravelers(), []);
+    const { blocks, roads } = useMemo(() => generateCityGrid(seed), [seed]);
+    const travelers = useMemo(() => generateTravelers(seed, blocks), [seed, blocks]);
 
     const handlePositionUpdate = useCallback((id: number, x: number, y: number) => {
         setTravelerPositions((prev) => ({ ...prev, [id]: { x, y } }));
     }, []);
 
     // Check if a block is near any traveler
-    const getBlockActivation = useCallback(
-        (block: CityBlock): { isActive: boolean; color: string | null } => {
-            const threshold = 8; // Distance threshold for activation
+    const isBlockNearTraveler = useCallback(
+        (block: CityBlock): boolean => {
+            const threshold = 6;
 
-            for (const [id, pos] of Object.entries(travelerPositions)) {
-                const traveler = travelers.find((t) => t.id === parseInt(id));
-                if (!traveler) continue;
-
+            for (const pos of Object.values(travelerPositions)) {
                 const blockCenterX = block.x + block.width / 2;
                 const blockCenterY = block.y + block.height / 2;
 
@@ -331,13 +440,13 @@ export default function CityMapVisualization() {
                 );
 
                 if (distance < threshold) {
-                    return { isActive: true, color: traveler.color };
+                    return true;
                 }
             }
 
-            return { isActive: false, color: null };
+            return false;
         },
-        [travelerPositions, travelers]
+        [travelerPositions]
     );
 
     return (
@@ -351,45 +460,41 @@ export default function CityMapVisualization() {
                         y1={`${road.y1}%`}
                         x2={`${road.x2}%`}
                         y2={`${road.y2}%`}
-                        stroke="rgb(161 161 170 / 0.12)"
-                        strokeWidth={road.isHorizontal ? 1.5 : 1}
-                        strokeDasharray={road.isHorizontal ? "none" : "4 2"}
+                        stroke={road.isMain ? "rgb(161 161 170 / 0.18)" : "rgb(161 161 170 / 0.1)"}
+                        strokeWidth={road.isMain ? 1.5 : 0.8}
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: 1 }}
                         transition={{
-                            delay: 0.5 + i * 0.1,
-                            duration: 1.5,
+                            delay: 0.3 + i * 0.03,
+                            duration: 1,
                             ease: "easeInOut",
                         }}
                     />
                 ))}
 
-                {/* Main road to sidebar */}
+                {/* Main avenue to sidebar */}
                 <motion.line
                     x1="95%"
                     y1="50%"
-                    x2="3%"
+                    x2="5%"
                     y2="50%"
-                    stroke="rgb(20 184 166 / 0.2)"
+                    stroke="rgb(20 184 166 / 0.15)"
                     strokeWidth={2}
+                    strokeDasharray="6 4"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
-                    transition={{ delay: 1, duration: 2, ease: "easeInOut" }}
+                    transition={{ delay: 0.5, duration: 2, ease: "easeInOut" }}
                 />
             </svg>
 
             {/* City blocks layer */}
-            {cityBlocks.map((block) => {
-                const { isActive, color } = getBlockActivation(block);
-                return (
-                    <CityBlockComponent
-                        key={block.id}
-                        block={block}
-                        isNearTraveler={isActive}
-                        travelerColor={color}
-                    />
-                );
-            })}
+            {blocks.map((block) => (
+                <CityBlockComponent
+                    key={block.id}
+                    block={block}
+                    isNearTraveler={isBlockNearTraveler(block)}
+                />
+            ))}
 
             {/* Travelers layer */}
             {travelers.map((traveler) => (
@@ -400,14 +505,15 @@ export default function CityMapVisualization() {
                 />
             ))}
 
-            {/* Sidebar destination glow */}
+            {/* Sidebar destination indicator */}
             <motion.div
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-32"
+                className="absolute left-0 top-1/2 w-6 h-24"
                 style={{
-                    background: "linear-gradient(to right, rgb(20 184 166 / 0.3), transparent)",
+                    background: "linear-gradient(to right, rgb(20 184 166 / 0.25), transparent)",
+                    transform: "translateY(-50%)",
                 }}
                 animate={{
-                    opacity: [0.3, 0.6, 0.3],
+                    opacity: [0.2, 0.5, 0.2],
                 }}
                 transition={{
                     duration: 3,
