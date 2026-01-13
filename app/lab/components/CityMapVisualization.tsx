@@ -26,6 +26,20 @@ const NODES: Node[] = [
     // === DESTINATION (left of grid) ===
     { id: "DEST", x: 5, y: 50 },
 
+    // === NEW LEFT COLUMN ===
+    { id: "R0C0L", x: 4, y: 10 },
+    { id: "R01C0L", x: 4, y: 18 },
+    { id: "R1C0L", x: 4, y: 26 },
+    { id: "R11C0L", x: 4, y: 34 },
+    { id: "R2C0L", x: 4, y: 42 },
+    { id: "R21C0L", x: 4, y: 50 },
+    { id: "M0L", x: 4, y: 50 },
+    { id: "R3C0L", x: 4, y: 58 },
+    { id: "R31C0L", x: 4, y: 64 },
+    { id: "R4C0L", x: 4, y: 74 },
+    { id: "R41C0L", x: 4, y: 82 },
+    { id: "R5C0L", x: 4, y: 90 },
+
     // === ROW 0 (y = 10) ===
     { id: "R0C0", x: 12, y: 10 },
     { id: "R0C01", x: 18, y: 10 },
@@ -230,53 +244,76 @@ const NODES: Node[] = [
 // All edges are strictly horizontal or vertical
 const EDGES: Edge[] = [
     // === DESTINATION CONNECTION ===
-    { from: "DEST", to: "M0" },
+    { from: "DEST", to: "M0L" },
 
     // === HORIZONTAL STREETS (rows) ===
+    // Left column connectors (new)
+    { from: "R0C0L", to: "R0C0" }, { from: "R01C0L", to: "R01C0" }, { from: "R1C0L", to: "R1C0" },
+    { from: "R11C0L", to: "R11C0" }, { from: "R2C0L", to: "R2C0" }, { from: "R21C0L", to: "R21C0" },
+    { from: "M0L", to: "M0" },
+    { from: "R3C0L", to: "R3C0" }, { from: "R31C0L", to: "R31C0" }, { from: "R4C0L", to: "R4C0" },
+    { from: "R41C0L", to: "R41C0" }, { from: "R5C0L", to: "R5C0" },
+
     // Row 0
-    { from: "R0C0", to: "R0C1" }, { from: "R0C1", to: "R0C2" }, { from: "R0C2", to: "R0C3" },
-    { from: "R0C3", to: "R0C4" }, { from: "R0C4", to: "R0C5" }, { from: "R0C5", to: "R0C6" },
+    { from: "R0C0", to: "R0C01" }, { from: "R0C01", to: "R0C1" }, { from: "R0C1", to: "R0C11" }, { from: "R0C11", to: "R0C2" }, { from: "R0C2", to: "R0C21" }, { from: "R0C21", to: "R0C3" }, { from: "R0C3", to: "R0C31" }, { from: "R0C31", to: "R0C4" }, { from: "R0C4", to: "R0C41" }, { from: "R0C41", to: "R0C5" }, { from: "R0C5", to: "R0C51" }, { from: "R0C51", to: "R0C6" }, { from: "R0C6", to: "R0C61" },
+
+    // Row 01
+    { from: "R01C0", to: "R01C01" }, { from: "R01C01", to: "R01C1" }, { from: "R01C1", to: "R01C11" }, { from: "R01C11", to: "R01C2" }, { from: "R01C2", to: "R01C21" }, { from: "R01C21", to: "R01C3" }, { from: "R01C3", to: "R01C31" }, { from: "R01C31", to: "R01C4" }, { from: "R01C4", to: "R01C41" }, { from: "R01C41", to: "R01C5" }, { from: "R01C5", to: "R01C51" }, { from: "R01C51", to: "R01C6" }, { from: "R01C6", to: "R01C61" },
+
     // Row 1
-    { from: "R1C0", to: "R1C1" }, { from: "R1C1", to: "R1C2" }, { from: "R1C2", to: "R1C3" },
-    { from: "R1C3", to: "R1C4" }, { from: "R1C4", to: "R1C5" }, { from: "R1C5", to: "R1C6" },
+    { from: "R1C0", to: "R1C01" }, { from: "R1C01", to: "R1C1" }, { from: "R1C1", to: "R1C11" }, { from: "R1C11", to: "R1C2" }, { from: "R1C2", to: "R1C21" }, { from: "R1C21", to: "R1C3" }, { from: "R1C3", to: "R1C31" }, { from: "R1C31", to: "R1C4" }, { from: "R1C4", to: "R1C41" }, { from: "R1C41", to: "R1C5" }, { from: "R1C5", to: "R1C51" }, { from: "R1C51", to: "R1C6" }, { from: "R1C6", to: "R1C61" },
+
+    // Row 11
+    { from: "R11C0", to: "R11C01" }, { from: "R11C01", to: "R11C1" }, { from: "R11C1", to: "R11C11" }, { from: "R11C11", to: "R11C2" }, { from: "R11C2", to: "R11C21" }, { from: "R11C21", to: "R11C3" }, { from: "R11C3", to: "R11C31" }, { from: "R11C31", to: "R11C4" }, { from: "R11C4", to: "R11C41" }, { from: "R11C41", to: "R11C5" }, { from: "R11C5", to: "R11C51" }, { from: "R11C51", to: "R11C6" }, { from: "R11C6", to: "R11C61" },
+
     // Row 2
-    { from: "R2C0", to: "R2C1" }, { from: "R2C1", to: "R2C2" }, { from: "R2C2", to: "R2C3" },
-    { from: "R2C3", to: "R2C4" }, { from: "R2C4", to: "R2C5" }, { from: "R2C5", to: "R2C6" },
+    { from: "R2C0", to: "R2C01" }, { from: "R2C01", to: "R2C1" }, { from: "R2C1", to: "R2C11" }, { from: "R2C11", to: "R2C2" }, { from: "R2C2", to: "R2C21" }, { from: "R2C21", to: "R2C3" }, { from: "R2C3", to: "R2C31" }, { from: "R2C31", to: "R2C4" }, { from: "R2C4", to: "R2C41" }, { from: "R2C41", to: "R2C5" }, { from: "R2C5", to: "R2C51" }, { from: "R2C51", to: "R2C6" }, { from: "R2C6", to: "R2C61" },
+
+    // Row 21
+    { from: "R21C0", to: "R21C01" }, { from: "R21C01", to: "R21C1" }, { from: "R21C1", to: "R21C11" }, { from: "R21C11", to: "R21C2" }, { from: "R21C2", to: "R21C21" }, { from: "R21C21", to: "R21C3" }, { from: "R21C3", to: "R21C31" }, { from: "R21C31", to: "R21C4" }, { from: "R21C4", to: "R21C41" }, { from: "R21C41", to: "R21C5" }, { from: "R21C5", to: "R21C51" }, { from: "R21C51", to: "R21C6" }, { from: "R21C6", to: "R21C61" },
+
     // Middle Row
-    { from: "M0", to: "M1" }, { from: "M1", to: "M2" }, { from: "M2", to: "M3" },
-    { from: "M3", to: "M4" }, { from: "M4", to: "M5" }, { from: "M5", to: "M6" },
+    { from: "M0", to: "M1" }, { from: "M1", to: "M2" }, { from: "M2", to: "M3" }, { from: "M3", to: "M4" }, { from: "M4", to: "M5" }, { from: "M5", to: "M6" },
+
     // Row 3
-    { from: "R3C0", to: "R3C1" }, { from: "R3C1", to: "R3C2" }, { from: "R3C2", to: "R3C3" },
-    { from: "R3C3", to: "R3C4" }, { from: "R3C4", to: "R3C5" }, { from: "R3C5", to: "R3C6" },
+    { from: "R3C0", to: "R3C01" }, { from: "R3C01", to: "R3C1" }, { from: "R3C1", to: "R3C11" }, { from: "R3C11", to: "R3C2" }, { from: "R3C2", to: "R3C21" }, { from: "R3C21", to: "R3C3" }, { from: "R3C3", to: "R3C31" }, { from: "R3C31", to: "R3C4" }, { from: "R3C4", to: "R3C41" }, { from: "R3C41", to: "R3C5" }, { from: "R3C5", to: "R3C51" }, { from: "R3C51", to: "R3C6" }, { from: "R3C6", to: "R3C61" },
+
+    // Row 31
+    { from: "R31C0", to: "R31C01" }, { from: "R31C01", to: "R31C1" }, { from: "R31C1", to: "R31C11" }, { from: "R31C11", to: "R31C2" }, { from: "R31C2", to: "R31C21" }, { from: "R31C21", to: "R31C3" }, { from: "R31C3", to: "R31C31" }, { from: "R31C31", to: "R31C4" }, { from: "R31C4", to: "R31C41" }, { from: "R31C41", to: "R31C5" }, { from: "R31C5", to: "R31C51" }, { from: "R31C51", to: "R31C6" }, { from: "R31C6", to: "R31C61" },
+
     // Row 4
-    { from: "R4C0", to: "R4C1" }, { from: "R4C1", to: "R4C2" }, { from: "R4C2", to: "R4C3" },
-    { from: "R4C3", to: "R4C4" }, { from: "R4C4", to: "R4C5" }, { from: "R4C5", to: "R4C6" },
+    { from: "R4C0", to: "R4C01" }, { from: "R4C01", to: "R4C1" }, { from: "R4C1", to: "R4C11" }, { from: "R4C11", to: "R4C2" }, { from: "R4C2", to: "R4C21" }, { from: "R4C21", to: "R4C3" }, { from: "R4C3", to: "R4C31" }, { from: "R4C31", to: "R4C4" }, { from: "R4C4", to: "R4C41" }, { from: "R4C41", to: "R4C5" }, { from: "R4C5", to: "R4C51" }, { from: "R4C51", to: "R4C6" }, { from: "R4C6", to: "R4C61" },
+
+    // Row 41
+    { from: "R41C0", to: "R41C01" }, { from: "R41C01", to: "R41C1" }, { from: "R41C1", to: "R41C11" }, { from: "R41C11", to: "R41C2" }, { from: "R41C2", to: "R41C21" }, { from: "R41C21", to: "R41C3" }, { from: "R41C3", to: "R41C31" }, { from: "R41C31", to: "R41C4" }, { from: "R41C4", to: "R41C41" }, { from: "R41C41", to: "R41C5" }, { from: "R41C5", to: "R41C51" }, { from: "R41C51", to: "R41C6" }, { from: "R41C6", to: "R41C61" },
+
     // Row 5
-    { from: "R5C0", to: "R5C1" }, { from: "R5C1", to: "R5C2" }, { from: "R5C2", to: "R5C3" },
-    { from: "R5C3", to: "R5C4" }, { from: "R5C4", to: "R5C5" }, { from: "R5C5", to: "R5C6" },
+    { from: "R5C0", to: "R5C01" }, { from: "R5C01", to: "R5C1" }, { from: "R5C1", to: "R5C11" }, { from: "R5C11", to: "R5C2" }, { from: "R5C2", to: "R5C21" }, { from: "R5C21", to: "R5C3" }, { from: "R5C3", to: "R5C31" }, { from: "R5C31", to: "R5C4" }, { from: "R5C4", to: "R5C41" }, { from: "R5C41", to: "R5C5" }, { from: "R5C5", to: "R5C51" }, { from: "R5C51", to: "R5C6" }, { from: "R5C6", to: "R5C61" },
 
     // === VERTICAL STREETS (columns) ===
     // Column 0
-    { from: "R0C01", to: "R1C0" }, { from: "R1C0", to: "R2C0" }, { from: "R2C0", to: "M0" },
-    { from: "M0", to: "R3C0" }, { from: "R3C0", to: "R4C0" }, { from: "R4C0", to: "R5C0" },
+    { from: "R0C0", to: "R01C0" }, { from: "R01C0", to: "R1C0" }, { from: "R1C0", to: "R11C0" }, { from: "R11C0", to: "R2C0" }, { from: "R2C0", to: "R21C0" }, { from: "R21C0", to: "M0" }, { from: "M0", to: "R3C0" }, { from: "R3C0", to: "R31C0" }, { from: "R31C0", to: "R4C0" }, { from: "R4C0", to: "R41C0" }, { from: "R41C0", to: "R5C0" },
+
+    // Column L (new leftmost)
+    { from: "R0C0L", to: "R01C0L" }, { from: "R01C0L", to: "R1C0L" }, { from: "R1C0L", to: "R11C0L" }, { from: "R11C0L", to: "R2C0L" }, { from: "R2C0L", to: "R21C0L" }, { from: "R21C0L", to: "M0L" }, { from: "M0L", to: "R3C0L" }, { from: "R3C0L", to: "R31C0L" }, { from: "R31C0L", to: "R4C0L" }, { from: "R4C0L", to: "R41C0L" }, { from: "R41C0L", to: "R5C0L" },
+
     // Column 1
-    { from: "R0C1", to: "R1C1" }, { from: "R1C1", to: "R2C1" }, { from: "R2C1", to: "M1" },
-    { from: "M1", to: "R3C1" }, { from: "R3C1", to: "R4C1" }, { from: "R4C1", to: "R5C1" },
+    { from: "R0C1", to: "R01C1" }, { from: "R01C1", to: "R1C1" }, { from: "R1C1", to: "R11C1" }, { from: "R11C1", to: "R2C1" }, { from: "R2C1", to: "R21C1" }, { from: "R21C1", to: "M1" }, { from: "M1", to: "R3C1" }, { from: "R3C1", to: "R31C1" }, { from: "R31C1", to: "R4C1" }, { from: "R4C1", to: "R41C1" }, { from: "R41C1", to: "R5C1" },
+
     // Column 2
-    { from: "R0C2", to: "R1C2" }, { from: "R1C2", to: "R2C2" }, { from: "R2C2", to: "M2" },
-    { from: "M2", to: "R3C2" }, { from: "R3C2", to: "R4C2" }, { from: "R4C2", to: "R5C2" },
+    { from: "R0C2", to: "R01C2" }, { from: "R01C2", to: "R1C2" }, { from: "R1C2", to: "R11C2" }, { from: "R11C2", to: "R2C2" }, { from: "R2C2", to: "R21C2" }, { from: "R21C2", to: "M2" }, { from: "M2", to: "R3C2" }, { from: "R3C2", to: "R31C2" }, { from: "R31C2", to: "R4C2" }, { from: "R4C2", to: "R41C2" }, { from: "R41C2", to: "R5C2" },
+
     // Column 3
-    { from: "R0C3", to: "R1C3" }, { from: "R1C3", to: "R2C3" }, { from: "R2C3", to: "M3" },
-    { from: "M3", to: "R3C3" }, { from: "R3C3", to: "R4C3" }, { from: "R4C3", to: "R5C3" },
+    { from: "R0C3", to: "R01C3" }, { from: "R01C3", to: "R1C3" }, { from: "R1C3", to: "R11C3" }, { from: "R11C3", to: "R2C3" }, { from: "R2C3", to: "R21C3" }, { from: "R21C3", to: "M3" }, { from: "M3", to: "R3C3" }, { from: "R3C3", to: "R31C3" }, { from: "R31C3", to: "R4C3" }, { from: "R4C3", to: "R41C3" }, { from: "R41C3", to: "R5C3" },
+
     // Column 4
-    { from: "R0C4", to: "R1C4" }, { from: "R1C4", to: "R2C4" }, { from: "R2C4", to: "M4" },
-    { from: "M4", to: "R3C4" }, { from: "R3C4", to: "R4C4" }, { from: "R4C4", to: "R5C4" },
+    { from: "R0C4", to: "R01C4" }, { from: "R01C4", to: "R1C4" }, { from: "R1C4", to: "R11C4" }, { from: "R11C4", to: "R2C4" }, { from: "R2C4", to: "R21C4" }, { from: "R21C4", to: "M4" }, { from: "M4", to: "R3C4" }, { from: "R3C4", to: "R31C4" }, { from: "R31C4", to: "R4C4" }, { from: "R4C4", to: "R41C4" }, { from: "R41C4", to: "R5C4" },
+
     // Column 5
-    { from: "R0C5", to: "R1C5" }, { from: "R1C5", to: "R2C5" }, { from: "R2C5", to: "M5" },
-    { from: "M5", to: "R3C5" }, { from: "R3C5", to: "R4C5" }, { from: "R4C5", to: "R5C5" },
+    { from: "R0C5", to: "R01C5" }, { from: "R01C5", to: "R1C5" }, { from: "R1C5", to: "R11C5" }, { from: "R11C5", to: "R2C5" }, { from: "R2C5", to: "R21C5" }, { from: "R21C5", to: "M5" }, { from: "M5", to: "R3C5" }, { from: "R3C5", to: "R31C5" }, { from: "R31C5", to: "R4C5" }, { from: "R4C5", to: "R41C5" }, { from: "R41C5", to: "R5C5" },
+
     // Column 6
-    { from: "R0C6", to: "R1C6" }, { from: "R1C6", to: "R2C6" }, { from: "R2C6", to: "M6" },
-    { from: "M6", to: "R3C6" }, { from: "R3C6", to: "R4C6" }, { from: "R4C6", to: "R5C6" },
+    { from: "R0C6", to: "R01C6" }, { from: "R01C6", to: "R1C6" }, { from: "R1C6", to: "R11C6" }, { from: "R11C6", to: "R2C6" }, { from: "R2C6", to: "R21C6" }, { from: "R21C6", to: "M6" }, { from: "M6", to: "R3C6" }, { from: "R3C6", to: "R31C6" }, { from: "R31C6", to: "R4C6" }, { from: "R4C6", to: "R41C6" }, { from: "R41C6", to: "R5C6" },
 
     // === ENTRY CONNECTIONS ===
     // Top entries (vertical)
