@@ -1,323 +1,419 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { motion, useAnimation } from "framer-motion";
+import { motion } from "framer-motion";
 
-// Seeded random for consistent city generation
-const seededRandom = (seed: number) => {
-    const x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
-};
+// ===== AERIAL STREET MAP =====
+// Pure rectangular grid - only horizontal and vertical streets
+// Hollow spaces between streets are 4-sided buildings
 
-// Building colors palette
-const BUILDING_COLORS = [
-    { base: "rgb(20 184 166)", glow: "rgb(20 184 166 / 0.3)" },      // teal
-    { base: "rgb(139 92 246)", glow: "rgb(139 92 246 / 0.3)" },      // violet
-    { base: "rgb(6 182 212)", glow: "rgb(6 182 212 / 0.3)" },        // cyan
-    { base: "rgb(34 211 238)", glow: "rgb(34 211 238 / 0.3)" },      // cyan-light
-    { base: "rgb(168 85 247)", glow: "rgb(168 85 247 / 0.3)" },      // purple
-    { base: "rgb(59 130 246)", glow: "rgb(59 130 246 / 0.3)" },      // blue
-    { base: "rgb(16 185 129)", glow: "rgb(16 185 129 / 0.3)" },      // emerald
-    { base: "rgb(244 114 182)", glow: "rgb(244 114 182 / 0.3)" },    // pink
-];
-
-// City block (building) type
-interface CityBlock {
-    id: number;
+interface Node {
+    id: string;
     x: number;
     y: number;
-    width: number;
-    height: number;
-    maxBuildingHeight: number;
-    color: typeof BUILDING_COLORS[0];
-    row: number;
-    col: number;
 }
 
-// Traveler type
+interface Edge {
+    from: string;
+    to: string;
+}
+
+// ===== PURE RECTANGULAR GRID =====
+// All nodes aligned to rows and columns
+// Every street is strictly horizontal or vertical
+
+const NODES: Node[] = [
+    // === DESTINATION (left of grid) ===
+    { id: "DEST", x: 5, y: 50 },
+
+    // === ROW 0 (y = 10) ===
+    { id: "R0C0", x: 12, y: 10 },
+    { id: "R0C01", x: 18, y: 10 },
+    { id: "R0C1", x: 24, y: 10 },
+    { id: "R0C11", x: 30, y: 10 },
+    { id: "R0C2", x: 38, y: 10 },
+    { id: "R0C21", x: 44, y: 10 },
+    { id: "R0C3", x: 52, y: 10 },
+    { id: "R0C31", x: 58, y: 10 },
+    { id: "R0C4", x: 66, y: 10 },
+    { id: "R0C41", x: 72, y: 10 },
+    { id: "R0C5", x: 80, y: 10 },
+    { id: "R0C51", x: 86, y: 10 },
+    { id: "R0C6", x: 94, y: 10 },
+    { id: "R0C61", x: 100, y: 10 },
+
+    // === ROW 01 (y = 18) ===
+    { id: "R01C0", x: 12, y: 18 },
+    { id: "R01C01", x: 18, y: 18 },
+    { id: "R01C1", x: 24, y: 18 },
+    { id: "R01C11", x: 30, y: 18 },
+    { id: "R01C2", x: 38, y: 18 },
+    { id: "R01C21", x: 44, y: 18 },
+    { id: "R01C3", x: 52, y: 18 },
+    { id: "R01C31", x: 58, y: 18 },
+    { id: "R01C4", x: 66, y: 18 },
+    { id: "R01C41", x: 72, y: 18 },
+    { id: "R01C5", x: 80, y: 18 },
+    { id: "R01C51", x: 86, y: 18 },
+    { id: "R01C6", x: 94, y: 18 },
+    { id: "R01C61", x: 100, y: 18 },
+
+    // === ROW 1 (y = 26) ===
+    { id: "R1C0", x: 12, y: 26 },
+    { id: "R1C01", x: 18, y: 26 },
+    { id: "R1C1", x: 24, y: 26 },
+    { id: "R1C11", x: 30, y: 26 },
+    { id: "R1C2", x: 38, y: 26 },
+    { id: "R1C21", x: 44, y: 26 },
+    { id: "R1C3", x: 52, y: 26 },
+    { id: "R1C31", x: 58, y: 26 },
+    { id: "R1C4", x: 66, y: 26 },
+    { id: "R1C41", x: 72, y: 26 },
+    { id: "R1C5", x: 80, y: 26 },
+    { id: "R1C51", x: 86, y: 26 },
+    { id: "R1C6", x: 94, y: 26 },
+    { id: "R1C61", x: 100, y: 26 },
+
+
+    // === Row 11 (y = 34) ===
+    { id: "R11C0", x: 12, y: 34 },
+    { id: "R11C01", x: 18, y: 34 },
+    { id: "R11C1", x: 24, y: 34 },
+    { id: "R11C11", x: 30, y: 34 },
+    { id: "R11C2", x: 38, y: 34 },
+    { id: "R11C21", x: 44, y: 34 },
+    { id: "R11C3", x: 52, y: 34 },
+    { id: "R11C31", x: 58, y: 34 },
+    { id: "R11C4", x: 66, y: 34 },
+    { id: "R11C41", x: 72, y: 34 },
+    { id: "R11C5", x: 80, y: 34 },
+    { id: "R11C51", x: 86, y: 34 },
+    { id: "R11C6", x: 94, y: 34 },
+    { id: "R11C61", x: 100, y: 34 },
+
+    // === ROW 2 (y = 42) ===
+    { id: "R2C0", x: 12, y: 42 },
+    { id: "R2C01", x: 18, y: 42 },
+    { id: "R2C1", x: 24, y: 42 },
+    { id: "R2C11", x: 30, y: 42 },
+    { id: "R2C2", x: 38, y: 42 },
+    { id: "R2C21", x: 44, y: 42 },
+    { id: "R2C3", x: 52, y: 42 },
+    { id: "R2C31", x: 58, y: 42 },
+    { id: "R2C4", x: 66, y: 42 },
+    { id: "R2C41", x: 72, y: 42 },
+    { id: "R2C5", x: 80, y: 42 },
+    { id: "R2C51", x: 86, y: 42 },
+    { id: "R2C6", x: 94, y: 42 },
+    { id: "R2C61", x: 100, y: 42 },
+
+    //=== ROW 21 (y = 50)===
+    { id:"R21C0", x: 12, y: 50 },
+    { id:"R21C01", x: 18, y: 50 },
+    { id:"R21C1", x: 24, y: 50 },
+    { id:"R21C11", x: 30, y: 50 },
+    { id:"R21C2", x: 38, y: 50 },
+    { id:"R21C21", x: 44, y: 50 },
+    { id:"R21C3", x: 52, y: 50 }, 
+    { id:"R21C31", x: 58, y: 50 },
+    { id:"R21C4", x: 66, y: 50 },
+    { id:"R21C41", x: 72, y: 50 },
+    { id:"R21C5", x: 80, y: 50 },
+    { id:"R21C51", x: 86, y: 50 },
+    { id:"R21C6", x: 94, y: 50 },
+    { id:"R21C61", x: 100, y: 50 },
+
+
+    // === ROW 3 (y = 58) ===
+    { id: "R3C0", x: 12, y: 58 },
+    { id: "R3C01", x: 18, y: 58 },
+    { id: "R3C1", x: 24, y: 58 },
+    { id: "R3C11", x: 30, y: 58 },
+    { id: "R3C2", x: 38, y: 58 },
+    { id: "R3C21", x: 44, y: 58 },
+    { id: "R3C3", x: 52, y: 58 },
+    { id: "R3C31", x: 58, y: 58 },
+    { id: "R3C4", x: 66, y: 58 },
+    { id: "R3C41", x: 72, y: 58 },
+    { id: "R3C5", x: 80, y: 58 },
+    { id: "R3C51", x: 86, y: 58 },
+    { id: "R3C6", x: 94, y: 58 },
+    { id: "R3C61", x: 100, y: 58 },
+
+    // === ROW 31 (y=64) ===
+    { id: "R31C0", x: 12, y: 64 },
+    { id: "R31C01", x: 18, y: 64 },
+    { id: "R31C1", x: 24, y: 64 },
+    { id: "R31C11", x: 30, y: 64 },
+    { id: "R31C2", x: 38, y: 64 },
+    { id: "R31C21", x: 44, y: 64 },
+    { id: "R31C3", x: 52, y: 64 },
+    { id: "R31C31", x: 58, y: 64 },
+    { id: "R31C4", x: 66, y: 64 },
+    { id: "R31C41", x: 72, y: 64 },
+    { id: "R31C5", x: 80, y: 64 },
+    { id: "R31C51", x: 86, y: 64 },
+    { id: "R31C6", x: 94, y: 64 },
+    { id: "R31C61", x: 100, y: 64 },
+
+    // === ROW 4 (y = 74) ===
+    { id: "R4C0", x: 12, y: 74 },
+    { id: "R4C01", x: 18, y: 74 },
+    { id: "R4C1", x: 24, y: 74 },
+    { id: "R4C11", x: 30, y: 74 },
+    { id: "R4C2", x: 38, y: 74 },
+    { id: "R4C21", x: 44, y: 74 },
+    { id: "R4C3", x: 52, y: 74 },
+    { id: "R4C31", x: 58, y: 74 },
+    { id: "R4C4", x: 66, y: 74 },
+    { id: "R4C41", x: 72, y: 74 },
+    { id: "R4C5", x: 80, y: 74 },
+    { id: "R4C51", x: 86, y: 74 },
+    { id: "R4C6", x: 94, y: 74 },
+    { id: "R4C61", x: 100, y: 74 },
+
+    //===Row 41 (y=82)===
+    { id:"R41C0", x: 12, y: 82 },
+    { id:"R41C01", x: 18, y: 82 },
+    { id:"R41C1", x: 24, y: 82 },
+    { id:"R41C11", x: 30, y: 82 },
+    { id:"R41C2", x: 38, y: 82 },
+    { id:"R41C21", x: 44, y: 82 },
+    { id:"R41C3", x: 52, y: 82 },
+    { id:"R41C31", x: 58, y: 82 },
+    { id:"R41C4", x: 66, y: 82 },
+    { id:"R41C41", x: 72, y: 82 },
+    { id:"R41C5", x: 80, y: 82 },
+    { id:"R41C51", x: 86, y: 82 },
+    { id:"R41C6", x: 94, y: 82 },
+    { id:"R41C61", x: 100, y: 82 },
+
+    // === ROW 5 (y = 90) ===
+    { id: "R5C0", x: 12, y: 90 },
+    { id: "R5C01", x: 18, y: 90 },
+    { id: "R5C1", x: 24, y: 90 },
+    { id: "R5C11", x: 30, y: 90 },
+    { id: "R5C2", x: 38, y: 90 },
+    { id: "R5C21", x: 44, y: 90 },
+    { id: "R5C3", x: 52, y: 90 },
+    { id: "R5C31", x: 58, y: 90 },
+    { id: "R5C4", x: 66, y: 90 },
+    { id: "R5C41", x: 72, y: 90 },
+    { id: "R5C5", x: 80, y: 90 },
+    { id: "R5C51", x: 86, y: 90 },
+    { id: "R5C6", x: 94, y: 90 },
+    { id: "R5C61", x: 100, y: 90 },
+
+    // === ENTRY POINTS ===
+    // Top entries
+    { id: "T1", x: 38, y: 0 },
+    { id: "T2", x: 66, y: 0 },
+    { id: "T3", x: 94, y: 0 },
+    // Right entries (inline to connect horizontally)
+    { id: "RE1", x: 100, y: 26 },
+    { id: "RE2", x: 100, y: 50 }, // needs R2.5 row
+    { id: "RE3", x: 100, y: 74 },
+    // Bottom entries
+    { id: "B1", x: 52, y: 100 },
+    { id: "B2", x: 80, y: 100 },
+
+    // === MIDDLE ROW for center destination (y = 50) ===
+    { id: "M0", x: 12, y: 50 },
+    { id: "M1", x: 24, y: 50 },
+    { id: "M2", x: 38, y: 50 },
+    { id: "M3", x: 52, y: 50 },
+    { id: "M4", x: 66, y: 50 },
+    { id: "M5", x: 80, y: 50 },
+    { id: "M6", x: 94, y: 50 },
+];
+
+// All edges are strictly horizontal or vertical
+const EDGES: Edge[] = [
+    // === DESTINATION CONNECTION ===
+    { from: "DEST", to: "M0" },
+
+    // === HORIZONTAL STREETS (rows) ===
+    // Row 0
+    { from: "R0C0", to: "R0C1" }, { from: "R0C1", to: "R0C2" }, { from: "R0C2", to: "R0C3" },
+    { from: "R0C3", to: "R0C4" }, { from: "R0C4", to: "R0C5" }, { from: "R0C5", to: "R0C6" },
+    // Row 1
+    { from: "R1C0", to: "R1C1" }, { from: "R1C1", to: "R1C2" }, { from: "R1C2", to: "R1C3" },
+    { from: "R1C3", to: "R1C4" }, { from: "R1C4", to: "R1C5" }, { from: "R1C5", to: "R1C6" },
+    // Row 2
+    { from: "R2C0", to: "R2C1" }, { from: "R2C1", to: "R2C2" }, { from: "R2C2", to: "R2C3" },
+    { from: "R2C3", to: "R2C4" }, { from: "R2C4", to: "R2C5" }, { from: "R2C5", to: "R2C6" },
+    // Middle Row
+    { from: "M0", to: "M1" }, { from: "M1", to: "M2" }, { from: "M2", to: "M3" },
+    { from: "M3", to: "M4" }, { from: "M4", to: "M5" }, { from: "M5", to: "M6" },
+    // Row 3
+    { from: "R3C0", to: "R3C1" }, { from: "R3C1", to: "R3C2" }, { from: "R3C2", to: "R3C3" },
+    { from: "R3C3", to: "R3C4" }, { from: "R3C4", to: "R3C5" }, { from: "R3C5", to: "R3C6" },
+    // Row 4
+    { from: "R4C0", to: "R4C1" }, { from: "R4C1", to: "R4C2" }, { from: "R4C2", to: "R4C3" },
+    { from: "R4C3", to: "R4C4" }, { from: "R4C4", to: "R4C5" }, { from: "R4C5", to: "R4C6" },
+    // Row 5
+    { from: "R5C0", to: "R5C1" }, { from: "R5C1", to: "R5C2" }, { from: "R5C2", to: "R5C3" },
+    { from: "R5C3", to: "R5C4" }, { from: "R5C4", to: "R5C5" }, { from: "R5C5", to: "R5C6" },
+
+    // === VERTICAL STREETS (columns) ===
+    // Column 0
+    { from: "R0C01", to: "R1C0" }, { from: "R1C0", to: "R2C0" }, { from: "R2C0", to: "M0" },
+    { from: "M0", to: "R3C0" }, { from: "R3C0", to: "R4C0" }, { from: "R4C0", to: "R5C0" },
+    // Column 1
+    { from: "R0C1", to: "R1C1" }, { from: "R1C1", to: "R2C1" }, { from: "R2C1", to: "M1" },
+    { from: "M1", to: "R3C1" }, { from: "R3C1", to: "R4C1" }, { from: "R4C1", to: "R5C1" },
+    // Column 2
+    { from: "R0C2", to: "R1C2" }, { from: "R1C2", to: "R2C2" }, { from: "R2C2", to: "M2" },
+    { from: "M2", to: "R3C2" }, { from: "R3C2", to: "R4C2" }, { from: "R4C2", to: "R5C2" },
+    // Column 3
+    { from: "R0C3", to: "R1C3" }, { from: "R1C3", to: "R2C3" }, { from: "R2C3", to: "M3" },
+    { from: "M3", to: "R3C3" }, { from: "R3C3", to: "R4C3" }, { from: "R4C3", to: "R5C3" },
+    // Column 4
+    { from: "R0C4", to: "R1C4" }, { from: "R1C4", to: "R2C4" }, { from: "R2C4", to: "M4" },
+    { from: "M4", to: "R3C4" }, { from: "R3C4", to: "R4C4" }, { from: "R4C4", to: "R5C4" },
+    // Column 5
+    { from: "R0C5", to: "R1C5" }, { from: "R1C5", to: "R2C5" }, { from: "R2C5", to: "M5" },
+    { from: "M5", to: "R3C5" }, { from: "R3C5", to: "R4C5" }, { from: "R4C5", to: "R5C5" },
+    // Column 6
+    { from: "R0C6", to: "R1C6" }, { from: "R1C6", to: "R2C6" }, { from: "R2C6", to: "M6" },
+    { from: "M6", to: "R3C6" }, { from: "R3C6", to: "R4C6" }, { from: "R4C6", to: "R5C6" },
+
+    // === ENTRY CONNECTIONS ===
+    // Top entries (vertical)
+    { from: "T1", to: "R0C2" },
+    { from: "T2", to: "R0C4" },
+    { from: "T3", to: "R0C6" },
+    // Right entries (horizontal)
+    { from: "RE1", to: "R1C6" },
+    { from: "RE2", to: "M6" },
+    { from: "RE3", to: "R4C6" },
+    // Bottom entries (vertical)
+    { from: "B1", to: "R5C3" },
+    { from: "B2", to: "R5C5" },
+];
+
+// ===== GRAPH UTILITIES =====
+
+const createAdjacencyList = () => {
+    const adj: { [key: string]: string[] } = {};
+    NODES.forEach(n => adj[n.id] = []);
+    EDGES.forEach(({ from, to }) => {
+        adj[from].push(to);
+        adj[to].push(from);
+    });
+    return adj;
+};
+
+const ADJACENCY = createAdjacencyList();
+
+const findPath = (startId: string, targetId: string): string[] => {
+    const visited = new Set<string>();
+    const queue: { node: string; path: string[] }[] = [{ node: startId, path: [startId] }];
+    visited.add(startId);
+
+    while (queue.length > 0) {
+        const { node, path } = queue.shift()!;
+        if (node === targetId) return path;
+
+        for (const neighbor of ADJACENCY[node] || []) {
+            if (!visited.has(neighbor)) {
+                visited.add(neighbor);
+                queue.push({ node: neighbor, path: [...path, neighbor] });
+            }
+        }
+    }
+    return [startId];
+};
+
+const getNode = (id: string) => NODES.find(n => n.id === id);
+
+// ===== TRAVELERS =====
+
 interface Traveler {
     id: number;
     color: string;
-    speed: number;
-    startDelay: number;
-    startEdge: "top" | "right" | "bottom";
     path: { x: number; y: number }[];
+    duration: number;
+    delay: number;
 }
 
-// City grid configuration
-const GRID_COLS = 10;
-const GRID_ROWS = 7;
-const STREET_WIDTH = 2; // percentage
-const BLOCK_MARGIN = 0.5; // percentage
+const COLORS = [
+    "rgb(20 184 166)",  // teal
+    "rgb(139 92 246)",  // violet
+    "rgb(6 182 212)",   // cyan
+    "rgb(168 85 247)",  // purple
+    "rgb(251 146 60)",  // orange
+    "rgb(244 114 182)", // pink
+];
 
-// Generate proper city grid with aligned blocks and streets
-const generateCityGrid = (seed: number): { blocks: CityBlock[]; roads: { x1: number; y1: number; x2: number; y2: number; isMain: boolean }[] } => {
-    const blocks: CityBlock[] = [];
-    const roads: { x1: number; y1: number; x2: number; y2: number; isMain: boolean }[] = [];
-
-    // Calculate cell dimensions
-    const startX = 12; // Leave space for sidebar
-    const endX = 95;
-    const startY = 5;
-    const endY = 95;
-
-    const totalWidth = endX - startX;
-    const totalHeight = endY - startY;
-
-    const cellWidth = (totalWidth - (GRID_COLS + 1) * STREET_WIDTH) / GRID_COLS;
-    const cellHeight = (totalHeight - (GRID_ROWS + 1) * STREET_WIDTH) / GRID_ROWS;
-
-    let blockId = 0;
-
-    // Generate horizontal roads (main streets)
-    for (let row = 0; row <= GRID_ROWS; row++) {
-        const y = startY + row * (cellHeight + STREET_WIDTH);
-        roads.push({
-            x1: startX - 2,
-            y1: y,
-            x2: endX,
-            y2: y,
-            isMain: row % 2 === 0,
-        });
-    }
-
-    // Generate vertical roads
-    for (let col = 0; col <= GRID_COLS; col++) {
-        const x = startX + col * (cellWidth + STREET_WIDTH);
-        roads.push({
-            x1: x,
-            y1: startY - 2,
-            x2: x,
-            y2: endY,
-            isMain: col % 3 === 0,
-        });
-    }
-
-    // Generate city blocks (buildings)
-    for (let row = 0; row < GRID_ROWS; row++) {
-        for (let col = 0; col < GRID_COLS; col++) {
-            // Some cells can be empty (parks/plazas) - about 15% chance
-            if (seededRandom(seed + row * 100 + col) < 0.12) continue;
-
-            const baseX = startX + STREET_WIDTH + col * (cellWidth + STREET_WIDTH);
-            const baseY = startY + STREET_WIDTH + row * (cellHeight + STREET_WIDTH);
-
-            // Randomize building size within cell (but keep it aligned)
-            const widthVariation = seededRandom(seed + blockId * 3) * 0.3;
-            const heightVariation = seededRandom(seed + blockId * 7) * 0.3;
-
-            const width = cellWidth * (0.7 + widthVariation) - BLOCK_MARGIN * 2;
-            const height = cellHeight * (0.7 + heightVariation) - BLOCK_MARGIN * 2;
-
-            // Center the building in its cell
-            const offsetX = (cellWidth - width) / 2;
-            const offsetY = (cellHeight - height) / 2;
-
-            // Random building height and color
-            const maxBuildingHeight = 10 + seededRandom(seed + blockId * 17) * 30;
-            const colorIndex = Math.floor(seededRandom(seed + blockId * 23) * BUILDING_COLORS.length);
-
-            blocks.push({
-                id: blockId++,
-                x: baseX + offsetX,
-                y: baseY + offsetY,
-                width,
-                height,
-                maxBuildingHeight,
-                color: BUILDING_COLORS[colorIndex],
-                row,
-                col,
-            });
-        }
-    }
-
-    return { blocks, roads };
-};
-
-// Generate path through the city (greedy pathfinding)
-const generateGreedyPath = (
-    startEdge: "top" | "right" | "bottom",
-    seed: number,
-    blocks: CityBlock[]
-): { x: number; y: number }[] => {
-    const path: { x: number; y: number }[] = [];
-    const targetX = 5; // Sidebar position
-    const targetY = 50; // Center height
-
-    // Starting position based on edge
-    let currentX: number;
-    let currentY: number;
-
-    switch (startEdge) {
-        case "top":
-            currentX = 20 + seededRandom(seed) * 60;
-            currentY = 2;
-            break;
-        case "bottom":
-            currentX = 20 + seededRandom(seed + 1) * 60;
-            currentY = 98;
-            break;
-        case "right":
-        default:
-            currentX = 98;
-            currentY = 15 + seededRandom(seed + 2) * 70;
-            break;
-    }
-
-    path.push({ x: currentX, y: currentY });
-
-    // Generate waypoints that follow streets (greedy approach)
-    const gridCellWidth = 80 / GRID_COLS;
-    const gridCellHeight = 90 / GRID_ROWS;
-
-    while (currentX > targetX + 5) {
-        // Move toward target with some randomness
-        const moveX = gridCellWidth * (0.8 + seededRandom(seed + path.length * 3) * 0.5);
-        const moveY = (targetY - currentY) * (0.15 + seededRandom(seed + path.length * 7) * 0.2);
-
-        // Add vertical movement waypoint (following streets)
-        if (Math.abs(moveY) > 2) {
-            currentY += moveY;
-            currentY = Math.max(10, Math.min(90, currentY));
-            path.push({ x: currentX, y: currentY });
-        }
-
-        // Add horizontal movement waypoint
-        currentX -= moveX;
-        currentX = Math.max(targetX, currentX);
-        path.push({ x: currentX, y: currentY });
-
-        // Prevent infinite loops
-        if (path.length > 20) break;
-    }
-
-    // Final approach to sidebar
-    path.push({ x: targetX, y: targetY });
-
-    return path;
-};
-
-// Generate travelers with different start edges
-const generateTravelers = (seed: number, blocks: CityBlock[]): Traveler[] => {
-    const edges: ("top" | "right" | "bottom")[] = ["right", "top", "bottom", "right", "top"];
-    const colors = [
-        "rgb(20 184 166)",  // teal
-        "rgb(139 92 246)",  // violet
-        "rgb(6 182 212)",   // cyan
-        "rgb(168 85 247)",  // purple
-        "rgb(34 211 238)",  // cyan-light
+const generateTravelers = (): Traveler[] => {
+    const routes = [
+        { start: "RE2", color: COLORS[0], duration: 14, delay: 0 },
+        { start: "T2", color: COLORS[1], duration: 16, delay: 3 },
+        { start: "B1", color: COLORS[2], duration: 15, delay: 6 },
+        { start: "RE3", color: COLORS[3], duration: 17, delay: 9 },
+        { start: "T1", color: COLORS[4], duration: 14, delay: 12 },
+        { start: "B2", color: COLORS[5], duration: 16, delay: 15 },
     ];
 
-    return edges.map((edge, i) => ({
-        id: i,
-        color: colors[i],
-        speed: 10 + i * 3,
-        startDelay: i * 3,
-        startEdge: edge,
-        path: generateGreedyPath(edge, seed + i * 100, blocks),
-    }));
+    return routes.map((route, i) => {
+        const pathIds = findPath(route.start, "DEST");
+        const coords = pathIds.map(id => getNode(id)).filter(Boolean) as Node[];
+
+        return {
+            id: i,
+            color: route.color,
+            path: coords.map(n => ({ x: n.x, y: n.y })),
+            duration: route.duration,
+            delay: route.delay,
+        };
+    });
 };
 
-// Building component
-function CityBlockComponent({
-    block,
-    isNearTraveler,
-}: {
-    block: CityBlock;
-    isNearTraveler: boolean;
-}) {
-    const buildingHeight = block.maxBuildingHeight;
+// ===== COMPONENTS =====
 
+function Road({ from, to, isActive }: { from: Node; to: Node; isActive: boolean }) {
     return (
-        <motion.div
-            className="absolute"
+        <motion.line
+            x1={`${from.x}%`}
+            y1={`${from.y}%`}
+            x2={`${to.x}%`}
+            y2={`${to.y}%`}
+            stroke={isActive ? "rgb(20 184 166)" : "rgb(150 150 160 / 0.25)"}
+            strokeWidth={isActive ? 2.5 : 1}
+            strokeLinecap="round"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
             style={{
-                left: `${block.x}%`,
-                top: `${block.y}%`,
-                width: `${block.width}%`,
-                height: `${block.height}%`,
+                filter: isActive ? "drop-shadow(0 0 6px rgb(20 184 166))" : "none",
             }}
-        >
-            {/* Building shadow when active */}
-            <motion.div
-                className="absolute inset-0 rounded-sm"
-                style={{
-                    background: block.color.glow,
-                }}
-                animate={{
-                    opacity: isNearTraveler ? 1 : 0,
-                    transform: isNearTraveler
-                        ? `translate(${buildingHeight * 0.12}px, ${buildingHeight * 0.12}px)`
-                        : "translate(0px, 0px)",
-                }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-            />
-
-            {/* Main building block */}
-            <motion.div
-                className="absolute inset-0 rounded-sm border transition-colors duration-300"
-                style={{
-                    borderColor: isNearTraveler
-                        ? block.color.base
-                        : "rgb(161 161 170 / 0.2)",
-                    background: isNearTraveler
-                        ? `linear-gradient(135deg, ${block.color.glow}, transparent)`
-                        : "rgb(161 161 170 / 0.05)",
-                }}
-                animate={{
-                    scale: isNearTraveler ? 1.03 : 1,
-                    boxShadow: isNearTraveler
-                        ? `0 ${buildingHeight * 0.4}px ${buildingHeight * 0.6}px ${block.color.glow.replace("0.3", "0.25")}`
-                        : "none",
-                }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-                {/* Building floors when active */}
-                {isNearTraveler && (
-                    <motion.div
-                        className="absolute inset-x-0.5 top-0.5 bottom-0.5 flex flex-col justify-evenly overflow-hidden"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.6 }}
-                        exit={{ opacity: 0 }}
-                    >
-                        {[...Array(Math.min(4, Math.floor(buildingHeight / 8)))].map((_, i) => (
-                            <motion.div
-                                key={i}
-                                className="w-full h-px"
-                                style={{ background: block.color.base }}
-                                initial={{ scaleX: 0 }}
-                                animate={{ scaleX: 1 }}
-                                transition={{ delay: i * 0.04, duration: 0.15 }}
-                            />
-                        ))}
-                    </motion.div>
-                )}
-            </motion.div>
-
-            {/* 3D extrusion effect */}
-            <motion.div
-                className="absolute rounded-sm pointer-events-none"
-                style={{
-                    left: "2px",
-                    top: "2px",
-                    right: "-2px",
-                    bottom: "-2px",
-                    borderRight: `2px solid ${block.color.base}`,
-                    borderBottom: `2px solid ${block.color.base}`,
-                }}
-                animate={{
-                    opacity: isNearTraveler ? 0.5 : 0,
-                    transform: isNearTraveler
-                        ? `translate(${buildingHeight * 0.06}px, ${buildingHeight * 0.06}px)`
-                        : "translate(0px, 0px)",
-                }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-            />
-        </motion.div>
+            transition={{ duration: 0.5, delay: Math.random() * 0.3 }}
+        />
     );
 }
 
-// Traveler component with path-following animation
+function Intersection({ node, isActive }: { node: Node; isActive: boolean }) {
+    // Don't render entry points
+    if (node.id.startsWith("T") || node.id.startsWith("RE") || node.id.startsWith("B") || node.id === "DEST") {
+        return null;
+    }
+
+    return (
+        <motion.circle
+            cx={`${node.x}%`}
+            cy={`${node.y}%`}
+            r={isActive ? 3 : 1.5}
+            fill={isActive ? "rgb(20 184 166)" : "rgb(130 130 140 / 0.4)"}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            style={{
+                filter: isActive ? "drop-shadow(0 0 6px rgb(20 184 166))" : "none",
+            }}
+            transition={{ duration: 0.2, delay: 0.2 + Math.random() * 0.15 }}
+        />
+    );
+}
+
 function TravelerDot({
     traveler,
     onPositionUpdate,
@@ -325,202 +421,155 @@ function TravelerDot({
     traveler: Traveler;
     onPositionUpdate: (id: number, x: number, y: number) => void;
 }) {
-    const [currentPos, setCurrentPos] = useState({ x: traveler.path[0].x, y: traveler.path[0].y });
+    const [pos, setPos] = useState(traveler.path[0] || { x: 50, y: 50 });
     const animationRef = useRef<number | null>(null);
 
     useEffect(() => {
-        let pathIndex = 0;
+        if (traveler.path.length < 2) return;
+
         let startTime: number | null = null;
-        let segmentStartTime: number;
 
         const animate = (timestamp: number) => {
-            if (startTime === null) {
-                startTime = timestamp + traveler.startDelay * 1000;
-                segmentStartTime = startTime;
-            }
-
+            if (startTime === null) startTime = timestamp + traveler.delay * 1000;
             if (timestamp < startTime) {
                 animationRef.current = requestAnimationFrame(animate);
                 return;
             }
 
-            const segmentDuration = (traveler.speed / traveler.path.length) * 1000;
-            const elapsed = timestamp - segmentStartTime;
-            const progress = Math.min(elapsed / segmentDuration, 1);
+            const elapsed = timestamp - startTime;
+            const totalDuration = traveler.duration * 1000;
+            let progress = (elapsed % (totalDuration + 4000)) / totalDuration;
 
-            if (pathIndex < traveler.path.length - 1) {
-                const from = traveler.path[pathIndex];
-                const to = traveler.path[pathIndex + 1];
-
-                const x = from.x + (to.x - from.x) * progress;
-                const y = from.y + (to.y - from.y) * progress;
-
-                setCurrentPos({ x, y });
-                onPositionUpdate(traveler.id, x, y);
-
-                if (progress >= 1) {
-                    pathIndex++;
-                    segmentStartTime = timestamp;
-                }
-
-                animationRef.current = requestAnimationFrame(animate);
-            } else {
-                // Reset and restart
-                pathIndex = 0;
-                startTime = timestamp + 2000; // Wait before restarting
-                segmentStartTime = startTime;
-                animationRef.current = requestAnimationFrame(animate);
+            if (progress > 1) {
+                progress = 0;
+                startTime = timestamp + 4000;
             }
+
+            const segmentCount = traveler.path.length - 1;
+            const segmentIndex = Math.min(Math.floor(progress * segmentCount), segmentCount - 1);
+            const segmentProgress = (progress * segmentCount) - segmentIndex;
+
+            const from = traveler.path[segmentIndex];
+            const to = traveler.path[segmentIndex + 1];
+
+            const eased = segmentProgress < 0.5
+                ? 2 * segmentProgress * segmentProgress
+                : 1 - Math.pow(-2 * segmentProgress + 2, 2) / 2;
+
+            const x = from.x + (to.x - from.x) * eased;
+            const y = from.y + (to.y - from.y) * eased;
+
+            setPos({ x, y });
+            onPositionUpdate(traveler.id, x, y);
+
+            animationRef.current = requestAnimationFrame(animate);
         };
 
         animationRef.current = requestAnimationFrame(animate);
-
-        return () => {
-            if (animationRef.current) {
-                cancelAnimationFrame(animationRef.current);
-            }
-        };
+        return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
     }, [traveler, onPositionUpdate]);
 
     return (
-        <motion.div
-            className="absolute rounded-full pointer-events-none"
-            style={{
-                left: `${currentPos.x}%`,
-                top: `${currentPos.y}%`,
-                width: "12px",
-                height: "12px",
-                background: traveler.color,
-                boxShadow: `0 0 15px ${traveler.color}, 0 0 30px ${traveler.color}`,
-                transform: "translate(-50%, -50%)",
-            }}
-        >
-            {/* Pulse ring */}
-            <motion.div
-                className="absolute -inset-1 rounded-full"
-                style={{
-                    border: `1px solid ${traveler.color}`,
-                }}
-                animate={{
-                    scale: [1, 1.8, 1],
-                    opacity: [0.6, 0, 0.6],
-                }}
-                transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeOut",
-                }}
+        <g>
+            <motion.circle
+                cx={`${pos.x}%`}
+                cy={`${pos.y}%`}
+                r={12}
+                fill={traveler.color.replace(")", " / 0.1)")}
+                animate={{ scale: [1, 1.4, 1], opacity: [0.2, 0.05, 0.2] }}
+                transition={{ duration: 1.6, repeat: Infinity }}
             />
-        </motion.div>
+            <motion.circle
+                cx={`${pos.x}%`}
+                cy={`${pos.y}%`}
+                r={4}
+                fill={traveler.color}
+                style={{ filter: `drop-shadow(0 0 8px ${traveler.color})` }}
+            />
+            <motion.circle
+                cx={`${pos.x}%`}
+                cy={`${pos.y}%`}
+                r={8}
+                fill="none"
+                stroke={traveler.color}
+                strokeWidth={1}
+                animate={{ scale: [1, 2], opacity: [0.4, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity }}
+            />
+        </g>
     );
 }
 
+// ===== MAIN =====
+
 export default function CityMapVisualization() {
-    const [seed] = useState(() => Date.now());
-    const [travelerPositions, setTravelerPositions] = useState<{ [id: number]: { x: number; y: number } }>({});
+    const [positions, setPositions] = useState<{ [id: number]: { x: number; y: number } }>({});
+    const travelers = useMemo(() => generateTravelers(), []);
 
-    const { blocks, roads } = useMemo(() => generateCityGrid(seed), [seed]);
-    const travelers = useMemo(() => generateTravelers(seed, blocks), [seed, blocks]);
-
-    const handlePositionUpdate = useCallback((id: number, x: number, y: number) => {
-        setTravelerPositions((prev) => ({ ...prev, [id]: { x, y } }));
+    const handleUpdate = useCallback((id: number, x: number, y: number) => {
+        setPositions(prev => ({ ...prev, [id]: { x, y } }));
     }, []);
 
-    // Check if a block is near any traveler
-    const isBlockNearTraveler = useCallback(
-        (block: CityBlock): boolean => {
-            const threshold = 6;
+    const isEdgeActive = useCallback((from: Node, to: Node): boolean => {
+        const threshold = 6;
+        for (const pos of Object.values(positions)) {
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const len = dx * dx + dy * dy;
+            const t = len > 0 ? Math.max(0, Math.min(1, ((pos.x - from.x) * dx + (pos.y - from.y) * dy) / len)) : 0;
+            const nearestX = from.x + t * dx;
+            const nearestY = from.y + t * dy;
+            const dist = Math.sqrt(Math.pow(pos.x - nearestX, 2) + Math.pow(pos.y - nearestY, 2));
+            if (dist < threshold) return true;
+        }
+        return false;
+    }, [positions]);
 
-            for (const pos of Object.values(travelerPositions)) {
-                const blockCenterX = block.x + block.width / 2;
-                const blockCenterY = block.y + block.height / 2;
-
-                const distance = Math.sqrt(
-                    Math.pow(pos.x - blockCenterX, 2) + Math.pow(pos.y - blockCenterY, 2)
-                );
-
-                if (distance < threshold) {
-                    return true;
-                }
-            }
-
-            return false;
-        },
-        [travelerPositions]
-    );
+    const isNodeActive = useCallback((node: Node): boolean => {
+        for (const pos of Object.values(positions)) {
+            if (Math.sqrt(Math.pow(pos.x - node.x, 2) + Math.pow(pos.y - node.y, 2)) < 6) return true;
+        }
+        return false;
+    }, [positions]);
 
     return (
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
-            {/* Roads layer */}
             <svg className="absolute inset-0 w-full h-full">
-                {roads.map((road, i) => (
-                    <motion.line
-                        key={`road-${i}`}
-                        x1={`${road.x1}%`}
-                        y1={`${road.y1}%`}
-                        x2={`${road.x2}%`}
-                        y2={`${road.y2}%`}
-                        stroke={road.isMain ? "rgb(161 161 170 / 0.18)" : "rgb(161 161 170 / 0.1)"}
-                        strokeWidth={road.isMain ? 1.5 : 0.8}
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{
-                            delay: 0.3 + i * 0.03,
-                            duration: 1,
-                            ease: "easeInOut",
-                        }}
-                    />
+                {/* Roads */}
+                {EDGES.map((edge) => {
+                    const from = getNode(edge.from);
+                    const to = getNode(edge.to);
+                    if (!from || !to) return null;
+                    return (
+                        <Road
+                            key={`${edge.from}-${edge.to}`}
+                            from={from}
+                            to={to}
+                            isActive={isEdgeActive(from, to)}
+                        />
+                    );
+                })}
+
+                {/* Intersections */}
+                {NODES.map(node => (
+                    <Intersection key={node.id} node={node} isActive={isNodeActive(node)} />
                 ))}
 
-                {/* Main avenue to sidebar */}
-                <motion.line
-                    x1="95%"
-                    y1="50%"
-                    x2="5%"
-                    y2="50%"
-                    stroke="rgb(20 184 166 / 0.15)"
-                    strokeWidth={2}
-                    strokeDasharray="6 4"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ delay: 0.5, duration: 2, ease: "easeInOut" }}
+                {/* Travelers */}
+                {travelers.map(t => (
+                    <TravelerDot key={t.id} traveler={t} onPositionUpdate={handleUpdate} />
+                ))}
+
+                {/* Destination glow */}
+                <motion.circle
+                    cx="5%"
+                    cy="50%"
+                    r={15}
+                    fill="rgb(20 184 166 / 0.1)"
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.1, 0.25, 0.1] }}
+                    transition={{ duration: 2.5, repeat: Infinity }}
                 />
             </svg>
-
-            {/* City blocks layer */}
-            {blocks.map((block) => (
-                <CityBlockComponent
-                    key={block.id}
-                    block={block}
-                    isNearTraveler={isBlockNearTraveler(block)}
-                />
-            ))}
-
-            {/* Travelers layer */}
-            {travelers.map((traveler) => (
-                <TravelerDot
-                    key={traveler.id}
-                    traveler={traveler}
-                    onPositionUpdate={handlePositionUpdate}
-                />
-            ))}
-
-            {/* Sidebar destination indicator */}
-            <motion.div
-                className="absolute left-0 top-1/2 w-6 h-24"
-                style={{
-                    background: "linear-gradient(to right, rgb(20 184 166 / 0.25), transparent)",
-                    transform: "translateY(-50%)",
-                }}
-                animate={{
-                    opacity: [0.2, 0.5, 0.2],
-                }}
-                transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                }}
-            />
         </div>
     );
 }
