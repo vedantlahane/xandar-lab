@@ -584,6 +584,10 @@ const NODES: Node[] = [
     { id: "X72Y96", x: 72, y: 96 },
     { id: "X72Y100", x: 72, y: 100 },
 
+    //  ---Column X = 74 ---
+    { id: "X74Y30", x: 74, y: 30},
+    { id: "X74734", x: 74, y: 34},
+
     // --- Column X = 76 ---
     { id: "X76Y0", x: 76, y: 0 },
     { id: "X76Y4", x: 76, y: 4 },
@@ -857,8 +861,10 @@ const EDGES: Edge[] = [
     // --- Row Y = 16 ---
     { from: "X0Y16", to: "X4Y16" }, { from: "X4Y16", to: "X8Y16" }, { from: "X8Y16", to: "X12Y16" },
     { from: "X12Y16", to: "X16Y16" }, { from: "X16Y16", to: "X20Y16" }, { from: "X20Y16", to: "X24Y16" },
-    { from: "X24Y16", to: "X28Y16" }, { from: "X28Y16", to: "X32Y16" }, { from: "X32Y16", to: "X36Y16" },
-    { from: "X36Y16", to: "X40Y16" }, { from: "X40Y16", to: "X44Y16" }, { from: "X44Y16", to: "X48Y16" },
+    { from: "X24Y16", to: "X28Y16" }, 
+    // { from: "X28Y16", to: "X32Y16" }, { from: "X32Y16", to: "X36Y16" },
+    // { from: "X36Y16", to: "X40Y16" },
+     { from: "X40Y16", to: "X44Y16" }, { from: "X44Y16", to: "X48Y16" },
     { from: "X48Y16", to: "X52Y16" }, { from: "X52Y16", to: "X56Y16" }, { from: "X56Y16", to: "X60Y16" },
     { from: "X60Y16", to: "X64Y16" }, { from: "X64Y16", to: "X68Y16" }, { from: "X68Y16", to: "X72Y16" },
     { from: "X72Y16", to: "X76Y16" }, { from: "X76Y16", to: "X80Y16" }, { from: "X80Y16", to: "X84Y16" },
@@ -925,7 +931,8 @@ const EDGES: Edge[] = [
 
     // --- Row Y = 36 ---
     { from: "X0Y36", to: "X4Y36" }, { from: "X4Y36", to: "X8Y36" }, { from: "X8Y36", to: "X12Y36" },
-    { from: "X12Y36", to: "X16Y36" }, { from: "X16Y36", to: "X20Y36" }, 
+    { from: "X12Y36", to: "X16Y36" }, 
+    { from: "X16Y36", to: "X20Y36" }, 
     // { from: "X20Y36", to: "X24Y36" },
     // { from: "X24Y36", to: "X28Y36" }, { from: "X28Y36", to: "X32Y36" }, { from: "X32Y36", to: "X36Y36" },
     // { from: "X36Y36", to: "X40Y36" }, { from: "X40Y36", to: "X44Y36" }, 
@@ -938,7 +945,8 @@ const EDGES: Edge[] = [
 
     // --- Row Y = 40 ---
     { from: "X0Y40", to: "X4Y40" }, { from: "X4Y40", to: "X8Y40" }, { from: "X8Y40", to: "X12Y40" },
-    { from: "X12Y40", to: "X16Y40" }, { from: "X16Y40", to: "X20Y40" }, 
+    { from: "X12Y40", to: "X16Y40" }, 
+    // { from: "X16Y40", to: "X20Y40" }, 
     // { from: "X20Y40", to: "X24Y40" },
     // { from: "X24Y40", to: "X28Y40" }, { from: "X28Y40", to: "X32Y40" }, { from: "X32Y40", to: "X36Y40" },
     // { from: "X36Y40", to: "X40Y40" }, { from: "X40Y40", to: "X44Y40" }, { from: "X44Y40", to: "X48Y40" },
@@ -950,7 +958,8 @@ const EDGES: Edge[] = [
 
     // --- Row Y = 44 ---
     { from: "X0Y44", to: "X4Y44" }, { from: "X4Y44", to: "X8Y44" }, { from: "X8Y44", to: "X12Y44" },
-    // { from: "X12Y44", to: "X16Y44" }, { from: "X16Y44", to: "X20Y44" }, { from: "X20Y44", to: "X24Y44" },
+    { from: "X12Y44", to: "X16Y44" }, 
+    // { from: "X16Y44", to: "X20Y44" }, { from: "X20Y44", to: "X24Y44" },
     // { from: "X24Y44", to: "X28Y44" }, { from: "X28Y44", to: "X32Y44" }, { from: "X32Y44", to: "X36Y44" },
     // { from: "X36Y44", to: "X40Y44" }, { from: "X40Y44", to: "X44Y44" }, 
     { from: "X44Y44", to: "X48Y44" },
@@ -962,8 +971,10 @@ const EDGES: Edge[] = [
 
     // --- Row Y = 48 ---
     { from: "X0Y48", to: "X4Y48" }, { from: "X4Y48", to: "X8Y48" }, { from: "X8Y48", to: "X12Y48" },
-    { from: "X12Y48", to: "X16Y48" }, { from: "X16Y48", to: "X20Y48" }, { from: "X20Y48", to: "X24Y48" },
-    { from: "X24Y48", to: "X28Y48" }, { from: "X28Y48", to: "X32Y48" }, { from: "X32Y48", to: "X36Y48" },
+    { from: "X12Y48", to: "X16Y48" }, 
+    // { from: "X16Y48", to: "X20Y48" }, 
+    //{ from: "X20Y48", to: "X24Y48" },
+    // { from: "X24Y48", to: "X28Y48" }, { from: "X28Y48", to: "X32Y48" }, { from: "X32Y48", to: "X36Y48" },
     // { from: "X36Y48", to: "X40Y48" }, { from: "X40Y48", to: "X44Y48" }, 
     { from: "X44Y48", to: "X48Y48" },
     { from: "X48Y48", to: "X52Y48" }, { from: "X52Y48", to: "X56Y48" }, { from: "X56Y48", to: "X60Y48" },
@@ -974,9 +985,11 @@ const EDGES: Edge[] = [
 
     // --- Row Y = 52 ---
     { from: "X0Y52", to: "X4Y52" }, { from: "X4Y52", to: "X8Y52" }, { from: "X8Y52", to: "X12Y52" },
-    { from: "X12Y52", to: "X16Y52" }, { from: "X16Y52", to: "X20Y52" }, { from: "X20Y52", to: "X24Y52" },
+    { from: "X12Y52", to: "X16Y52" }, { from: "X16Y52", to: "X20Y52" }, 
+    // { from: "X20Y52", to: "X24Y52" },
     // { from: "X24Y52", to: "X28Y52" }, { from: "X28Y52", to: "X32Y52" }, { from: "X32Y52", to: "X36Y52" },
-    { from: "X36Y52", to: "X40Y52" }, { from: "X40Y52", to: "X44Y52" }, { from: "X44Y52", to: "X48Y52" },
+    // { from: "X36Y52", to: "X40Y52" }, { from: "X40Y52", to: "X44Y52" },
+    { from: "X44Y52", to: "X48Y52" },
     { from: "X48Y52", to: "X52Y52" }, { from: "X52Y52", to: "X56Y52" }, { from: "X56Y52", to: "X60Y52" },
     { from: "X60Y52", to: "X64Y52" }, { from: "X64Y52", to: "X68Y52" }, { from: "X68Y52", to: "X72Y52" },
     { from: "X72Y52", to: "X76Y52" }, { from: "X76Y52", to: "X80Y52" }, { from: "X80Y52", to: "X84Y52" },
@@ -985,7 +998,8 @@ const EDGES: Edge[] = [
 
     // --- Row Y = 56 ---
     { from: "X0Y56", to: "X4Y56" }, { from: "X4Y56", to: "X8Y56" }, { from: "X8Y56", to: "X12Y56" },
-    { from: "X12Y56", to: "X16Y56" }, { from: "X16Y56", to: "X20Y56" }, { from: "X20Y56", to: "X24Y56" },
+    { from: "X12Y56", to: "X16Y56" }, { from: "X16Y56", to: "X20Y56" },
+    //  { from: "X20Y56", to: "X24Y56" },
     // { from: "X24Y56", to: "X28Y56" }, { from: "X28Y56", to: "X32Y56" }, { from: "X32Y56", to: "X36Y56" },
     // { from: "X36Y56", to: "X40Y56" }, { from: "X40Y56", to: "X44Y56" }, { from: "X44Y56", to: "X48Y56" },
     { from: "X48Y56", to: "X52Y56" }, { from: "X52Y56", to: "X56Y56" }, { from: "X56Y56", to: "X60Y56" },
@@ -1177,8 +1191,10 @@ const EDGES: Edge[] = [
     { from: "X16Y0", to: "X16Y4" }, { from: "X16Y4", to: "X16Y8" }, { from: "X16Y8", to: "X16Y12" },
     { from: "X16Y12", to: "X16Y16" }, { from: "X16Y16", to: "X16Y20" }, { from: "X16Y20", to: "X16Y24" },
     { from: "X16Y24", to: "X16Y28" }, { from: "X16Y28", to: "X16Y32" }, { from: "X16Y32", to: "X16Y36" },
-    { from: "X16Y36", to: "X16Y40" }, { from: "X16Y40", to: "X16Y44" }, { from: "X16Y44", to: "X16Y48" },
-    { from: "X16Y48", to: "X16Y52" }, { from: "X16Y52", to: "X16Y56" }, { from: "X16Y56", to: "X16Y60" },
+    { from: "X16Y36", to: "X16Y40" }, 
+    { from: "X16Y40", to: "X16Y44" }, { from: "X16Y44", to: "X16Y48" },
+    { from: "X16Y48", to: "X16Y52" }, 
+    { from: "X16Y52", to: "X16Y56" }, { from: "X16Y56", to: "X16Y60" },
     { from: "X16Y60", to: "X16Y64" }, { from: "X16Y64", to: "X16Y68" }, { from: "X16Y68", to: "X16Y72" },
     { from: "X16Y72", to: "X16Y76" }, { from: "X16Y76", to: "X16Y80" }, { from: "X16Y80", to: "X16Y84" },
     { from: "X16Y84", to: "X16Y88" }, { from: "X16Y88", to: "X16Y92" }, { from: "X16Y92", to: "X16Y96" },
@@ -1188,8 +1204,9 @@ const EDGES: Edge[] = [
     { from: "X20Y0", to: "X20Y4" }, { from: "X20Y4", to: "X20Y8" }, { from: "X20Y8", to: "X20Y12" },
     { from: "X20Y12", to: "X20Y16" }, { from: "X20Y16", to: "X20Y20" }, { from: "X20Y20", to: "X20Y24" },
     { from: "X20Y24", to: "X20Y28" }, { from: "X20Y28", to: "X20Y32" }, { from: "X20Y32", to: "X20Y36" },
-    { from: "X20Y36", to: "X20Y40" }, { from: "X20Y40", to: "X20Y44" }, { from: "X20Y44", to: "X20Y48" },
-    { from: "X20Y48", to: "X20Y52" }, { from: "X20Y52", to: "X20Y56" }, { from: "X20Y56", to: "X20Y60" },
+    // { from: "X20Y36", to: "X20Y40" }, { from: "X20Y40", to: "X20Y44" }, { from: "X20Y44", to: "X20Y48" },
+    // { from: "X20Y48", to: "X20Y52" },
+     { from: "X20Y52", to: "X20Y56" }, { from: "X20Y56", to: "X20Y60" },
     { from: "X20Y60", to: "X20Y64" }, { from: "X20Y64", to: "X20Y68" }, { from: "X20Y68", to: "X20Y72" },
     { from: "X20Y72", to: "X20Y76" }, { from: "X20Y76", to: "X20Y80" }, { from: "X20Y80", to: "X20Y84" },
     { from: "X20Y84", to: "X20Y88" }, { from: "X20Y88", to: "X20Y92" }, { from: "X20Y92", to: "X20Y96" },
@@ -1198,8 +1215,8 @@ const EDGES: Edge[] = [
     // --- Column X = 24 ---
     { from: "X24Y0", to: "X24Y4" }, { from: "X24Y4", to: "X24Y8" }, { from: "X24Y8", to: "X24Y12" },
     { from: "X24Y12", to: "X24Y16" }, { from: "X24Y16", to: "X24Y20" }, { from: "X24Y20", to: "X24Y24" },
-    { from: "X24Y24", to: "X24Y28" }, { from: "X24Y28", to: "X24Y32" }, { from: "X24Y32", to: "X24Y36" },
-    { from: "X24Y36", to: "X24Y40" }, { from: "X24Y40", to: "X24Y44" }, 
+    // { from: "X24Y24", to: "X24Y28" }, { from: "X24Y28", to: "X24Y32" }, { from: "X24Y32", to: "X24Y36" },
+    // { from: "X24Y36", to: "X24Y40" }, { from: "X24Y40", to: "X24Y44" }, 
     // { from: "X24Y44", to: "X24Y48" },
     //{ from: "X24Y48", to: "X24Y52" }, { from: "X24Y52", to: "X24Y56" }, { from: "X24Y56", to: "X24Y60" },
     { from: "X24Y60", to: "X24Y64" }, { from: "X24Y64", to: "X24Y68" }, { from: "X24Y68", to: "X24Y72" },
@@ -1209,29 +1226,32 @@ const EDGES: Edge[] = [
 
     // --- Column X = 28 ---
     { from: "X28Y0", to: "X28Y4" }, { from: "X28Y4", to: "X28Y8" }, { from: "X28Y8", to: "X28Y12" },
-    { from: "X28Y12", to: "X28Y16" }, { from: "X28Y16", to: "X28Y20" }, { from: "X28Y20", to: "X28Y24" },
-    { from: "X28Y24", to: "X28Y28" }, { from: "X28Y28", to: "X28Y32" }, { from: "X28Y32", to: "X28Y36" },
-    { from: "X28Y36", to: "X28Y40" }, { from: "X28Y40", to: "X28Y44" }, { from: "X28Y44", to: "X28Y48" },
-    { from: "X28Y48", to: "X28Y52" }, { from: "X28Y52", to: "X28Y56" }, { from: "X28Y56", to: "X28Y60" },
-    { from: "X28Y60", to: "X28Y64" }, { from: "X28Y64", to: "X28Y68" }, { from: "X28Y68", to: "X28Y72" },
+    { from: "X28Y12", to: "X28Y16" },
+    //  { from: "X28Y16", to: "X28Y20" }, { from: "X28Y20", to: "X28Y24" },
+    // { from: "X28Y24", to: "X28Y28" }, { from: "X28Y28", to: "X28Y32" }, { from: "X28Y32", to: "X28Y36" },
+    // { from: "X28Y36", to: "X28Y40" }, { from: "X28Y40", to: "X28Y44" }, { from: "X28Y44", to: "X28Y48" },
+    // { from: "X28Y48", to: "X28Y52" }, { from: "X28Y52", to: "X28Y56" }, { from: "X28Y56", to: "X28Y60" },
+    // { from: "X28Y60", to: "X28Y64" }, 
+    { from: "X28Y64", to: "X28Y68" }, { from: "X28Y68", to: "X28Y72" },
     { from: "X28Y72", to: "X28Y76" }, { from: "X28Y76", to: "X28Y80" }, { from: "X28Y80", to: "X28Y84" },
     { from: "X28Y84", to: "X28Y88" }, { from: "X28Y88", to: "X28Y92" }, { from: "X28Y92", to: "X28Y96" },
     { from: "X28Y96", to: "X28Y100" },
 
     // --- Column X = 32 ---
     { from: "X32Y0", to: "X32Y4" }, { from: "X32Y4", to: "X32Y8" }, { from: "X32Y8", to: "X32Y12" },
-    { from: "X32Y12", to: "X32Y16" }, { from: "X32Y16", to: "X32Y20" }, { from: "X32Y20", to: "X32Y24" },
-    { from: "X32Y24", to: "X32Y28" }, { from: "X32Y28", to: "X32Y32" }, { from: "X32Y32", to: "X32Y36" },
-    { from: "X32Y36", to: "X32Y40" }, { from: "X32Y40", to: "X32Y44" }, { from: "X32Y44", to: "X32Y48" },
-    { from: "X32Y48", to: "X32Y52" }, { from: "X32Y52", to: "X32Y56" }, { from: "X32Y56", to: "X32Y60" },
-    { from: "X32Y60", to: "X32Y64" }, { from: "X32Y64", to: "X32Y68" }, { from: "X32Y68", to: "X32Y72" },
+    // { from: "X32Y12", to: "X32Y16" }, { from: "X32Y16", to: "X32Y20" }, { from: "X32Y20", to: "X32Y24" },
+    // { from: "X32Y24", to: "X32Y28" }, { from: "X32Y28", to: "X32Y32" }, { from: "X32Y32", to: "X32Y36" },
+    // { from: "X32Y36", to: "X32Y40" }, { from: "X32Y40", to: "X32Y44" }, { from: "X32Y44", to: "X32Y48" },
+    // { from: "X32Y48", to: "X32Y52" }, { from: "X32Y52", to: "X32Y56" }, { from: "X32Y56", to: "X32Y60" },
+    // { from: "X32Y60", to: "X32Y64" }, { from: "X32Y64", to: "X32Y68" }, 
+    { from: "X32Y68", to: "X32Y72" },
     { from: "X32Y72", to: "X32Y76" }, { from: "X32Y76", to: "X32Y80" }, { from: "X32Y80", to: "X32Y84" },
     { from: "X32Y84", to: "X32Y88" }, { from: "X32Y88", to: "X32Y92" }, { from: "X32Y92", to: "X32Y96" },
     { from: "X32Y96", to: "X32Y100" },
 
     // --- Column X = 36 ---
     { from: "X36Y0", to: "X36Y4" }, { from: "X36Y4", to: "X36Y8" }, { from: "X36Y8", to: "X36Y12" },
-    { from: "X36Y12", to: "X36Y16" },
+    // { from: "X36Y12", to: "X36Y16" },
     //  { from: "X36Y16", to: "X36Y20" }, { from: "X36Y20", to: "X36Y24" },
     // { from: "X36Y24", to: "X36Y28" }, { from: "X36Y28", to: "X36Y32" }, { from: "X36Y32", to: "X36Y36" },
     // { from: "X36Y36", to: "X36Y40" }, { from: "X36Y40", to: "X36Y44" }, { from: "X36Y44", to: "X36Y48" },
@@ -1261,10 +1281,12 @@ const EDGES: Edge[] = [
     { from: "X44Y0", to: "X44Y4" }, { from: "X44Y4", to: "X44Y8" }, { from: "X44Y8", to: "X44Y12" },
     { from: "X44Y12", to: "X44Y16" }, 
     // { from: "X44Y16", to: "X44Y20" },
-     { from: "X44Y20", to: "X44Y24" },
+    //  { from: "X44Y20", to: "X44Y24" },
     { from: "X44Y24", to: "X44Y28" }, { from: "X44Y28", to: "X44Y32" }, { from: "X44Y32", to: "X44Y36" },
-    { from: "X44Y36", to: "X44Y40" }, { from: "X44Y40", to: "X44Y44" }, { from: "X44Y44", to: "X44Y48" },
-    { from: "X44Y48", to: "X44Y52" }, { from: "X44Y52", to: "X44Y56" }, { from: "X44Y56", to: "X44Y60" },
+    // { from: "X44Y36", to: "X44Y40" }, { from: "X44Y40", to: "X44Y44" }, 
+    { from: "X44Y44", to: "X44Y48" },
+    { from: "X44Y48", to: "X44Y52" }, 
+    // { from: "X44Y52", to: "X44Y56" }, { from: "X44Y56", to: "X44Y60" },
     { from: "X44Y60", to: "X44Y64" }, { from: "X44Y64", to: "X44Y68" }, { from: "X44Y68", to: "X44Y72" },
     { from: "X44Y72", to: "X44Y76" }, { from: "X44Y76", to: "X44Y80" }, { from: "X44Y80", to: "X44Y84" },
     { from: "X44Y84", to: "X44Y88" }, 
@@ -1547,7 +1569,7 @@ function Intersection({ node, isActive }: { node: Node; isActive: boolean }) {
             textAnchor="middle"
             style={{ pointerEvents: "none", userSelect: "none" }}
         >
-            {/* {node.id} */}
+            {node.id}
         </text>
         <motion.circle
             cx={`${node.x}%`}
