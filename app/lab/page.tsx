@@ -15,7 +15,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
-import CityMapVisualization from "./components/CityMapVisualization";
+import CityMapVisualization from "../../components/CityMapVisualization";
 
 // Smooth spring animation config
 const smoothSpring = {
