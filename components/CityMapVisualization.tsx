@@ -3,14 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Nodes, NODES } from "@/data/Nodes";
-import { Edge, EDGES } from "@/data/edges";
-
-// ===== AERIAL STREET MAP =====
-// Pure rectangular grid - only horizontal and vertical streets
-// Hollow spaces between streets are 4-sided buildings
-
-
-
+import { Edge, EDGES } from "@/data/Edges";
 
 // ===== GRAPH UTILITIES =====
 
