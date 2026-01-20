@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Maximize2, Minimize2, X, Plus, Check, Clock,
     MessageSquare, Send, Trash2, ChevronDown, ChevronUp,
-    Loader2, BookOpen, Lightbulb
+    Loader2, BookOpen, Lightbulb, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DSAProblem } from "../data/sheet";
@@ -219,6 +219,43 @@ export function ProblemDrawer({
         return date.toLocaleDateString();
     };
 
+    // Load problem in VS Code (create markdown file)
+    const handleLoadInVSCode = async (problem: DSAProblem) => {
+        const content = `# ${problem.title}
+
+**Platform:** ${problem.platform}  
+**URL:** ${problem.url}
+
+## Description
+${problem.description}
+
+## Tags
+${problem.tags?.map(tag => `- ${tag}`).join('\n') || 'No tags available'}
+
+## Solution Approach
+*Write your solution approach here...*
+
+## Code
+\`\`\`javascript
+// Write your solution here
+\`\`\`
+
+## Notes
+*Add any additional notes here...*
+`;
+
+        // Create a blob and download it
+        const blob = new Blob([content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${problem.id}-${problem.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="fixed inset-0 z-50">
             {/* Backdrop */}
@@ -312,10 +349,18 @@ export function ProblemDrawer({
 
                                 <div className="flex gap-3">
                                     <Button className="flex-1" asChild>
-                                        <a href={problem.url} target="_blank" rel="noopener noreferrer">
+                                        <a href={problem.url} rel="noopener noreferrer">
                                             <BookOpen className="h-4 w-4 mr-2" />
                                             Solve on {problem.platform}
                                         </a>
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => handleLoadInVSCode(problem)}
+                                        title="Load problem details in VS Code"
+                                    >
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        Load in VS Code
                                     </Button>
                                     <Button
                                         variant="outline"

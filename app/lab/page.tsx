@@ -391,7 +391,7 @@ export default function LabPage() {
                     </AnimatePresence>
 
                     {/* ===== CITY MAP VISUALIZATION ===== */}
-                    <CityMapVisualization />
+                    {/* <CityMapVisualization /> */}
 
                 </motion.div>
             </div>

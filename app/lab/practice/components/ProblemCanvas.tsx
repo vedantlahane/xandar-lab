@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { SHEET } from "../data/sheet";
 import { Check, Bookmark } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
@@ -21,16 +21,9 @@ export default function ProblemCanvas({
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("All");
   const [difficultyFilter, setDifficultyFilter] = useState<FilterDifficulty>("All");
   const [platformFilter, setPlatformFilter] = useState<FilterPlatform>("All");
-  const { user } = useAuth();
-  const [savedProblems, setSavedProblems] = useState<string[]>([]);
-  const [completedProblems, setCompletedProblems] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (user) {
-      setSavedProblems(user.savedProblems || []);
-      setCompletedProblems(user.completedProblems || []);
-    }
-  }, [user]);
+  const { user, updateUser } = useAuth();
+  const savedProblems = useMemo(() => user?.savedProblems || [], [user?.savedProblems]);
+  const completedProblems = useMemo(() => user?.completedProblems || [], [user?.completedProblems]);
 
   const handleSaveProblem = async (problemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,7 +38,7 @@ export default function ProblemCanvas({
 
       const data = await res.json();
       if (res.ok) {
-        setSavedProblems(data.savedProblems);
+        updateUser({ savedProblems: data.savedProblems });
       }
     } catch (error) {
       console.error('Failed to save problem:', error);
@@ -65,7 +58,7 @@ export default function ProblemCanvas({
 
       const data = await res.json();
       if (res.ok) {
-        setCompletedProblems(data.completedProblems);
+        updateUser({ completedProblems: data.completedProblems });
       }
     } catch (error) {
       console.error('Failed to complete problem:', error);
