@@ -1,3 +1,4 @@
+'use client';
 export interface Edge {
     from: string;
     to: string;
@@ -29,6 +30,9 @@ export const EDGES: Edge[] = [
     // Bottom Entries
     { from: "B1", to: "X52Y84" },
     { from: "B2", to: "X80Y76" },
+
+
+    
 
     // ==========================================
     // 2. HORIZONTAL EDGES (Left <-> Right)

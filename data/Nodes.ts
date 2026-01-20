@@ -1,3 +1,4 @@
+'use client';
 export interface Nodes {
     id: string;
     x: number;
