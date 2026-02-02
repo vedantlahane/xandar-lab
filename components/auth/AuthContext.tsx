@@ -7,8 +7,11 @@ interface User {
   _id: string;
   email?: string;
   bio?: string;
+  avatarGradient?: string;
   savedProblems?: string[];
   completedProblems?: string[];
+  savedJobs?: string[];
+  jobApplications?: Record<string, string>;
   createdAt?: string;
   lastLoginAt?: string;
   hasPassword?: boolean;
@@ -49,20 +52,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Also update localStorage as backup
           localStorage.setItem("lab_user", JSON.stringify(data.user));
         } else {
-          // Check localStorage fallback
-          const storedUser = localStorage.getItem("lab_user");
-          if (storedUser) {
-            try {
-              setUser(JSON.parse(storedUser));
-            } catch {
-              localStorage.removeItem("lab_user");
-            }
-          }
+          // Server says no session - clear any stale localStorage data
+          // This prevents the "half-authenticated" state where localStorage
+          // has user data but the auth cookie is missing/expired
+          localStorage.removeItem("lab_user");
+          setUser(null);
         }
       }
     } catch (error) {
       console.error("Failed to refresh session:", error);
-      // Fallback to localStorage
+      // Only fallback to localStorage on network errors (offline mode)
+      // This allows the app to work offline with cached credentials
       const storedUser = localStorage.getItem("lab_user");
       if (storedUser) {
         try {

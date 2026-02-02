@@ -13,6 +13,7 @@ import {
     Trophy,
     ArrowRight,
     Sparkles,
+    Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
 import CityMapVisualization from "../../components/CityMapVisualization";
@@ -111,6 +112,16 @@ const labSections = [
         borderColor: "hover:border-amber-500/30",
     },
     {
+        href: "/lab/jobs",
+        icon: Briefcase,
+        title: "Jobs",
+        description: "Track job listings and applications",
+        status: "active" as const,
+        gradient: "from-cyan-500/10 to-sky-500/10",
+        iconColor: "text-cyan-600 dark:text-cyan-400",
+        borderColor: "hover:border-cyan-500/30",
+    },
+    {
         href: "/lab/notes",
         icon: StickyNote,
         title: "Notes",
@@ -141,6 +152,7 @@ const labSections = [
         borderColor: "hover:border-rose-500/30",
     },
 ];
+
 
 // Section Card Component
 function SectionCard({

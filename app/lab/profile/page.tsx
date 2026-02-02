@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Check, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { StatsDashboard } from "@/components/StatsDashboard";
+import { SessionsManager } from "@/components/auth/SessionsManager";
+import { AvatarCustomizer, getAvatarGradientClass, getDefaultAvatarGradient } from "@/components/auth/AvatarCustomizer";
 
 // Smooth spring config for organic motion
 const smoothSpring = {
@@ -70,6 +72,7 @@ interface ProfileData {
     username: string;
     email: string;
     bio: string;
+    avatarGradient?: string;
     savedProblems: string[];
     completedProblems: string[];
     createdAt: string;
@@ -77,13 +80,21 @@ interface ProfileData {
     hasPassword: boolean;
 }
 
-type TabType = "stats" | "profile" | "password" | "danger";
+type TabType = "stats" | "profile" | "sessions" | "password" | "danger";
 
 export default function ProfilePage() {
     const { user, isLoading, isAuthenticated, logout, updateUser } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
-    const [activeTab, setActiveTab] = useState<TabType>("stats");
+    // Initialize tab from query param or default to "stats"
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        const tabParam = searchParams.get("tab");
+        if (tabParam && ["stats", "profile", "sessions", "password", "danger"].includes(tabParam)) {
+            return tabParam as TabType;
+        }
+        return "stats";
+    });
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [fetchingProfile, setFetchingProfile] = useState(true);
 
@@ -286,6 +297,7 @@ export default function ProfilePage() {
     const tabs: { id: TabType; label: string }[] = [
         { id: "stats", label: "Statistics" },
         { id: "profile", label: "Profile" },
+        { id: "sessions", label: "Sessions" },
         { id: "password", label: "Password" },
         { id: "danger", label: "Danger Zone" },
     ];
@@ -323,7 +335,11 @@ export default function ProfilePage() {
                         >
                             <div className="flex items-start gap-4">
                                 {/* Avatar */}
-                                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-zinc-300 to-zinc-400 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-2xl font-bold text-white uppercase">
+                                <div
+                                    className={`h-16 w-16 rounded-full bg-gradient-to-br ${getAvatarGradientClass(
+                                        profile.avatarGradient || getDefaultAvatarGradient(profile.username)
+                                    )} flex items-center justify-center text-2xl font-bold text-white uppercase shadow-lg`}
+                                >
                                     {profile.username.charAt(0)}
                                 </div>
 
@@ -412,6 +428,30 @@ export default function ProfilePage() {
                                     transition={{ duration: 0.2 }}
                                     className="space-y-6"
                                 >
+                                    {/* Avatar Customization */}
+                                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 p-6">
+                                        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+                                            Customize Avatar
+                                        </h3>
+                                        <AvatarCustomizer
+                                            username={profile.username}
+                                            currentGradient={profile.avatarGradient}
+                                            onSave={async (gradientId) => {
+                                                const res = await fetch("/api/auth/profile", {
+                                                    method: "PUT",
+                                                    headers: { "Content-Type": "application/json" },
+                                                    credentials: "include",
+                                                    body: JSON.stringify({ avatarGradient: gradientId }),
+                                                });
+                                                if (res.ok) {
+                                                    const data = await res.json();
+                                                    setProfile(prev => prev ? { ...prev, avatarGradient: gradientId } : null);
+                                                    updateUser({ avatarGradient: gradientId });
+                                                }
+                                            }}
+                                        />
+                                    </div>
+
                                     <form onSubmit={handleProfileUpdate} className="space-y-4">
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -587,6 +627,18 @@ export default function ProfilePage() {
                                             {profile.hasPassword ? "Change Password" : "Set Password"}
                                         </Button>
                                     </form>
+                                </motion.div>
+                            )}
+
+                            {activeTab === "sessions" && (
+                                <motion.div
+                                    key="sessions"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <SessionsManager />
                                 </motion.div>
                             )}
 

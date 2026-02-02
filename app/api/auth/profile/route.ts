@@ -28,6 +28,7 @@ export async function GET() {
                 username: user.username,
                 email: user.email || '',
                 bio: user.bio || '',
+                avatarGradient: user.avatarGradient || '',
                 savedProblems: user.savedProblems || [],
                 completedProblems: user.completedProblems || [],
                 createdAt: user.createdAt,
@@ -51,7 +52,7 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json();
-        const { email, bio } = body;
+        const { email, bio, avatarGradient } = body;
 
         await connectDB();
 
@@ -80,6 +81,11 @@ export async function PUT(req: Request) {
             user.bio = bio;
         }
 
+        // Update avatar gradient
+        if (avatarGradient !== undefined) {
+            user.avatarGradient = avatarGradient;
+        }
+
         await user.save();
 
         return NextResponse.json({
@@ -89,6 +95,7 @@ export async function PUT(req: Request) {
                 username: user.username,
                 email: user.email || '',
                 bio: user.bio || '',
+                avatarGradient: user.avatarGradient || '',
                 savedProblems: user.savedProblems || [],
                 completedProblems: user.completedProblems || [],
                 createdAt: user.createdAt,

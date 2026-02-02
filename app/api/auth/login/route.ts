@@ -1,11 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { headers } from 'next/headers';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
-import { signToken, setAuthCookie, verifyInviteCode, hashPassword, verifyPassword } from '@/lib/auth';
+import {
+  signToken,
+  setAuthCookie,
+  verifyInviteCode,
+  hashPassword,
+  verifyPassword,
+  generateSessionId,
+  getSessionExpiry,
+  parseUserAgent,
+} from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { username, inviteCode, password, isSignUp } = body;
@@ -20,6 +30,12 @@ export async function POST(req: Request) {
     }
 
     await connectDB();
+
+    // Get request metadata for session tracking
+    const headersList = await headers();
+    const userAgent = headersList.get('user-agent');
+    const forwardedFor = headersList.get('x-forwarded-for');
+    const ip = forwardedFor?.split(',')[0]?.trim() || 'unknown';
 
     let user;
 
@@ -37,6 +53,7 @@ export async function POST(req: Request) {
         username,
         password: hashedPassword,
         lastLoginAt: new Date(),
+        sessions: [], // Initialize empty sessions array
       });
     } else {
       // Login flow
@@ -56,23 +73,65 @@ export async function POST(req: Request) {
 
       // Update last login
       user.lastLoginAt = new Date();
-      await user.save();
     }
 
-    // Generate JWT token
+    // Create a new session
+    const sessionId = generateSessionId();
+    const sessionExpiry = getSessionExpiry();
+
+    const newSession = {
+      tokenId: sessionId,
+      userAgent: parseUserAgent(userAgent),
+      ip,
+      createdAt: new Date(),
+      lastActiveAt: new Date(),
+      expiresAt: sessionExpiry,
+    };
+
+    // Add session to user (limit to 10 active sessions)
+    if (!user.sessions) {
+      user.sessions = [];
+    }
+
+    // Remove oldest sessions if over limit
+    const MAX_SESSIONS = 10;
+    while (user.sessions.length >= MAX_SESSIONS) {
+      // Find the oldest session by lastActiveAt
+      let oldestIndex = 0;
+      let oldestTime = new Date(user.sessions[0].lastActiveAt).getTime();
+      for (let i = 1; i < user.sessions.length; i++) {
+        const sessionTime = new Date(user.sessions[i].lastActiveAt).getTime();
+        if (sessionTime < oldestTime) {
+          oldestTime = sessionTime;
+          oldestIndex = i;
+        }
+      }
+      // Remove oldest session in-place
+      user.sessions.splice(oldestIndex, 1);
+    }
+
+    user.sessions.push(newSession);
+    await user.save();
+
+    // Generate JWT token with session ID
     const token = await signToken({
       userId: user._id.toString(),
       username: user.username,
+      sessionId,
     });
 
     // Set HTTP-only cookie
     await setAuthCookie(token);
 
-    // Return user data (without password)
-    const { password: _, ...userWithoutPassword } = user.toObject();
+    // Return user data (without password and sessions)
+    const userObj = user.toObject();
+    const { password: _, sessions: __, ...userWithoutSensitive } = userObj;
 
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutSensitive,
+        hasPassword: !!user.password,
+      },
       token, // Also return token for client-side storage fallback
     });
   } catch (error: any) {
