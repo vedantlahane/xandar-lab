@@ -1,11 +1,6 @@
-"use client";
-
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { motion } from "framer-motion";
-import { Nodes, NODES } from "@/data/Nodes";
-import { Edge, EDGES } from "@/data/Edges";
-
-// ===== GRAPH UTILITIES =====
+// Deprecated: moved to `app/lab/components/CityMapVisualization.tsx`.
+// Keeping a re-export here for backwards compatibility.
+export { default } from "@/app/lab/components/CityMapVisualization";
 
 const createAdjacencyList = () => {
     const adj: { [key: string]: string[] } = {};

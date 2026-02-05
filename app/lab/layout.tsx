@@ -1,4 +1,4 @@
-import LabSidebar from "@/components/LabSidebar";
+import LabSidebar from "./components/LabSidebar";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ThemeProvider } from "@/components/ThemeProvider";

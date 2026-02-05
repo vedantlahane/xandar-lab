@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Check, AlertTriangle, Eye, EyeOff } from "lucide-react";
-import { StatsDashboard } from "@/components/StatsDashboard";
+import { StatsDashboard } from "./components/StatsDashboard";
 import { SessionsManager } from "@/components/auth/SessionsManager";
 import { AvatarCustomizer, getAvatarGradientClass, getDefaultAvatarGradient } from "@/components/auth/AvatarCustomizer";
 
