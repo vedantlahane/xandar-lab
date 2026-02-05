@@ -60,12 +60,12 @@ export default function Home() {
               variants={item}
               className="max-w-3xl text-5xl font-bold leading-tight tracking-tight text-zinc-900 sm:text-6xl lg:text-7xl"
             >
-              A calm workspace <br />
-              <span className="text-zinc-400">for developers.</span>
+              Your personal <br />
+              <span className="text-zinc-400">learning lab.</span>
             </motion.h2>
 
             <motion.p variants={item} className="max-w-2xl text-lg leading-relaxed text-zinc-600 sm:text-xl">
-              Build understanding without the noise. Practice, notes, docs, and experiments live in one place—attempt-first and distraction-free.
+              A unified workspace for practice, notes, and experiments. Every attempt preserved. Every insight captured.
             </motion.p>
 
 

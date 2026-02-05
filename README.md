@@ -1,212 +1,175 @@
-Xandar-Lab 🧪
-Xandar-Lab is a modular learning workspace for developers — designed as a lab, not a checklist.
+# Xandar-Lab 🧪
 
-It brings together structured notes, interactive documentation, and contextual practice into a single environment, helping learners focus on how understanding evolves, not just what gets completed.
+**A modular learning workspace for developers — designed as a lab, not a checklist.**
 
-This repository currently implements the Practice module, one of the core building blocks of the Xandar-Lab ecosystem.
+Xandar-Lab brings together structured notes, interactive documentation, contextual practice, and career tracking into a single environment. It helps learners focus on *how understanding evolves*, not just what gets completed.
 
-Landing
-Minimal monochrome hero with a single CTA into the lab; marketing view sits under `(marketing)` with the same aesthetic. Copy keeps focus tight and highlights that more modules are coming.
+> Built for deep learning, not dopamine loops.
 
-✨ Why Xandar-Lab?
-Most learning workflows today are fragmented:
+---
 
-Notes live in Notion or Markdown
+## ✨ Philosophy
 
-Practice happens on external platforms
+| Principle | Meaning |
+|-----------|---------|
+| **Process over performance** | Focus on *how* you learn, not what you complete |
+| **Understanding over outcomes** | Capture the evolution of thought, not just final answers |
+| **Calm over gamified** | No streaks, badges, or competitive noise |
+| **Labs over dashboards** | A workspace for exploration, not a checklist |
 
-Progress is reduced to solved / unsolved
+### The Problem We Solve
 
-Collaboration is either noisy or absent
+Most learning workflows are fragmented:
+- Notes live in Notion or Markdown files
+- Practice happens on external platforms
+- Progress is reduced to **solved / unsolved**
+- Collaboration is either noisy or absent
 
-Xandar-Lab addresses this by providing a lab-style learning system where:
+Xandar-Lab provides a unified lab-style learning system where concepts, notes, and practice coexist seamlessly.
 
-Concepts, notes, and practice coexist
+---
 
-Learning is treated as a process, not a score
+## 🚀 Current Features
 
-Understanding is captured in versions, not overwrites
+### 🔐 Authentication System
+- Secure user registration and login with JWT tokens
+- Session management with multi-device support
+- Profile customization with avatar gradients
+- Password management and account settings
 
-Collaboration is intentional, contextual, and quiet
+### 🧠 Practice Module
+- Topic-wise organization of DSA problems
+- Central problem canvas with interactive UI
+- Problem drawer with contextual details
+- Attempt-based learning model (Attempting → Resolved)
+- Progress tracking per user
 
-🧠 Practice Module (Current Focus)
-The Practice module allows learners to work through curated problem sets while recording how their understanding changes over time.
+### 💼 Jobs Module
+- Curated job and internship listings
+- Job tracking with application status
+- Save jobs for later
+- Personal notes on applications
 
-Core ideas
-Problems are explored through attempts
+### 👤 Profile System
+- Comprehensive user profile page
+- Stats dashboard (saved problems, completed problems)
+- Session management across devices
+- Account settings and preferences
 
-Each attempt captures intuition, not just final answers
+### 🎨 UI/UX
+- Modern, minimal dark/light theme
+- Smooth Framer Motion animations
+- Mobile-responsive design
+- Distraction-free interface
 
-Understanding evolves through discussion
+---
 
-Resolution is explicit and versioned
+## 📂 Project Structure
 
-Multiple attempts are preserved — never overwritten
-
-🧩 Practice Flow (High Level)
-Select a problem from a curated sheet
-
-Share intuition (text, pseudocode, explanation, or link)
-
-An Attempting node is automatically created
-
-Contextual discussion happens on that attempt
-
-When understanding stabilizes, a Resolved version is shared
-
-Re-visiting the problem creates a new attempt, not a rewrite
-
-Xandar-Lab treats learning like version control for understanding.
-
-🔑 Key Capabilities
-Topic-wise organization of problems
-
-Right-sidebar topic navigation (scroll-synced)
-
-Central problem canvas
-
-Problem drawer with contextual collaboration
-
-Attempt-based learning model
-
-Attempting
-
-Resolved
-
-Multiple attempts per user, preserved as history
-
-Contextual discussions (not chat threads)
-
-Discussion-driven resolution
-
-Timestamped learning snapshots
-
-Local-first persistence (works offline)
-
-This module is not meant to replace platforms like LeetCode or GFG, but to act as a structured companion inside a larger learning system.
-
-🤝 Collaboration Model (Planned / Partial)
-Xandar-Lab supports intentional collaboration, not real-time chat.
-
-Each user owns their own branch
-
-Attempts form a learning tree
-
-Discussions are attached to specific attempts
-
-Resolutions can reference the discussion that led to clarity
-
-Branches can be:
-
-Shared with selected collaborators
-
-Filtered or hidden from view
-
-Archived or deleted by their owner
-
-Comments can be hidden without breaking learning history.
-
-Collaboration emphasizes clarity, lineage, and context — not noise.
-
-🏗️ Project Structure (High Level)
+```
 xandar-lab/
 ├── app/
-│   ├── (marketing)/              # Landing & intro
-│   ├── lab/                      # Core lab workspace
-│   │   ├── practice/             # 🎯 Practice module
-│   │   │   ├── components/
-│   │   │   ├── data/
-│   │   │   ├── hooks/
-│   │   │   ├── types.ts
-│   │   │   └── README.md
-│   │   ├── docs/                 # 📘 Interactive docs (planned)
-│   │   ├── notes/                # 📝 Notes & reflections (planned)
-│   │   └── experiments/          # 🧪 Sandboxes (planned)
-│   └── api/                      # API routes (future)
-│
-├── components/                   # Shared UI components
-├── lib/                          # Utilities & storage helpers
-├── styles/                       # Design tokens
-├── public/
-└── README.md
-The architecture is module-first, allowing Xandar-Lab to evolve without tightly coupling features.
+│   ├── api/                     # API Routes
+│   │   ├── auth/                # Authentication endpoints
+│   │   ├── jobs/                # Job tracking endpoints
+│   │   ├── attempts/            # Practice attempts
+│   │   └── stats/               # User statistics
+│   ├── lab/                     # Core lab workspace
+│   │   ├── practice/            # 🎯 DSA Practice module
+│   │   ├── jobs/                # 💼 Job tracking module
+│   │   ├── docs/                # 📘 Interactive docs
+│   │   ├── notes/               # 📝 Notes & reflections
+│   │   ├── experiments/         # 🧪 Sandboxes
+│   │   ├── hackathons/          # 🏆 Hackathon tracking
+│   │   └── profile/             # 👤 User profile
+│   └── page.tsx                 # Landing page
+├── components/
+│   ├── auth/                    # Authentication components
+│   └── ui/                      # Shared UI components
+├── models/                      # MongoDB schemas
+├── lib/                         # Utilities & helpers
+└── data/                        # Static data files
+```
 
-🚀 Getting Started
-Prerequisites
-Node.js 18+
+---
 
-npm / yarn / pnpm / bun
+## 🛠️ Tech Stack
 
-Install dependencies
+| Layer | Technology |
+|-------|------------|
+| **Framework** | Next.js 16 (App Router) |
+| **Language** | TypeScript |
+| **Styling** | Tailwind CSS 4 |
+| **Animations** | Framer Motion |
+| **Database** | MongoDB with Mongoose |
+| **Auth** | JWT with jose + bcryptjs |
+| **Icons** | Lucide React |
+
+---
+
+## 🏃 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- MongoDB instance (local or Atlas)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/vedantlahane/xandar-lab.git
+cd xandar-lab
+
+# Install dependencies
 npm install
-# or
-yarn
-# or
-pnpm install
-Run the development server
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your MongoDB URI
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-Open
-👉 http://localhost:3000
-to view the app in the browser.
+```
 
-🛠️ Tech Stack
-Framework: Next.js (App Router)
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-Language: TypeScript
+---
 
-Styling: Tailwind CSS
+## 🧭 Roadmap
 
-Animations: Framer Motion
+### ✅ Phase 1 (Complete)
+- [x] Practice module with DSA problems
+- [x] Authentication system
+- [x] User profiles and sessions
+- [x] Jobs/internship tracking
+- [x] Dark/light theme
 
-State Persistence: localStorage (v1)
+### 🔄 Phase 2 (In Progress)
+- [ ] Attempt lineage & version history
+- [ ] Notes module implementation
+- [ ] Docs module with interactive content
+- [ ] Experiments sandbox
 
-Planned: Authentication, database, collaboration APIs
+### 📋 Phase 3 (Planned)
+- [ ] Shared labs & collaboration
+- [ ] Cross-module linking (notes ↔ practice ↔ docs)
+- [ ] Real-time collaboration features
+- [ ] Export/import learning data
 
-🧭 Roadmap
-Phase 1 (Current)
-Practice module
+---
 
-Attempt-based learning model
+## 📄 License
 
-Local-first persistence
-
-Clean, distraction-free UI
-
-Phase 2
-Attempt lineage & history
-
-Notes and reflections per topic
-
-Authentication
-
-Phase 3
-Shared labs
-
-Branch-level collaboration
-
-Cross-module linking (notes ↔ practice ↔ docs)
-
-🎯 Design Philosophy
-Process over performance
-
-Understanding over outcomes
-
-Calm over gamified
-
-Labs over dashboards
-
-Xandar-Lab is built for deep learning, not dopamine loops.
-
-📄 License
 This project is under active development.
 License details will be added once core modules stabilize.
 
-👋 Author
-Built by Vedant Lahane
+---
+
+## 👋 Author
+
+Built by [**Vedant Lahane**](https://github.com/vedantlahane)
 as a long-term learning system — not just a project.
+
+---
+
+*Xandar-Lab treats learning like version control for understanding.*
