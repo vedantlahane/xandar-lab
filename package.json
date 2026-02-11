@@ -2,6 +2,11 @@
   "name": "xandar-lab",
   "version": "0.1.0",
   "private": true,
+  "workspaces":[
+    ".",
+    "extensions/clipper",
+    "extensions/harvester"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
