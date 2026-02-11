@@ -6,11 +6,87 @@ import type {
   CaptureHistoryEntry,
   CaptureStatus,
   IngestRequest,
-  IngestResponse
+  IngestResponse,
+  PageContext
 } from "./types"
 
 /** Next.js API endpoint for content ingestion */
 const API_ENDPOINT = "http://localhost:3000/api/ingest/parse"
+
+/**
+ * Injected into the active tab to scrape rich context.
+ *
+ * This function runs in the PAGE context (via chrome.scripting.executeScript),
+ * so it has full access to the DOM. It collects:
+ *   1. document.title
+ *   2. Relevant <meta> tags (OpenGraph, description, keywords, etc.)
+ *   3. JSON-LD structured data (<script type="application/ld+json">)
+ *   4. Trimmed HTML of the main content area
+ *   5. Full plaintext as fallback
+ */
+function scrapePageContext(): PageContext {
+  // ── 1. Page title ──────────────────────────────────────────────────────
+  const pageTitle = document.title || ""
+
+  // ── 2. Meta tags ───────────────────────────────────────────────────────
+  const metaTags: Record<string, string> = {}
+  const interestingMeta = [
+    "og:title", "og:description", "og:site_name", "og:type", "og:url",
+    "twitter:title", "twitter:description",
+    "description", "keywords", "author"
+  ]
+  document.querySelectorAll("meta").forEach((el) => {
+    const name =
+      el.getAttribute("property") ||
+      el.getAttribute("name") ||
+      el.getAttribute("itemprop") ||
+      ""
+    const content = el.getAttribute("content") || ""
+    if (name && content && interestingMeta.includes(name.toLowerCase())) {
+      metaTags[name.toLowerCase()] = content
+    }
+  })
+
+  // ── 3. JSON-LD structured data ─────────────────────────────────────────
+  const jsonLd: Record<string, unknown>[] = []
+  document.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+    try {
+      const parsed = JSON.parse(script.textContent || "")
+      // Some pages embed an array of objects, some embed a single object
+      if (Array.isArray(parsed)) {
+        jsonLd.push(...parsed)
+      } else if (typeof parsed === "object" && parsed !== null) {
+        jsonLd.push(parsed)
+      }
+    } catch {
+      // Malformed JSON-LD – skip silently
+    }
+  })
+
+  // ── 4. Main content HTML (trimmed) ─────────────────────────────────────
+  // Try to find the main content area; fall back to <body>.
+  // We cap the HTML at ~50KB to avoid overly large payloads.
+  const mainEl =
+    document.querySelector("main") ||
+    document.querySelector('[role="main"]') ||
+    document.querySelector("#main-content") ||
+    document.querySelector(".jobs-description") ||          // LinkedIn
+    document.querySelector(".job-view-layout") ||           // LinkedIn
+    document.querySelector(".jobs-unified-top-card") ||     // LinkedIn
+    document.querySelector("article") ||
+    document.body
+
+  let mainHtml = mainEl?.innerHTML || ""
+  const MAX_HTML_LENGTH = 50_000
+  if (mainHtml.length > MAX_HTML_LENGTH) {
+    mainHtml = mainHtml.substring(0, MAX_HTML_LENGTH) + "\n<!-- TRUNCATED -->"
+  }
+
+  // ── 5. Plain text (fallback) ───────────────────────────────────────────
+  const plainText = document.body.innerText || ""
+
+  return { pageTitle, metaTags, jsonLd, mainHtml, plainText }
+}
 
 function ClipperPopup(): JSX.Element {
   const [status, setStatus] = useState<CaptureStatus>("idle")
@@ -51,17 +127,17 @@ function ClipperPopup(): JSX.Element {
     }
 
     setStatus("loading")
-    setMessage("Scraping page content…")
+    setMessage("Scraping page context…")
 
     try {
-      // Inject a script into the active tab to grab page text
+      // Inject the rich scraper into the active tab
       const injectionResults = await chrome.scripting.executeScript({
         target: { tabId: currentTab.id },
-        func: (): string => document.body.innerText
+        func: scrapePageContext
       })
 
-      const pageText: string | undefined = injectionResults?.[0]?.result
-      if (!pageText || pageText.trim().length < 50) {
+      const context: PageContext | undefined = injectionResults?.[0]?.result
+      if (!context || context.plainText.trim().length < 50) {
         setStatus("error")
         setMessage("Page content is too short or empty.")
         return
@@ -69,11 +145,10 @@ function ClipperPopup(): JSX.Element {
 
       setMessage("Sending to dashboard…")
 
-      // Build the ingestion payload
+      // Build the ingestion payload with full context
       const requestBody: IngestRequest = {
-        content: pageText,
+        context,
         sourceUrl: currentTab.url || "",
-        title: currentTab.title || "Untitled",
         action: "capture",
         timestamp: new Date().toISOString()
       }
@@ -91,6 +166,13 @@ function ClipperPopup(): JSX.Element {
 
       const data: IngestResponse = await response.json()
 
+      // Derive a display title from the richest available source
+      const displayTitle =
+        context.metaTags["og:title"] ||
+        context.pageTitle ||
+        currentTab.title ||
+        "Untitled"
+
       if (data.success) {
         setStatus("success")
         setMessage(data.message || "Job saved to dashboard!")
@@ -103,7 +185,7 @@ function ClipperPopup(): JSX.Element {
       await saveHistoryEntry({
         id: data.jobId || crypto.randomUUID(),
         url: currentTab.url || "",
-        title: currentTab.title || "Untitled",
+        title: displayTitle,
         action: "capture",
         status: data.success ? "success" : "error",
         timestamp: new Date().toISOString()

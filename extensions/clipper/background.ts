@@ -57,7 +57,7 @@ chrome.runtime.onMessage.addListener(
 async function handleApplicationClick(
     message: ContentMessage
 ): Promise<BackgroundResponse> {
-    const { url, title, buttonText, timestamp } = message.payload
+    const { url, context, buttonText, timestamp } = message.payload
 
     console.log(
         `[Clipper BG] Application click detected: "${buttonText}" on ${url}`
@@ -67,12 +67,17 @@ async function handleApplicationClick(
     // action: "apply" tells the backend this is an auto-tracked application,
     // not a manual capture from the popup.
     const requestBody: IngestRequest = {
-        content: `Application submitted via "${buttonText}" button click`,
+        context,
         sourceUrl: url,
-        title: title,
         action: "apply",
         timestamp: timestamp
     }
+
+    // Derive a display title from the richest available source
+    const displayTitle =
+        context.metaTags?.["og:title"] ||
+        context.pageTitle ||
+        "Untitled"
 
     try {
         const response = await fetch(API_ENDPOINT, {
@@ -91,7 +96,7 @@ async function handleApplicationClick(
         await saveToHistory({
             id: data.jobId || crypto.randomUUID(),
             url,
-            title,
+            title: displayTitle,
             action: "apply",
             status: data.success ? "success" : "error",
             timestamp
@@ -110,7 +115,7 @@ async function handleApplicationClick(
         await saveToHistory({
             id: crypto.randomUUID(),
             url,
-            title,
+            title: displayTitle,
             action: "apply",
             status: "error",
             timestamp
