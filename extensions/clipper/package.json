@@ -1,8 +1,8 @@
 {
   "name": "clipper",
-  "displayName": "Clipper",
-  "version": "0.0.1",
-  "description": "Manual job saving and automated application status tracking for users",
+  "displayName": "Clipper – Job Saver",
+  "version": "1.0.0",
+  "description": "Save job listings from any website to your Xandar Lab dashboard. Automatically tracks application status on LinkedIn and Himalayas.",
   "author": "xandar-lab",
   "scripts": {
     "dev": "plasmo dev",
@@ -20,12 +20,21 @@
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
+    "autoprefixer": "10.4.17",
+    "postcss": "8.4.33",
     "prettier": "3.2.4",
+    "tailwindcss": "3.4.1",
     "typescript": "5.3.3"
   },
   "manifest": {
+    "permissions": [
+      "activeTab",
+      "scripting",
+      "storage"
+    ],
     "host_permissions": [
-      "https://*/*"
+      "https://*/*",
+      "http://localhost:3000/*"
     ]
   }
 }
