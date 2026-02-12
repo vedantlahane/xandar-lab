@@ -11,24 +11,14 @@ import type {
 } from "./types"
 
 /** Next.js API endpoint for content ingestion */
-const API_ENDPOINT = "http://localhost:3000/api/ingest/parse"
+const DEFAULT_API_ENDPOINT = "http://localhost:3000/api/ingest/parse"
 
 /**
  * Injected into the active tab to scrape rich context.
- *
- * This function runs in the PAGE context (via chrome.scripting.executeScript),
- * so it has full access to the DOM. It collects:
- *   1. document.title
- *   2. Relevant <meta> tags (OpenGraph, description, keywords, etc.)
- *   3. JSON-LD structured data (<script type="application/ld+json">)
- *   4. Trimmed HTML of the main content area
- *   5. Full plaintext as fallback
  */
 function scrapePageContext(): PageContext {
-  // ── 1. Page title ──────────────────────────────────────────────────────
   const pageTitle = document.title || ""
 
-  // ── 2. Meta tags ───────────────────────────────────────────────────────
   const metaTags: Record<string, string> = {}
   const interestingMeta = [
     "og:title", "og:description", "og:site_name", "og:type", "og:url",
@@ -47,12 +37,10 @@ function scrapePageContext(): PageContext {
     }
   })
 
-  // ── 3. JSON-LD structured data ─────────────────────────────────────────
   const jsonLd: Record<string, unknown>[] = []
   document.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
     try {
       const parsed = JSON.parse(script.textContent || "")
-      // Some pages embed an array of objects, some embed a single object
       if (Array.isArray(parsed)) {
         jsonLd.push(...parsed)
       } else if (typeof parsed === "object" && parsed !== null) {
@@ -63,9 +51,6 @@ function scrapePageContext(): PageContext {
     }
   })
 
-  // ── 4. Main content HTML (trimmed) ─────────────────────────────────────
-  // Try to find the main content area; fall back to <body>.
-  // We cap the HTML at ~50KB to avoid overly large payloads.
   const mainEl =
     document.querySelector("main") ||
     document.querySelector('[role="main"]') ||
@@ -82,7 +67,6 @@ function scrapePageContext(): PageContext {
     mainHtml = mainHtml.substring(0, MAX_HTML_LENGTH) + "\n<!-- TRUNCATED -->"
   }
 
-  // ── 5. Plain text (fallback) ───────────────────────────────────────────
   const plainText = document.body.innerText || ""
 
   return { pageTitle, metaTags, jsonLd, mainHtml, plainText }
@@ -93,8 +77,8 @@ function ClipperPopup(): JSX.Element {
   const [message, setMessage] = useState<string>("")
   const [currentTab, setCurrentTab] = useState<chrome.tabs.Tab | null>(null)
   const [history, setHistory] = useState<CaptureHistoryEntry[]>([])
+  const [apiEndpoint, setApiEndpoint] = useState(DEFAULT_API_ENDPOINT)
 
-  // Load the active tab info and recent capture history on mount
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) setCurrentTab(tabs[0])
@@ -104,9 +88,12 @@ function ClipperPopup(): JSX.Element {
       const stored = result.captureHistory as CaptureHistoryEntry[] | undefined
       if (stored) setHistory(stored.slice(0, 5))
     })
+
+    chrome.storage.sync.get("apiEndpoint", (result) => {
+      if (result.apiEndpoint) setApiEndpoint(result.apiEndpoint)
+    })
   }, [])
 
-  // Save a history entry to chrome.storage.local
   const saveHistoryEntry = useCallback(
     async (entry: CaptureHistoryEntry): Promise<void> => {
       const result = await chrome.storage.local.get("captureHistory")
@@ -118,7 +105,6 @@ function ClipperPopup(): JSX.Element {
     []
   )
 
-  // Main capture handler
   const handleCapture = useCallback(async (): Promise<void> => {
     if (!currentTab?.id) {
       setStatus("error")
@@ -127,10 +113,9 @@ function ClipperPopup(): JSX.Element {
     }
 
     setStatus("loading")
-    setMessage("Scraping page context…")
+    setMessage("Analyzing page...")
 
     try {
-      // Inject the rich scraper into the active tab
       const injectionResults = await chrome.scripting.executeScript({
         target: { tabId: currentTab.id },
         func: scrapePageContext
@@ -139,13 +124,12 @@ function ClipperPopup(): JSX.Element {
       const context: PageContext | undefined = injectionResults?.[0]?.result
       if (!context || context.plainText.trim().length < 50) {
         setStatus("error")
-        setMessage("Page content is too short or empty.")
+        setMessage("Content too short.")
         return
       }
 
-      setMessage("Sending to dashboard…")
+      setMessage("Sending to Xandar...")
 
-      // Build the ingestion payload with full context
       const requestBody: IngestRequest = {
         context,
         sourceUrl: currentTab.url || "",
@@ -153,20 +137,18 @@ function ClipperPopup(): JSX.Element {
         timestamp: new Date().toISOString()
       }
 
-      // POST to the Next.js API
-      const response = await fetch(API_ENDPOINT, {
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
       })
 
       if (!response.ok) {
-        throw new Error(`API returned ${response.status}`)
+        throw new Error(`API ${response.status}`)
       }
 
       const data: IngestResponse = await response.json()
 
-      // Derive a display title from the richest available source
       const displayTitle =
         context.metaTags["og:title"] ||
         context.pageTitle ||
@@ -175,13 +157,12 @@ function ClipperPopup(): JSX.Element {
 
       if (data.success) {
         setStatus("success")
-        setMessage(data.message || "Job saved to dashboard!")
+        setMessage("Saved to Dashboard")
       } else {
         setStatus("error")
-        setMessage(data.message || "API rejected the data.")
+        setMessage(data.message || "Failed to save")
       }
 
-      // Persist to local history
       await saveHistoryEntry({
         id: data.jobId || crypto.randomUUID(),
         url: currentTab.url || "",
@@ -193,126 +174,150 @@ function ClipperPopup(): JSX.Element {
     } catch (err: unknown) {
       setStatus("error")
       const errorMessage =
-        err instanceof Error ? err.message : "Unknown error occurred"
-      setMessage(`Failed: ${errorMessage}`)
+        err instanceof Error ? err.message : "Network Error"
+      setMessage(errorMessage)
     }
-  }, [currentTab, saveHistoryEntry])
+  }, [currentTab, saveHistoryEntry, apiEndpoint])
 
-  // Status badge rendering
-  const renderStatusBadge = (): JSX.Element | null => {
-    if (status === "idle") return null
-
-    const baseClasses = "mt-3 px-3 py-2 rounded-lg text-sm font-medium"
-    const variants: Record<Exclude<CaptureStatus, "idle">, string> = {
-      loading:
-        "bg-accent-muted text-accent border border-accent/20 animate-pulse",
-      success: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
-      error: "bg-red-500/15 text-red-400 border border-red-500/20"
-    }
-
-    return (
-      <div className={`${baseClasses} ${variants[status]}`}>
-        {status === "loading" && (
-          <span className="inline-block w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin mr-2 align-middle" />
-        )}
-        {status === "success" && <span className="mr-2">✓</span>}
-        {status === "error" && <span className="mr-2">✕</span>}
-        {message}
-      </div>
-    )
-  }
+  const openOptions = () => chrome.runtime.openOptionsPage()
 
   return (
-    <div className="dark w-[360px] bg-surface text-white font-sans">
+    <div className="w-[360px] bg-background text-foreground font-sans overflow-hidden border border-border">
+      {/* Dynamic Background Effect */}
+      <div className="fixed inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+
       {/* Header */}
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-              <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+      <div className="relative px-5 pt-5 pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-[0_0_15px_-3px_rgba(var(--primary),0.3)]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-sm font-bold tracking-tight">Clipper</h1>
+              <p className="text-[10px] text-muted-foreground">Xandar Lab</p>
+            </div>
+          </div>
+          <button
+            onClick={openOptions}
+            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+            title="Settings"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
-          </div>
-          <div>
-            <h1 className="text-base font-semibold tracking-tight">Clipper</h1>
-            <p className="text-[11px] text-muted">
-              Save jobs to your dashboard
-            </p>
-          </div>
+          </button>
         </div>
       </div>
 
-      {/* Current Page Info */}
-      <div className="mx-5 mb-3 px-3 py-2.5 rounded-lg bg-surface-raised border border-white/5">
-        <p className="text-xs text-muted mb-0.5">Current page</p>
-        <p className="text-sm font-medium truncate">
-          {currentTab?.title || "Loading…"}
-        </p>
-        <p className="text-[11px] text-muted truncate">
-          {currentTab?.url || ""}
-        </p>
-      </div>
+      {/* Main Content */}
+      <div className="relative px-5 space-y-4">
+        {/* Page Card */}
+        <div className="p-3 rounded-lg bg-card border border-border/50 shadow-sm">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Active Page</p>
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium truncate text-foreground/90" title={currentTab?.title}>
+                {currentTab?.title || "Loading..."}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate font-mono mt-0.5 opacity-80">
+                {currentTab?.url || ""}
+              </p>
+            </div>
+          </div>
+        </div>
 
-      {/* Capture Button */}
-      <div className="px-5 pb-3">
-        <button
-          onClick={handleCapture}
-          disabled={status === "loading"}
-          className="w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200
-            bg-accent hover:bg-accent-hover active:scale-[0.98]
-            disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
-            focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-surface">
-          {status === "loading" ? "Capturing…" : "⚡ Capture Job"}
-        </button>
-
-        {renderStatusBadge()}
-      </div>
-
-      {/* Recent History */}
-      {history.length > 0 && (
-        <div className="px-5 pb-4 border-t border-white/5 pt-3">
-          <p className="text-xs text-muted mb-2 font-medium uppercase tracking-wider">
-            Recent
-          </p>
-          <div className="space-y-1.5">
-            {history.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-surface-raised/50 text-xs">
-                <span
-                  className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${entry.status === "success" ? "bg-emerald-400" : "bg-red-400"
-                    }`}
-                />
-                <span className="truncate flex-1 text-white/80">
-                  {entry.title}
-                </span>
-                <span className="text-muted text-[10px] flex-shrink-0">
-                  {entry.action === "apply" ? "Applied" : "Saved"}
-                </span>
+        {/* Action Button */}
+        <div className="space-y-3">
+          <button
+            onClick={handleCapture}
+            disabled={status === "loading" || status === "success"}
+            className={`
+              w-full relative group overflow-hidden rounded-lg font-semibold text-sm transition-all duration-300
+              ${status === "success"
+                ? "bg-green-500/10 text-green-500 border border-green-500/20 py-2.5 cursor-default"
+                : "bg-primary text-primary-foreground hover:bg-primary-hover shadow-lg hover:shadow-primary/20 py-3 active:scale-[0.98]"
+              }
+              disabled:opacity-80 disabled:cursor-not-allowed
+            `}
+          >
+            {status === "loading" ? (
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Scanning Content...</span>
               </div>
-            ))}
-          </div>
+            ) : status === "success" ? (
+              <div className="flex items-center justify-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Successfully Saved</span>
+              </div>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                Capture to Dashboard
+              </span>
+            )}
+          </button>
+
+          {status === "error" && (
+            <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-md flex items-center gap-2 animate-fade-in">
+              <span className="font-bold">Error:</span> {message}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* History Section */}
+        {history.length > 0 && (
+          <div className="pt-2 pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Recent Activity
+              </p>
+            </div>
+            <div className="space-y-1">
+              {history.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50"
+                >
+                  <div className={`w-2 h-2 rounded-full ${entry.status === "success" ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-red-500"}`} />
+                  <span className="truncate flex-1 text-xs text-foreground/80 group-hover:text-foreground transition-colors">
+                    {entry.title}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-medium">
+                    {entry.action === "capture" ? "Saved" : "Applied"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
-      <div className="px-5 py-2.5 border-t border-white/5 flex justify-between items-center">
+      <div className="px-5 py-3 border-t border-border bg-card/30 flex justify-between items-center text-[10px]">
+        <span className="text-muted-foreground">v1.0.0</span>
         <a
           href="http://localhost:3000/lab/jobs"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[11px] text-accent hover:text-accent-hover transition-colors">
-          Open Dashboard →
+          className="text-primary hover:text-primary-hover font-medium flex items-center gap-1 transition-colors"
+        >
+          Open Dashboard
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
         </a>
-        <span className="text-[10px] text-muted">v1.0.0</span>
       </div>
     </div>
   )

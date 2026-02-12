@@ -1,23 +1,60 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: ["./**/*.tsx"],
-    darkMode: "class",
+    darkMode: "media",
     theme: {
         extend: {
             colors: {
-                surface: {
-                    DEFAULT: "#0a0a0f",
-                    raised: "#12121a",
-                    overlay: "#1a1a25",
+                background: "var(--background)",
+                foreground: "var(--foreground)",
+                card: {
+                    DEFAULT: "var(--card)",
+                    foreground: "var(--card-foreground)",
+                },
+                popover: {
+                    DEFAULT: "var(--popover)",
+                    foreground: "var(--popover-foreground)",
+                },
+                primary: {
+                    DEFAULT: "var(--primary)",
+                    foreground: "var(--primary-foreground)",
+                },
+                secondary: {
+                    DEFAULT: "var(--secondary)",
+                    foreground: "var(--secondary-foreground)",
+                },
+                muted: {
+                    DEFAULT: "var(--muted)",
+                    foreground: "var(--muted-foreground)",
+                },
+                accent: {
+                    DEFAULT: "var(--accent)",
+                    foreground: "var(--accent-foreground)",
+                },
+                destructive: {
+                    DEFAULT: "var(--destructive)",
+                    foreground: "var(--destructive-foreground)",
                 },
                 harvest: {
-                    DEFAULT: "#f59e0b",
-                    hover: "#fbbf24",
-                    muted: "rgba(245, 158, 11, 0.15)",
+                    DEFAULT: "var(--chart-1)", // Orange/Red-ish from chart-1
+                    hover: "var(--chart-2)",
+                    muted: "var(--muted)",
                 },
-                success: "#34d399",
-                danger: "#f87171",
-                muted: "#6b7280",
+                border: "var(--border)",
+                input: "var(--input)",
+                ring: "var(--ring)",
+                chart: {
+                    1: "var(--chart-1)",
+                    2: "var(--chart-2)",
+                    3: "var(--chart-3)",
+                    4: "var(--chart-4)",
+                    5: "var(--chart-5)",
+                },
+            },
+            borderRadius: {
+                lg: "var(--radius)",
+                md: "calc(var(--radius) - 2px)",
+                sm: "calc(var(--radius) - 4px)",
             },
             fontFamily: {
                 sans: ["Inter", "system-ui", "sans-serif"],
