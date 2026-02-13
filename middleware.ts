@@ -21,7 +21,7 @@ const protectedApiRoutes = [
     '/api/problems',
 ];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Check if this is a protected route
