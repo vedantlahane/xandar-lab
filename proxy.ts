@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'xandar-lab-secret-key-change-in-production'
+    process.env.JWT_SECRET
 );
 
 // Protected routes that require authentication
@@ -25,7 +25,7 @@ export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Check if this is a protected route
-    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));//some is an array method that checks if at least one element in array satisfies the provided testing function.
     const isProtectedApi = protectedApiRoutes.some(route => pathname.startsWith(route));
 
     if (!isProtectedRoute && !isProtectedApi) {
