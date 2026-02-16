@@ -288,31 +288,20 @@ export default function ProblemCanvas({
                           <button
                             key={problem.id}
                             onClick={(e) => onProblemSelect(problem.id, e)}
-                            className={`group relative w-full rounded-xl border-b px-4 py-3 text-left transition-all  ${isActive
-                                ? "bg-accent/50 border-primary/50 shadow-sm"
-                                : isCompleted
-                                  ? "bg-green-500/5 border-green-500/20 opacity-90 hover:opacity-100"
-                                  : "bg-card border-border/40 hover:bg-accent/20"
+                            className={`group relative w-full border-b border-border/40 px-4 py-3 text-left transition-all hover:bg-gradient-to-r hover:from-transparent hover:to-accent/40 ${isActive ? "bg-accent/50" : ""
                               }`}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="space-y-1.5 flex-1">
-                                <div className="flex items-center gap-2">
-                                  {isCompleted && (
-                                    <div className="h-4 w-4 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                                      <Check className="h-2.5 w-2.5 text-green-500" />
-                                    </div>
-                                  )}
-                                  <span
-                                    className={`text-sm font-medium transition-colors line-clamp-1 ${isActive
-                                        ? "text-primary"
-                                        : isCompleted
-                                          ? "text-foreground/70"
-                                          : "text-foreground group-hover:text-primary"
-                                      }`}
-                                  >
-                                    {problem.title}
-                                  </span>
+                                <div
+                                  className={`text-sm font-medium transition-colors ${isActive
+                                      ? "text-primary"
+                                      : isCompleted
+                                        ? "text-foreground/60 line-through decoration-green-500/30"
+                                        : "text-foreground group-hover:text-primary"
+                                    }`}
+                                >
+                                  {problem.title}
                                 </div>
                                 <div className="flex flex-wrap gap-2 text-[11px] font-medium text-muted-foreground items-center">
                                   <span className="px-1.5 py-0.5 rounded bg-muted/50 border border-border/50 text-xs text-muted-foreground/70">
