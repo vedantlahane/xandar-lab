@@ -1,3 +1,4 @@
+// app/lab/hackathons/hooks/useHackathonScroll.ts
 "use client"
 import { useEffect, useState } from "react";
 

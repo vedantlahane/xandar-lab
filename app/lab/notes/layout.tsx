@@ -1,3 +1,4 @@
+// app/lab/notes/layout.tsx
 export default function NotesLayout({
     children,
 }: {

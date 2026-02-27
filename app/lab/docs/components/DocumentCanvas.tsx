@@ -1,3 +1,4 @@
+// app/lab/docs/components/DocumentCanvas.tsx
 "use client";
 
 import { useState, useMemo } from "react";

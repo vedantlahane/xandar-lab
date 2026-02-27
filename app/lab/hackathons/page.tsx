@@ -1,3 +1,4 @@
+// app/lab/hackathons/page.tsx
 "use client";
 
 import { useMemo, useState, useEffect } from "react";

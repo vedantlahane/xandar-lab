@@ -1,3 +1,5 @@
+// app/lab/layout.tsx
+
 import LabSidebar from "./components/LabSidebar";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";

@@ -1,3 +1,4 @@
+// app/lab/notes/components/GroupSidebar.tsx
 "use client";
 
 import { useState } from "react";

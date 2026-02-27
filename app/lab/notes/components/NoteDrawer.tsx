@@ -1,3 +1,4 @@
+// app/lab/notes/components/NoteDrawer.tsx
 "use client";
 
 import { useState } from "react";

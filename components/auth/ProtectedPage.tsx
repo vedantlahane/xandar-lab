@@ -1,3 +1,4 @@
+// components/auth/ProtectedPage.tsx
 "use client";
 
 import { useEffect } from "react";

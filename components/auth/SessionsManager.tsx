@@ -1,3 +1,4 @@
+// components/auth/SessionsManager.tsx
 "use client";
 
 import { useState, useEffect } from "react";

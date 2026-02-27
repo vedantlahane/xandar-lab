@@ -1,3 +1,4 @@
+// app/lab/docs/components/SectionSidebar.tsx
 "use client";
 
 import { useState } from "react";

@@ -1,3 +1,4 @@
+// app/lab/hackathons/layout.tsx
 export default function HackathonsLayout({
     children,
 }: {

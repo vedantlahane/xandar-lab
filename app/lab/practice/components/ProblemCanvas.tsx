@@ -1,3 +1,5 @@
+// app/lab/practice/components/ProblemCanvas.tsx
+
 "use client";
 
 import { useState, useMemo } from "react";

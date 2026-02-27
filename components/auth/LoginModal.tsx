@@ -1,3 +1,4 @@
+// components/auth/LoginModal.tsx
 "use client";
 
 import { useAuth } from "./AuthContext";

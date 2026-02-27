@@ -1,3 +1,5 @@
+// app/lab/practice/layout.tsx
+
 export default function PracticeLayout({
     children,
 }:{

@@ -1,3 +1,4 @@
+// app/lab/notes/components/NoteCanvas.tsx
 "use client";
 
 import { useState, useMemo } from "react";

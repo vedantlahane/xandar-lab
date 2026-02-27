@@ -1,3 +1,4 @@
+// components/auth/AvatarCustomizer.tsx
 "use client";
 
 import { useState } from "react";

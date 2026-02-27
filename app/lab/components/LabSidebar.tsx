@@ -1,3 +1,5 @@
+// app/lab/components/LabSidebar.tsx
+
 "use client";
 
 import type { Transition } from "framer-motion";

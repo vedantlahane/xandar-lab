@@ -1,3 +1,4 @@
+// app/lab/jobs/data/jobs.ts
 export type JobPlatform = 
   | 'LinkedIn' 
   | 'Indeed' 

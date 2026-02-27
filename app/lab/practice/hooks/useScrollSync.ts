@@ -1,3 +1,4 @@
+// app/lab/practice/hooks/useScrollSync.ts
 "use client"
 import { useEffect, useState } from "react";
 

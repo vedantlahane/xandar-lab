@@ -1,3 +1,4 @@
+// app/lab/profile/components/StatsDashboard.tsx
 "use client";
 
 import { useState, useEffect } from "react";

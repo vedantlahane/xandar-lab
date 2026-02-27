@@ -1,3 +1,4 @@
+// app/lab/hackathons/components/HackathonCard.tsx
 "use client";
 
 import { useState } from "react";

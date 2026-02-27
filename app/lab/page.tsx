@@ -1,3 +1,5 @@
+// app/lab/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,7 +18,7 @@ import {
     Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
-import CityMapVisualization from "../../components/CityMapVisualization";
+
 
 // Smooth spring animation config
 const smoothSpring = {

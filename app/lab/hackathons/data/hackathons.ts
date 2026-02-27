@@ -1,3 +1,4 @@
+// app/lab/hackathons/data/hackathons.ts
 export type HackathonStatus = 'Upcoming' | 'Registered' | 'In Progress' | 'Completed' | 'Missed';
 export type HackathonType = 'Online' | 'In-Person' | 'Hybrid';
 export type HackathonPrize = 'Cash' | 'Swag' | 'Job Opportunity' | 'Credits' | 'None';

@@ -1,3 +1,4 @@
+// app/lab/notes/data/notes.ts
 export type NoteColor = 'default' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'orange';
 export type NoteCategory = 'Learning' | 'Ideas' | 'Todo' | 'Reference' | 'Personal' | 'Work';
 
