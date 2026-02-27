@@ -3,7 +3,6 @@
 import LabSidebar from "./components/LabSidebar";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";
-import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggleWrapper } from "@/components/ThemeToggleWrapper";
 
 export default function LabLayout({
@@ -12,7 +11,7 @@ export default function LabLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
+
       <AuthProvider>
         <div className="flex min-h-screen bg-zinc-50 dark:bg-black">
           {/* Left Sidebar */}
@@ -30,6 +29,6 @@ export default function LabLayout({
           <LoginModal />
         </div>
       </AuthProvider>
-    </ThemeProvider>
+
   );
 }

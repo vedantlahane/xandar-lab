@@ -182,7 +182,7 @@ function SectionCard({
             >
                 {/* Gradient Background */}
                 <motion.div
-                    className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${section.gradient} opacity-0 transition-opacity duration-300`}
+                    className={`absolute inset-0 rounded-2xl bg-linear-to-br ${section.gradient} opacity-0 transition-opacity duration-300`}
                     animate={{ opacity: isHovered ? 1 : 0 }}
                 />
 
@@ -280,9 +280,9 @@ export default function LabPage() {
         <div className="relative min-h-screen bg-zinc-50 dark:bg-black text-zinc-800 dark:text-zinc-200 overflow-hidden selection:bg-teal-100 selection:text-teal-900 dark:selection:bg-teal-900 dark:selection:text-teal-100">
             {/* Grid pattern background - matching landing page */}
             <div className="pointer-events-none absolute inset-0 z-0">
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-                <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-teal-400 opacity-20 blur-[100px]" />
-                <div className="absolute right-0 top-0 -z-10 h-screen w-screen bg-gradient-to-b from-white via-transparent to-transparent dark:from-black" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]" />
+                <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-77.5 w-77.5 rounded-full bg-teal-400 opacity-20 blur-[100px]" />
+                <div className="absolute right-0 top-0 -z-10 h-screen w-screen bg-linear-to-b from-white via-transparent to-transparent dark:from-black" />
             </div>
 
             {/* Subtle noise texture */}
@@ -296,7 +296,7 @@ export default function LabPage() {
             {/* Gradient orbs with enhanced animation */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <motion.div
-                    className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-teal-400/25 to-emerald-500/25 dark:from-teal-400/15 dark:to-emerald-500/15 blur-[80px]"
+                    className="absolute -top-40 -right-40 h-125 w-125 rounded-full bg-linear-to-br from-teal-400/25 to-emerald-500/25 dark:from-teal-400/15 dark:to-emerald-500/15 blur-[80px]"
                     animate={{
                         scale: [1, 1.15, 1],
                         opacity: [0.4, 0.5, 0.4],
@@ -310,7 +310,7 @@ export default function LabPage() {
                     }}
                 />
                 <motion.div
-                    className="absolute -bottom-40 -left-40 h-[450px] w-[450px] rounded-full bg-gradient-to-tr from-violet-400/20 to-purple-500/20 dark:from-violet-400/10 dark:to-purple-500/10 blur-[80px]"
+                    className="absolute -bottom-40 -left-40 h-112.5 w-112.5 rounded-full bg-linear-to-tr from-violet-400/20 to-purple-500/20 dark:from-violet-400/10 dark:to-purple-500/10 blur-[80px]"
                     animate={{
                         scale: [1, 1.2, 1],
                         opacity: [0.3, 0.4, 0.3],
@@ -325,7 +325,7 @@ export default function LabPage() {
                     }}
                 />
                 <motion.div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-gradient-to-r from-cyan-400/10 to-blue-500/10 dark:from-cyan-400/5 dark:to-blue-500/5 blur-[100px]"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-150 w-150 rounded-full bg-linear-to-r from-cyan-400/10 to-blue-500/10 dark:from-cyan-400/5 dark:to-blue-500/5 blur-[100px]"
                     animate={{
                         scale: [1, 1.1, 1],
                         opacity: [0.2, 0.3, 0.2],
