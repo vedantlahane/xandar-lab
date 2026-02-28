@@ -1,78 +1,47 @@
-// app/lab/practice/page.tsx
+// app/lab/practice/page.tsx — Browse mode
 
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import TopicSidebar from "./components/TopicSidebar";
-import ProblemCanvas from "./components/ProblemCanvas";
-import { ProblemDrawer } from "./components/ProblemDrawer";
-import { DSAProblem, SHEET } from "./data/sheet";
 import { useAuth } from "@/components/auth/AuthContext";
+import { PracticeHeader } from "./components/PracticeHeader";
+import { BrowseView } from "./components/browse/BrowseView";
+import { usePracticeContext } from "./context/PracticeContext";
 
-export default function PracticePage() {
-    const [activeProblemId, setActiveProblemId] = useState<string | null>(null);
-    const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
-    const { isAuthenticated, openLoginModal, isLoading } = useAuth();
-    const router = useRouter();
+export default function PracticeBrowse() {
+  const { isAuthenticated, openLoginModal, isLoading } = useAuth();
+  const router = useRouter();
+  const { openDrawer, activeDrawer } = usePracticeContext();
 
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push("/lab?mode=login");
-        }
-    }, [isLoading, isAuthenticated, router]);
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/lab?mode=login");
+    }
+  }, [isLoading, isAuthenticated, router]);
 
-    const problemIndex = useMemo(() => {
-        const map = new Map<string, DSAProblem>();
-        SHEET.forEach((topic) => {
-            topic.problems.forEach((problem) => map.set(problem.id, problem));
-        });
-        return map;
-    }, []);
+  if (isLoading || !isAuthenticated) return null;
 
-    const activeProblem = activeProblemId
-        ? problemIndex.get(activeProblemId) ?? null
-        : null;
+  const handleSelect = (id: string, e: React.MouseEvent) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+    openDrawer(id, e);
+  };
 
-    const handleProblemSelect = (id: string, event: React.MouseEvent) => {
-        if (!isAuthenticated) {
-            openLoginModal();
-            return;
-        }
-        setClickPosition({ x: event.clientX, y: event.clientY });
-        setActiveProblemId(id);
-    };
+  return (
+    <>
+      {/* Header: mode pills only — SearchBar lives inside BrowseView */}
+      <PracticeHeader />
 
-    return (
-        <div className="relative h-screen w-full bg-background text-foreground overflow-hidden">
-            <main className="h-full w-full">
-                <ProblemCanvas 
-                    activeProblemId={activeProblemId}
-                    onProblemSelect={handleProblemSelect}
-                />
-            </main>
-
-            {/* Sidebar - z-40 to be below drawer */}
-            <aside className="absolute right-0 top-0 h-full pointer-events-none z-40">
-                <div className="pointer-events-auto h-full">
-                    <TopicSidebar />
-                </div>
-            </aside>
-
-            {/* Drawer - z-50 to be above sidebar */}
-            <AnimatePresence>
-                {activeProblem && clickPosition && (
-                    <div className="absolute inset-0 pointer-events-none z-50">
-                        <ProblemDrawer
-                            key={activeProblem.id}
-                            problem={activeProblem}
-                            position={clickPosition}
-                            onClose={() => setActiveProblemId(null)}
-                        />
-                    </div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
+      {/* Browse content — owns the two-column grid + topic sidebar */}
+      <div className="flex-1 overflow-hidden">
+        <BrowseView
+          activeProblemId={activeDrawer?.problemId ?? null}
+          onProblemSelect={handleSelect}
+        />
+      </div>
+    </>
+  );
 }
