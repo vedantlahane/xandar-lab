@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
-import { getSession } from '@/lib/auth';
+import { getValidatedSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/auth/profile - Get current user's profile
 export async function GET() {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -45,7 +45,7 @@ export async function GET() {
 // PUT /api/auth/profile - Update user profile
 export async function PUT(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import JobNote from '@/models/JobNote';
-import { getSession } from '@/lib/auth';
+import { getValidatedSession } from '@/lib/auth';
 
 // Get notes for a job
 export async function GET(request: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Get username from session
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json(
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get username from session
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json(
@@ -102,7 +102,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Get username from session
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json(

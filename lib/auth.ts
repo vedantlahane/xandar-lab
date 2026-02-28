@@ -2,6 +2,8 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import connectDB from '@/lib/db';
+import User from '@/models/User';
 
 const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'xandar-lab-secret-key-change-in-production'
@@ -56,13 +58,13 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
         // Validate the payload has the required fields
         if (
             typeof payload.userId === 'string' &&
-            typeof payload.username === 'string'
+            typeof payload.username === 'string' &&
+            typeof payload.sessionId === 'string'
         ) {
             return {
                 userId: payload.userId,
                 username: payload.username,
-                // SessionId may not exist for older tokens - provide a fallback
-                sessionId: typeof payload.sessionId === 'string' ? payload.sessionId : 'legacy',
+                sessionId: payload.sessionId,
                 exp: payload.exp,
             };
         }
@@ -79,6 +81,39 @@ export async function getSession(): Promise<TokenPayload | null> {
     if (!token) return null;
 
     return verifyToken(token);
+}
+
+/**
+ * Validates the JWT session AND confirms the session still exists (is not revoked)
+ * in the database. Use this in all protected API routes.
+ * The only exception is logout, which can use getSession() to attempt cleanup.
+ */
+export async function getValidatedSession(): Promise<TokenPayload | null> {
+    const session = await getSession();
+    if (!session) return null;
+
+    try {
+        await connectDB();
+        const now = new Date();
+        const user = await User.findOne(
+            {
+                _id: session.userId,
+                sessions: {
+                    $elemMatch: {
+                        tokenId: session.sessionId,
+                        expiresAt: { $gt: now },
+                    },
+                },
+            },
+            { _id: 1 }
+        ).lean();
+
+        if (!user) return null;
+        return session;
+    } catch {
+        // If DB lookup fails, fail closed for security
+        return null;
+    }
 }
 
 export async function setAuthCookie(token: string): Promise<void> {

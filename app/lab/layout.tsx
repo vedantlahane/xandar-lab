@@ -3,7 +3,7 @@
 import LabSidebar from "./components/LabSidebar";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";
-import { ThemeToggleWrapper } from "@/components/ThemeToggleWrapper";
+import { ThemeToggleWrapper } from "@/components/theme/ThemeToggleWrapper";
 
 export default function LabLayout({
   children,

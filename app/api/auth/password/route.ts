@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
-import { getSession, hashPassword, verifyPassword } from '@/lib/auth';
+import { getValidatedSession, hashPassword, verifyPassword } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // PUT /api/auth/password - Change user password
 export async function PUT(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -41,13 +41,16 @@ export async function PUT(req: Request) {
             }
         }
 
+        // Determine message before overwriting the field
+        const isFirstTimeSet = !user.password;
+
         // Hash and save the new password
         user.password = await hashPassword(newPassword);
         await user.save();
 
         return NextResponse.json({
             success: true,
-            message: user.password ? 'Password updated successfully' : 'Password set successfully'
+            message: isFirstTimeSet ? 'Password set successfully' : 'Password updated successfully',
         });
     } catch (error: any) {
         console.error("Password change error:", error);

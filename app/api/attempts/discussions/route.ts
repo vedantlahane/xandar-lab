@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { Discussion } from '@/models/Attempt';
-import { getSession } from '@/lib/auth';
+import { getValidatedSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/attempts/discussions - Get discussions for an attempt
 export async function GET(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 // POST /api/attempts/discussions - Add a discussion comment
 export async function POST(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
 // DELETE /api/attempts/discussions - Delete a discussion comment (only owner)
 export async function DELETE(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

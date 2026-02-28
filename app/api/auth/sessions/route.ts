@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
-import { getSession, clearAuthCookie } from '@/lib/auth';
+import { getValidatedSession, clearAuthCookie } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // GET - List all active sessions
 export async function GET() {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -47,7 +47,7 @@ export async function GET() {
 // DELETE - Revoke a specific session or all sessions
 export async function DELETE(request: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -66,14 +66,16 @@ export async function DELETE(request: Request) {
 
         if (revokeAll) {
             // Revoke all sessions except the current one
+            const totalBefore = user.sessions.length;
             user.sessions = user.sessions.filter(
                 (s: any) => s.tokenId === session.sessionId
             );
+            const revokedCount = totalBefore - user.sessions.length;
             await user.save();
 
             return NextResponse.json({
                 message: 'All other sessions have been revoked',
-                revokedCount: user.sessions.length,
+                revokedCount,
             });
         }
 

@@ -127,12 +127,13 @@ export async function POST(req: NextRequest) {
     const userObj = user.toObject();
     const { password: _, sessions: __, ...userWithoutSensitive } = userObj;
 
+    // NOTE: token is intentionally NOT returned in response body.
+    // Authentication is cookie-based (httpOnly) only.
     return NextResponse.json({
       user: {
         ...userWithoutSensitive,
         hasPassword: !!user.password,
       },
-      token, // Also return token for client-side storage fallback
     });
   } catch (error: any) {
     console.error("Login error:", error);

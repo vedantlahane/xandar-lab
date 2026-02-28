@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
-import { getSession } from '@/lib/auth';
+import { getValidatedSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const session = await getSession();
+        // getValidatedSession checks both JWT validity AND that the session
+        // still exists in the DB (not revoked by the user from another device).
+        const session = await getValidatedSession();
 
         if (!session) {
             return NextResponse.json({ user: null }, { status: 200 });
@@ -15,7 +17,8 @@ export async function GET() {
 
         await connectDB();
 
-        const user = await User.findById(session.userId).select('-password');
+        // Exclude password AND sessions array (contains IPs / device info)
+        const user = await User.findById(session.userId).select('-password -sessions');
 
         if (!user) {
             return NextResponse.json({ user: null }, { status: 200 });

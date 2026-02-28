@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Attempt from '@/models/Attempt';
 import User from '@/models/User';
-import { getSession } from '@/lib/auth';
+import { getValidatedSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/attempts - Get attempts for a problem or all user attempts
 export async function GET(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 // POST /api/attempts - Create a new attempt
 export async function POST(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
 // PUT /api/attempts - Update an attempt (resolve or update content)
 export async function PUT(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -192,7 +192,7 @@ export async function PUT(req: Request) {
 // DELETE /api/attempts - Delete an attempt
 export async function DELETE(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

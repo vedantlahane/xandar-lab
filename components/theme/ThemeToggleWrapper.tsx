@@ -1,4 +1,4 @@
-// components/ThemeToggleWrapper.tsx
+// components/theme/ThemeToggleWrapper.tsx
 "use client";
 
 import { ThemeToggle } from "./ThemeToggle";

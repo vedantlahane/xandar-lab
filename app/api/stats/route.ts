@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Attempt from '@/models/Attempt';
 import User from '@/models/User';
-import { getSession } from '@/lib/auth';
+import { getValidatedSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/stats - Get user statistics
 export async function GET(req: Request) {
     try {
-        const session = await getSession();
+        const session = await getValidatedSession();
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

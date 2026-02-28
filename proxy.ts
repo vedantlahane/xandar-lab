@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET
+    process.env.JWT_SECRET || 'xandar-lab-secret-key-change-in-production'
 );
 
 // Protected routes that require authentication
@@ -24,8 +24,7 @@ const protectedApiRoutes = [
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Check if this is a protected route
-    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));//some is an array method that checks if at least one element in array satisfies the provided testing function.
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
     const isProtectedApi = protectedApiRoutes.some(route => pathname.startsWith(route));
 
     if (!isProtectedRoute && !isProtectedApi) {
@@ -39,18 +38,16 @@ export async function proxy(request: NextRequest) {
         if (isProtectedApi) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        // Redirect to lab home with login mode for protected pages
+        // Redirect to lab home with login modal open
         return NextResponse.redirect(new URL('/lab?mode=login', request.url));
     }
 
     try {
-        // Verify the token
         await jwtVerify(token, JWT_SECRET);
         return NextResponse.next();
-    } catch (error) {
+    } catch {
         // Token is invalid or expired
         const response = NextResponse.redirect(new URL('/lab?mode=login', request.url));
-        // Clear the invalid cookie
         response.cookies.delete('auth_token');
         return response;
     }
