@@ -7,13 +7,13 @@ import { Bookmark, Check, Target, RefreshCcw, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DSAProblem } from "../../data/sheet";
 import type { ExtensionData } from "../../hooks/useProblemFilters";
-import { getExtensionData } from "../../hooks/useProblemFilters";
 
 interface ProblemRowProps {
   problem: DSAProblem;
   isActive: boolean;
   isSaved: boolean;
   isCompleted: boolean;
+  extData: ExtensionData | null;
   onSelect: (id: string, e: React.MouseEvent) => void;
   onSave: (id: string, e: React.MouseEvent) => void;
   onComplete: (id: string, e: React.MouseEvent) => void;
@@ -24,15 +24,12 @@ export function ProblemRow({
   isActive,
   isSaved,
   isCompleted,
+  extData,
   onSelect,
   onSave,
   onComplete,
 }: ProblemRowProps) {
   const router = useRouter();
-
-  // TODO: When extension ships, receive extensionData as a prop from BrowseView
-  // (fetched once for all problems) instead of computing per-row
-  const extData: ExtensionData | null = getExtensionData(problem.id, isCompleted);
   const isUnresolved = !!extData?.stuck && !isCompleted;
   const showActions = isActive || isSaved || isCompleted || isUnresolved;
 

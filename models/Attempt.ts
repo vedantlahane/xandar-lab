@@ -9,12 +9,17 @@ export interface IAttempt {
     language?: string;
     timeComplexity?: string;
     spaceComplexity?: string;
-    feltDifficulty?: number; // 1-5 ranking
+    feltDifficulty?: number; // 0-5 ranking
     duration?: number; // in seconds
     submissionCount?: number;
     status: 'attempting' | 'resolved' | 'solved_with_help' | 'gave_up';
+    // Failure reflection
     failureReason?: string;
     failureNote?: string;
+    // Success reflection
+    solveMethod?: string;    // "Independently" | "With hints" | "From editorial"
+    keyInsight?: string;
+    confidence?: string;     // "Definitely" | "Probably" | "Not sure"
     notes?: string;
     timestamp: Date;
     resolvedAt?: Date;
@@ -70,7 +75,7 @@ const AttemptSchema = new Schema({
     },
     content: {
         type: String,
-        required: true,
+        default: '',
         maxlength: 5000,
     },
     code: {
@@ -91,7 +96,7 @@ const AttemptSchema = new Schema({
     },
     feltDifficulty: {
         type: Number,
-        min: 1,
+        min: 0,
         max: 5,
     },
     duration: {
@@ -114,6 +119,18 @@ const AttemptSchema = new Schema({
     failureNote: {
         type: String,
         maxlength: 1000,
+    },
+    solveMethod: {
+        type: String,
+        maxlength: 100,
+    },
+    keyInsight: {
+        type: String,
+        maxlength: 1000,
+    },
+    confidence: {
+        type: String,
+        maxlength: 50,
     },
     notes: {
         type: String,

@@ -13,11 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import type { InterviewConfig } from "./InterviewManager";
 
-// TODO: Replace all mock AI responses with real API calls:
-// POST /api/interviews/message — send user message, receive AI response
-// POST /api/interviews/hint — request a hint, receive AI hint
-// POST /api/interviews/end — end session, receive report data
-
 interface Message {
   id: string;
   sender: "ai" | "user";
@@ -27,10 +22,11 @@ interface Message {
 
 interface ActiveInterviewProps {
   config: InterviewConfig;
+  sessionId: string | null;
   onEnd: () => void;
 }
 
-export function ActiveInterview({ config, onEnd }: ActiveInterviewProps) {
+export function ActiveInterview({ config, sessionId, onEnd }: ActiveInterviewProps) {
   const [phase, setPhase] = useState("Understanding");
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -43,6 +39,28 @@ export function ActiveInterview({ config, onEnd }: ActiveInterviewProps) {
       }),
     },
   ]);
+
+  // Load session messages from API if we have a sessionId
+  useEffect(() => {
+    if (!sessionId) return;
+    fetch(`/api/interviews/${sessionId}`, { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.session?.messages?.length) {
+          const loaded: Message[] = data.session.messages.map((m: { role: string; text: string; createdAt: string }, i: number) => ({
+            id: String(i),
+            sender: m.role === "ai" ? "ai" : "user",
+            text: m.text,
+            timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          }));
+          setMessages(loaded);
+        }
+        if (data.session?.hintsUsed !== undefined) {
+          setHintsUsed(data.session.hintsUsed);
+        }
+      })
+      .catch(() => {});
+  }, [sessionId]);
   const [inputMessage, setInputMessage] = useState("");
   const [hintsUsed, setHintsUsed] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -72,19 +90,49 @@ export function ActiveInterview({ config, onEnd }: ActiveInterviewProps) {
       minute: "2-digit",
     });
 
-  // TODO: Replace with POST /api/interviews/message
-  const mockAIResponse = (userText: string) => {
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: "ai",
-          text: "Good intuition. What approach would give you that maximum overlap?",
-          timestamp: now(),
-        },
-      ]);
-    }, 1000);
+  // Send a message to the interview API and add the AI response
+  const sendToApi = async (text: string, type: "message" | "hint" | "clarify" | "phase-change") => {
+    if (!sessionId) {
+      // Fallback for no session — add a generic mock response
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "ai",
+            text: "Good point. Can you elaborate on that approach?",
+            timestamp: now(),
+          },
+        ]);
+      }, 800);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/interviews/${sessionId}/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ text, type }),
+      });
+      const data = await res.json();
+      if (res.ok && data.reply) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "ai",
+            text: data.reply.text,
+            timestamp: now(),
+          },
+        ]);
+        if (data.hintsUsed !== undefined) {
+          setHintsUsed(data.hintsUsed);
+        }
+      }
+    } catch {
+      // Silently fail — user can retry
+    }
   };
 
   const handleSend = () => {
@@ -102,14 +150,12 @@ export function ActiveInterview({ config, onEnd }: ActiveInterviewProps) {
 
     const sent = inputMessage;
     setInputMessage("");
-    mockAIResponse(sent);
+    sendToApi(sent, "message");
   };
 
   const handleHint = () => {
     if (hintsUsed >= 3) return;
-    setHintsUsed((h) => h + 1);
 
-    // TODO: Replace with POST /api/interviews/hint
     setMessages((prev) => [
       ...prev,
       {
@@ -120,17 +166,7 @@ export function ActiveInterview({ config, onEnd }: ActiveInterviewProps) {
       },
     ]);
 
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: "ai",
-          text: "Hint: Think about what happens if you sort the intervals by start time and use a min-heap to track end times.",
-          timestamp: now(),
-        },
-      ]);
-    }, 800);
+    sendToApi("[hint request]", "hint");
   };
 
   const handleClarify = () => {
@@ -144,22 +180,24 @@ export function ActiveInterview({ config, onEnd }: ActiveInterviewProps) {
       },
     ]);
 
-    // TODO: Replace with POST /api/interviews/message with clarify flag
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: "ai",
-          text: "Sure — you're given a list of intervals where each interval represents [start_time, end_time] of a meeting. Two meetings conflict if they overlap in time. You need to find the minimum number of rooms so that no two overlapping meetings share a room.",
-          timestamp: now(),
-        },
-      ]);
-    }, 800);
+    sendToApi("Can you clarify the problem?", "clarify");
   };
 
-  const handleEnd = () => {
+  const handleEnd = async () => {
     setIsRunning(false);
+    // End the session via API
+    if (sessionId) {
+      try {
+        await fetch(`/api/interviews/${sessionId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ action: "end" }),
+        });
+      } catch {
+        // Continue to report view regardless
+      }
+    }
     onEnd();
   };
 

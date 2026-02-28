@@ -2,52 +2,47 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, RotateCcw, Star, ArrowRight } from "lucide-react";
+import { X, RotateCcw, Star, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePracticeContext } from "../../context/PracticeContext";
 
-// TODO: Replace with computed suggestions from:
-// 1. useSpacedRepetition() — problems with nextReviewDate <= today
-// 2. Recent failures — problems where last attempt was "gave-up"
-// 3. Topic staleness — topics not practiced in >7 days
-const SUGGESTIONS = [
-  {
-    type: "Review" as const,
-    title: "Two Sum",
-    meta: "Easy · Arrays",
-    staleness: "14d stale",
-    problemId: "array-1",
-  },
-  {
-    type: "Review" as const,
-    title: "Valid Parentheses",
-    meta: "Easy · Stacks",
-    staleness: "9d stale",
-    problemId: "stack-1",
-  },
-  {
-    type: "Retry" as const,
-    title: "Course Schedule II",
-    meta: "Hard · Graphs",
-    staleness: "failed yday",
-    problemId: "graph-5",
-  },
-] as const;
+interface Suggestion {
+  type: "review" | "retry" | "new";
+  title: string;
+  meta: string;
+  reason: string;
+  problemId: string;
+}
 
 /**
  * "Today's Focus" suggestion card shown above the problem list in Browse mode.
- * Displays review + retry suggestions. Dismissible per session.
+ * Fetches personalized review + retry suggestions from the API. Dismissible per session.
  */
 export function TodaysFocus() {
   const router = useRouter();
   const { openDrawer } = usePracticeContext();
 
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [progress, setProgress] = useState({ done: 0, total: 3 });
+  const [loading, setLoading] = useState(true);
+
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
     return sessionStorage.getItem("todaysFocus-dismissed") === "true";
   });
+
+  useEffect(() => {
+    fetch("/api/suggestions", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.suggestions) setSuggestions(data.suggestions);
+        if (data.progress) setProgress(data.progress);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const dismiss = () => {
     setDismissed(true);
@@ -55,14 +50,14 @@ export function TodaysFocus() {
   };
 
   if (dismissed) return null;
+  if (!loading && suggestions.length === 0) return null;
 
   const handleSuggestionClick = (problemId: string, event?: React.MouseEvent) => {
-    // Opens drawer — no mouse event, so openDrawer uses center fallback
     openDrawer(problemId, event as React.MouseEvent);
   };
 
   const handleStartSession = () => {
-    const first = SUGGESTIONS[0];
+    const first = suggestions[0];
     if (first) {
       router.push(`/lab/practice/focus?p=${first.problemId}`);
     }
@@ -74,10 +69,13 @@ export function TodaysFocus() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h3 className="font-semibold text-foreground">Today&apos;s Focus</h3>
-          <div className="flex gap-1" title="2/3 done">
-            <div className="w-2 h-2 rounded-sm bg-primary" />
-            <div className="w-2 h-2 rounded-sm bg-primary" />
-            <div className="w-2 h-2 rounded-sm bg-muted-foreground/30" />
+          <div className="flex gap-1" title={`${progress.done}/${progress.total} done`}>
+            {Array.from({ length: progress.total }).map((_, i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-sm ${i < progress.done ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+              />
+            ))}
           </div>
         </div>
         <button
@@ -92,23 +90,31 @@ export function TodaysFocus() {
 
       {/* Suggestions */}
       <div className="space-y-2">
-        {SUGGESTIONS.map((s) => (
-          <SuggestionRow
-            key={s.problemId}
-            icon={
-              s.type === "Review" ? (
-                <RotateCcw className="h-4 w-4 text-teal-500" />
-              ) : (
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-              )
-            }
-            type={s.type}
-            title={s.title}
-            meta={s.meta}
-            staleness={s.staleness}
-            onClick={(e) => handleSuggestionClick(s.problemId, e)}
-          />
-        ))}
+        {loading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          suggestions.map((s) => (
+            <SuggestionRow
+              key={s.problemId}
+              icon={
+                s.type === "review" ? (
+                  <RotateCcw className="h-4 w-4 text-teal-500" />
+                ) : s.type === "retry" ? (
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                ) : (
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                )
+              }
+              type={s.type}
+              title={s.title}
+              meta={s.meta}
+              reason={s.reason}
+              onClick={(e) => handleSuggestionClick(s.problemId, e)}
+            />
+          ))
+        )}
       </div>
 
       <div className="flex justify-end pt-2">
@@ -129,14 +135,14 @@ function SuggestionRow({
   type,
   title,
   meta,
-  staleness,
+  reason,
   onClick,
 }: {
   icon: React.ReactNode;
   type: string;
   title: string;
   meta: string;
-  staleness: string;
+  reason: string;
   onClick: (e?: React.MouseEvent) => void;
 }) {
   return (
@@ -153,7 +159,7 @@ function SuggestionRow({
       </div>
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span>{meta}</span>
-        <span className="w-16 text-right">{staleness}</span>
+        <span className="w-16 text-right">{reason}</span>
       </div>
     </div>
   );

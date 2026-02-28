@@ -2,10 +2,11 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { SHEET } from "../../data/sheet";
 import { useProblemFilters } from "../../hooks/useProblemFilters";
+import type { ExtensionData } from "../../hooks/useProblemFilters";
 import { ProgressCard } from "./ProgressCard";
 import { FilterPanel } from "./FilterPanel";
 import { SearchBar } from "./SearchBar";
@@ -30,12 +31,38 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
   const savedSet = useMemo(() => new Set(savedProblems), [savedProblems]);
   const completedSet = useMemo(() => new Set(completedProblems), [completedProblems]);
 
-  const filters = useProblemFilters({ savedProblems, completedProblems });
+  // ── Extension data (attempt summaries) ─────────────────────────────────
+  const [extensionMap, setExtensionMap] = useState<Map<string, ExtensionData>>(new Map());
+
+  useEffect(() => {
+    fetch("/api/attempts/summary", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.summaries) {
+          const map = new Map<string, ExtensionData>();
+          data.summaries.forEach((s: ExtensionData & { problemId: string }) =>
+            map.set(s.problemId, s)
+          );
+          setExtensionMap(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const filters = useProblemFilters({ savedProblems, completedProblems, extensionMap });
 
   // Flattened once — used by stats + random picker
   const allProblems = useMemo(() => SHEET.flatMap((t) => t.problems), []);
 
   // ── Progress stats ─────────────────────────────────────────────────────
+  const [weeklyDelta, setWeeklyDelta] = useState<number | undefined>();
+
+  useEffect(() => {
+    fetch("/api/analytics/activity", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => setWeeklyDelta(data.weeklyDelta))
+      .catch(() => {});
+  }, []);
 
   const stats = useMemo(() => {
     const easy = allProblems.filter((p) => p.tags?.includes("Easy"));
@@ -56,10 +83,9 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
         total: hard.length,
       },
       savedCount: savedSet.size,
-      // TODO: Compute from actual completion timestamps once activity API exists
-      // weeklyDelta: computeWeeklyDelta(completedProblems, activityLog),
+      weeklyDelta,
     };
-  }, [allProblems, completedSet, savedSet]);
+  }, [allProblems, completedSet, savedSet, weeklyDelta]);
 
   // ── Random picker ──────────────────────────────────────────────────────
 
@@ -163,6 +189,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
                 activeProblemId={activeProblemId}
                 savedSet={savedSet}
                 completedSet={completedSet}
+                extensionMap={extensionMap}
                 onSelect={onProblemSelect}
                 onSave={handleSave}
                 onComplete={handleComplete}

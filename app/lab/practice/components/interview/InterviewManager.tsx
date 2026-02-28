@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { InterviewSetup } from "./InterviewSetup";
 import { ActiveInterview } from "./ActiveInterview";
 import { InterviewReport } from "./InterviewReport";
@@ -30,13 +30,56 @@ export interface PastSession {
 export function InterviewManager() {
   const [view, setView] = useState<"setup" | "active" | "report">("setup");
   const [config, setConfig] = useState<InterviewConfig | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // TODO: Fetch from GET /api/interviews/history
-  const pastSessions: PastSession[] = [];
+  // Fetch past interview sessions
+  const [pastSessions, setPastSessions] = useState<PastSession[]>([]);
 
-  const handleStart = (selectedConfig: InterviewConfig) => {
+  useEffect(() => {
+    fetch("/api/interviews", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.sessions) {
+          const mapped: PastSession[] = data.sessions.map((s: {
+            config: { style: string; difficulty: string; topic: string };
+            status: string;
+            startedAt: string;
+            endedAt?: string;
+            report?: { overallScore: number };
+          }) => ({
+            company: s.config.style,
+            difficulty: s.config.difficulty,
+            duration: s.endedAt
+              ? `${Math.round((new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime()) / 60000)}m`
+              : "–",
+            problem: s.config.topic,
+            score: s.report?.overallScore ? `${s.report.overallScore}%` : undefined,
+            status: s.status === "completed" ? "completed" : "in-progress",
+          }));
+          setPastSessions(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleStart = async (selectedConfig: InterviewConfig) => {
     setConfig(selectedConfig);
-    setView("active");
+    try {
+      const res = await fetch("/api/interviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(selectedConfig),
+      });
+      const data = await res.json();
+      if (res.ok && data.session?._id) {
+        setSessionId(data.session._id);
+        setView("active");
+      }
+    } catch {
+      // Fallback: start without a session ID (mock mode)
+      setView("active");
+    }
   };
 
   const handleEnd = () => {
@@ -45,6 +88,7 @@ export function InterviewManager() {
 
   const handleCloseReport = () => {
     setConfig(null);
+    setSessionId(null);
     setView("setup");
   };
 
@@ -58,7 +102,7 @@ export function InterviewManager() {
   }
 
   if (view === "active" && config) {
-    return <ActiveInterview config={config} onEnd={handleEnd} />;
+    return <ActiveInterview config={config} sessionId={sessionId} onEnd={handleEnd} />;
   }
 
   return <InterviewReport config={config} onClose={handleCloseReport} />;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Attempt from '@/models/Attempt';
+import ActivityLog from '@/models/ActivityLog';
 import User from '@/models/User';
 import { getValidatedSession } from '@/lib/auth';
 
@@ -50,11 +51,12 @@ export async function POST(req: Request) {
             problemId, content, notes, status,
             code, language, timeComplexity, spaceComplexity, 
             feltDifficulty, duration, submissionCount,
-            failureReason, failureNote
+            failureReason, failureNote,
+            solveMethod, keyInsight, confidence
         } = body;
 
-        if (!problemId || !content) {
-            return NextResponse.json({ error: 'Problem ID and content are required' }, { status: 400 });
+        if (!problemId) {
+            return NextResponse.json({ error: 'Problem ID is required' }, { status: 400 });
         }
 
         await connectDB();
@@ -62,7 +64,7 @@ export async function POST(req: Request) {
         const attempt = await Attempt.create({
             problemId,
             userId: session.userId,
-            content,
+            content: content || '',
             notes,
             status: status || 'attempting',
             code,
@@ -73,8 +75,22 @@ export async function POST(req: Request) {
             duration,
             submissionCount,
             failureReason,
-            failureNote
+            failureNote,
+            solveMethod,
+            keyInsight,
+            confidence,
         });
+
+        // Log to ActivityLog
+        const today = new Date().toISOString().split('T')[0];
+        await ActivityLog.findOneAndUpdate(
+            { userId: session.userId, date: today },
+            {
+                $addToSet: { problemsAttempted: problemId },
+                $inc: { attemptsCount: 1, totalDuration: duration || 0 },
+            },
+            { upsert: true }
+        );
 
         return NextResponse.json({
             success: true,
@@ -93,6 +109,9 @@ export async function POST(req: Request) {
                 submissionCount: attempt.submissionCount,
                 failureReason: attempt.failureReason,
                 failureNote: attempt.failureNote,
+                solveMethod: attempt.solveMethod,
+                keyInsight: attempt.keyInsight,
+                confidence: attempt.confidence,
                 timestamp: attempt.timestamp,
                 resolvedAt: attempt.resolvedAt,
             }
@@ -116,7 +135,8 @@ export async function PUT(req: Request) {
             attemptId, content, notes, status,
             code, language, timeComplexity, spaceComplexity, 
             feltDifficulty, duration, submissionCount,
-            failureReason, failureNote
+            failureReason, failureNote,
+            solveMethod, keyInsight, confidence
         } = body;
 
         if (!attemptId) {
@@ -145,6 +165,9 @@ export async function PUT(req: Request) {
         if (submissionCount !== undefined) attempt.submissionCount = submissionCount;
         if (failureReason !== undefined) attempt.failureReason = failureReason;
         if (failureNote !== undefined) attempt.failureNote = failureNote;
+        if (solveMethod !== undefined) attempt.solveMethod = solveMethod;
+        if (keyInsight !== undefined) attempt.keyInsight = keyInsight;
+        if (confidence !== undefined) attempt.confidence = confidence;
         
         if (status && ['attempting', 'resolved', 'solved_with_help', 'gave_up'].includes(status)) {
             attempt.status = status;
@@ -155,11 +178,21 @@ export async function PUT(req: Request) {
 
         await attempt.save();
 
-        // If resolved, add to user's completedProblems
+        // If resolved, add to user's completedProblems and log activity
         if (status === 'resolved' || status === 'solved_with_help') {
             await User.findByIdAndUpdate(session.userId, {
                 $addToSet: { completedProblems: attempt.problemId }
             });
+
+            // Log completion to ActivityLog
+            const today = new Date().toISOString().split('T')[0];
+            await ActivityLog.findOneAndUpdate(
+                { userId: session.userId, date: today },
+                {
+                    $addToSet: { problemsCompleted: attempt.problemId },
+                },
+                { upsert: true }
+            );
         }
 
         return NextResponse.json({
@@ -179,6 +212,9 @@ export async function PUT(req: Request) {
                 submissionCount: attempt.submissionCount,
                 failureReason: attempt.failureReason,
                 failureNote: attempt.failureNote,
+                solveMethod: attempt.solveMethod,
+                keyInsight: attempt.keyInsight,
+                confidence: attempt.confidence,
                 timestamp: attempt.timestamp,
                 resolvedAt: attempt.resolvedAt,
             }

@@ -30,45 +30,7 @@ export interface ExtensionData {
 interface UseProblemFiltersOptions {
   savedProblems: string[];
   completedProblems: string[];
-}
-
-// ── Extension data (STUB — replace with real API integration) ──────────────
-//
-// MOCK: Returns hardcoded extension data for demo purposes.
-// TODO: Replace with data from GET /api/extension/data when extension ships.
-//       At that point, fetch once in BrowseView and pass as a Map<string, ExtensionData>
-//       rather than calling per-problem.
-
-export function getExtensionData(
-  problemId: string,
-  isCompleted: boolean,
-): ExtensionData | null {
-  if (
-    problemId.toLowerCase().includes("course-schedule-ii") ||
-    problemId === "graph-5"
-  ) {
-    return {
-      solveTime: "38m",
-      subs: 5,
-      lastAttempted: "yesterday",
-      stuck: true,
-    };
-  }
-  if (
-    problemId.toLowerCase().includes("two-sum") ||
-    problemId === "array-1"
-  ) {
-    return {
-      solveTime: "8m",
-      subs: 1,
-      lastAttempted: "14d ago",
-      reviewDue: true,
-    };
-  }
-  if (isCompleted) {
-    return { solveTime: "14m", subs: 2, lastAttempted: "3d ago" };
-  }
-  return null;
+  extensionMap: Map<string, ExtensionData>;
 }
 
 // ── Hook ───────────────────────────────────────────────────────────────────
@@ -76,6 +38,7 @@ export function getExtensionData(
 export function useProblemFilters({
   savedProblems,
   completedProblems,
+  extensionMap,
 }: UseProblemFiltersOptions) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("All");
@@ -106,7 +69,7 @@ export function useProblemFilters({
 
         const isCompleted = completedSet.has(problem.id);
         const isSaved = savedSet.has(problem.id);
-        const extData = getExtensionData(problem.id, isCompleted);
+        const extData = extensionMap.get(problem.id) ?? null;
 
         // ── Status filter ─────────────────────────────────────────────────
         if (statusFilter === "Saved") return isSaved;
@@ -143,7 +106,7 @@ export function useProblemFilters({
 
       return { ...topic, problems: filtered };
     }).filter((topic) => topic.problems.length > 0);
-  }, [searchQuery, statusFilter, difficultyFilter, platformFilter, savedProblems, completedProblems]);
+  }, [searchQuery, statusFilter, difficultyFilter, platformFilter, savedProblems, completedProblems, extensionMap]);
 
   return {
     // Values

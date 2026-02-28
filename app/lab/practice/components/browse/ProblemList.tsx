@@ -5,6 +5,7 @@
 import { Search, Hash } from "lucide-react";
 import { ProblemRow } from "./ProblemRow";
 import type { DSAProblem } from "../../data/sheet";
+import type { ExtensionData } from "../../hooks/useProblemFilters";
 
 // Reuse the shape that useProblemFilters returns
 type FilteredTopic = {
@@ -17,6 +18,7 @@ interface ProblemListProps {
   activeProblemId: string | null;
   savedSet: Set<string>;
   completedSet: Set<string>;
+  extensionMap: Map<string, ExtensionData>;
   onSelect: (id: string, e: React.MouseEvent) => void;
   onSave: (id: string, e: React.MouseEvent) => void;
   onComplete: (id: string, e: React.MouseEvent) => void;
@@ -27,6 +29,7 @@ export function ProblemList({
   activeProblemId,
   savedSet,
   completedSet,
+  extensionMap,
   onSelect,
   onSave,
   onComplete,
@@ -77,6 +80,7 @@ export function ProblemList({
                 isActive={activeProblemId === problem.id}
                 isSaved={savedSet.has(problem.id)}
                 isCompleted={completedSet.has(problem.id)}
+                extData={extensionMap.get(problem.id) ?? null}
                 onSelect={onSelect}
                 onSave={onSave}
                 onComplete={onComplete}

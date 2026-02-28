@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
+import ActivityLog from '@/models/ActivityLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,16 @@ export async function POST(req: Request) {
       completedProblems.splice(index, 1);
     } else {
       completedProblems.push(problemId);
+
+      // Log to ActivityLog when completing
+      const today = new Date().toISOString().split('T')[0];
+      await ActivityLog.findOneAndUpdate(
+        { userId: user._id, date: today },
+        {
+          $addToSet: { problemsCompleted: problemId },
+        },
+        { upsert: true }
+      );
     }
 
     user.completedProblems = completedProblems;
