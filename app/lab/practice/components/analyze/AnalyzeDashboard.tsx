@@ -26,8 +26,7 @@ interface AnalyticsData {
     resolutionDeltaMinutes: number;
     firstTryRate: number;
     firstTryGoal: number;
-    topBarrier: string;
-    topBarrierFailRate: number;
+    topBarrier: { topic: string; failureRate: number };
   };
   proficiency: { topic: string; score: number }[];
   pitfalls: { reason: string; count: number; focus: string }[];
@@ -144,10 +143,10 @@ export function AnalyzeDashboard({ timeRange }: AnalyzeDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="text-lg font-bold truncate">
-                {data.summary.topBarrier || "None"}
+                {data.summary.topBarrier?.topic || "None"}
               </div>
               <p className="text-xs text-muted-foreground mt-1 text-destructive/80">
-                {data.summary.topBarrierFailRate}% failure rate
+                {data.summary.topBarrier?.failureRate ?? 0}% failure rate
               </p>
             </CardContent>
           </Card>
