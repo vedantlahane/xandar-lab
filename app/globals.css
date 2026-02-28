@@ -128,3 +128,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Extremely thin scrollbar that's barely visible */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 2px !important;
+  height: 2px !important;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.15) !important;
+  border-radius: 10px !important;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.3) !important;
+}
