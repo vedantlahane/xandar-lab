@@ -34,6 +34,7 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
   const [complexitySpace, setComplexitySpace] = useState("");
   const [difficultyFelt, setDifficultyFelt] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Auto-start timer when a problem is loaded
   useEffect(() => {
@@ -49,12 +50,19 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
     (t) => !["Easy", "Medium", "Hard"].includes(t),
   );
 
+  // TODO: Reconcile status values with API contract.
+  // Existing ProblemDrawer sends "attempting" | "resolved".
+  // FocusCard needs "resolved" | "gave_up". Either update the API to accept
+  // the new statuses or map here. For now, sending as-is and letting the
+  // API route handle validation.
   const createAttempt = async (status: "resolved" | "gave_up") => {
     setSaving(true);
+    setError(null);
     try {
-      await fetch("/api/attempts", {
+      const res = await fetch("/api/attempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           problemId: problem.id,
           content: approach,
@@ -67,8 +75,14 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
           status,
         }),
       });
+      if (!res.ok) throw new Error("Save failed");
+      return true;
     } catch (err) {
       console.error("Failed to save attempt:", err);
+      setError("Failed to save. Try again.");
+      // Restart timer so user doesn't lose their session
+      timer.start();
+      return false;
     } finally {
       setSaving(false);
     }
@@ -76,14 +90,14 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
 
   const handleSolved = async () => {
     timer.pause();
-    await createAttempt("resolved");
-    onSolved?.(problem.id);
+    const ok = await createAttempt("resolved");
+    if (ok) onSolved?.(problem.id);
   };
 
   const handleGaveUp = async () => {
     timer.pause();
-    await createAttempt("gave_up");
-    onGaveUp?.(problem.id);
+    const ok = await createAttempt("gave_up");
+    if (ok) onGaveUp?.(problem.id);
   };
 
   return (
@@ -193,6 +207,11 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
 
           <div className="h-px bg-border/40" />
 
+          {/* Error feedback */}
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+
           {/* Action bar */}
           <div className="flex items-center gap-3 flex-wrap">
             <Button variant="outline" className="gap-2" asChild>
@@ -202,7 +221,14 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
               </a>
             </Button>
 
-            <Button variant="outline" size="sm" className="gap-1.5">
+            {/* TODO: Implement hint system — needs AI integration or curated hints per problem */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled
+              title="Coming soon"
+            >
               <Lightbulb size={14} />
               Hint
             </Button>

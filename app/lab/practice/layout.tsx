@@ -14,6 +14,7 @@ import { DrawerOverlay } from "./components/DrawerOverlay";
  * NOT responsible for:
  *  - The mode switcher header (each page renders <PracticeHeader> itself)
  *  - Any specific layout grid (each mode owns 100% of its space)
+ *  - Auth guarding (template.tsx handles this for all modes)
  */
 export default function PracticeLayout({
   children,

@@ -150,10 +150,12 @@ export function FilterPanel({
             }}
             className={cn(
               "cursor-pointer transition-colors",
-              sortOption === s ? "text-primary font-medium" : "hover:text-foreground",
+              sortOption === s
+                ? "text-primary font-medium"
+                : "hover:text-foreground",
             )}
           >
-            {s} ↕
+            {s} {sortOption === s ? (sortDesc ? "↓" : "↑") : "↕"}
           </div>
         ))}
       </FilterSection>

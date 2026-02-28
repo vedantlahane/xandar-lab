@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Clock, Pause, Play } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { TimerHandle } from "../../hooks/useTimer";
@@ -28,11 +28,7 @@ export function TimerDisplay({ timer, className }: TimerDisplayProps) {
       )}
       title={timer.isRunning ? "Pause timer" : "Resume timer"}
     >
-      {timer.isRunning ? (
-        <Pause size={13} />
-      ) : (
-        <Clock size={13} />
-      )}
+      {timer.isRunning ? <Pause size={13} /> : <Play size={13} />}
       <span>{timer.formatted}</span>
       {timer.isRunning && (
         <motion.span

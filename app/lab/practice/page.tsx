@@ -2,27 +2,18 @@
 
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthContext";
 import { PracticeHeader } from "./components/PracticeHeader";
 import { BrowseView } from "./components/browse/BrowseView";
 import { usePracticeContext } from "./context/PracticeContext";
 
 export default function PracticeBrowse() {
-  const { isAuthenticated, openLoginModal, isLoading } = useAuth();
-  const router = useRouter();
+  const { isAuthenticated, openLoginModal } = useAuth();
   const { openDrawer, activeDrawer } = usePracticeContext();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/lab?mode=login");
-    }
-  }, [isLoading, isAuthenticated, router]);
-
-  if (isLoading || !isAuthenticated) return null;
-
   const handleSelect = (id: string, e: React.MouseEvent) => {
+    // Defensive — template.tsx already guards auth,
+    // but this prevents drawer open if auth expires mid-session
     if (!isAuthenticated) {
       openLoginModal();
       return;

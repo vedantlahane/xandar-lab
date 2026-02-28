@@ -2,7 +2,8 @@
 
 "use client";
 
-import { Bookmark, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bookmark, Check, Target, RefreshCcw, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DSAProblem } from "../../data/sheet";
 import type { ExtensionData } from "../../hooks/useProblemFilters";
@@ -27,6 +28,10 @@ export function ProblemRow({
   onSave,
   onComplete,
 }: ProblemRowProps) {
+  const router = useRouter();
+
+  // TODO: When extension ships, receive extensionData as a prop from BrowseView
+  // (fetched once for all problems) instead of computing per-row
   const extData: ExtensionData | null = getExtensionData(problem.id, isCompleted);
   const isUnresolved = !!extData?.stuck && !isCompleted;
   const showActions = isActive || isSaved || isCompleted || isUnresolved;
@@ -47,22 +52,7 @@ export function ProblemRow({
             {/* Review-due icon */}
             {extData?.reviewDue && (
               <span className="text-teal-500 shrink-0" title="Review Due">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                  <path d="M21 3v5h-5" />
-                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                  <path d="M3 21v-5h5" />
-                </svg>
+                <RefreshCcw className="h-3.5 w-3.5" strokeWidth={2.5} />
               </span>
             )}
 
@@ -128,6 +118,19 @@ export function ProblemRow({
                 showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100",
               )}
             >
+              {/* Focus */}
+              <div
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/lab/practice/focus?p=${problem.id}`);
+                }}
+                className="rounded-md p-1.5 hover:bg-background hover:shadow-sm transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                title="Open in Focus mode"
+              >
+                <Target className="h-4 w-4" />
+              </div>
+
               {/* Save */}
               <div
                 role="button"
@@ -160,19 +163,7 @@ export function ProblemRow({
                 title={isCompleted ? "Mark as incomplete" : "Mark as completed"}
               >
                 {isUnresolved ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                  </svg>
+                  <Circle className="h-4 w-4" />
                 ) : (
                   <Check className="h-4 w-4" />
                 )}

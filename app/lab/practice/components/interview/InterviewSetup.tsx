@@ -1,26 +1,36 @@
+// app/lab/practice/components/interview/InterviewSetup.tsx
+
 "use client";
 
 import { useState } from "react";
-import { Play, FileText, ChevronDown, Check, Zap } from "lucide-react";
+import { Play, ChevronDown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { InterviewConfig, PastSession } from "./InterviewManager";
 
-interface InterviewModeProps {
-  onStartInterview: (config: any) => void;
-  pastSessions: any[];
+interface InterviewSetupProps {
+  onStartInterview: (config: InterviewConfig) => void;
+  pastSessions: PastSession[];
 }
 
-export function InterviewSetup({ onStartInterview, pastSessions }: InterviewModeProps) {
+export function InterviewSetup({
+  onStartInterview,
+  pastSessions,
+}: InterviewSetupProps) {
   const [style, setStyle] = useState("General");
   const [difficulty, setDifficulty] = useState("Medium");
   const [topic, setTopic] = useState("Any topic");
-  const [source, setSource] = useState("sheet");
+  const [source, setSource] = useState<"sheet" | "ai">("sheet");
 
   return (
     <div className="max-w-2xl mx-auto pt-16 pb-32 px-6">
       <div className="rounded-xl border border-border bg-card p-10 space-y-10 shadow-sm">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Start a Mock Interview</h2>
-          <p className="text-sm text-muted-foreground">Practice communicating your thoughts with an AI interviewer.</p>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Start a Mock Interview
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Practice communicating your thoughts with an AI interviewer.
+          </p>
         </div>
 
         <div className="h-px bg-border/50 w-full" />
@@ -30,9 +40,9 @@ export function InterviewSetup({ onStartInterview, pastSessions }: InterviewMode
           <div className="space-y-3">
             <label className="text-sm font-semibold">Company style</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {["Google", "Meta", "Amazon", "General"].map(c => (
-                <Button 
-                  key={c} 
+              {["Google", "Meta", "Amazon", "General"].map((c) => (
+                <Button
+                  key={c}
                   variant={style === c ? "default" : "outline"}
                   onClick={() => setStyle(c)}
                   className="w-full"
@@ -47,9 +57,9 @@ export function InterviewSetup({ onStartInterview, pastSessions }: InterviewMode
           <div className="space-y-3">
             <label className="text-sm font-semibold">Difficulty</label>
             <div className="grid grid-cols-3 gap-3">
-              {["Easy", "Medium", "Hard"].map(d => (
-                <Button 
-                  key={d} 
+              {["Easy", "Medium", "Hard"].map((d) => (
+                <Button
+                  key={d}
                   variant={difficulty === d ? "default" : "outline"}
                   onClick={() => setDifficulty(d)}
                   className="w-full"
@@ -62,11 +72,13 @@ export function InterviewSetup({ onStartInterview, pastSessions }: InterviewMode
 
           {/* Topic */}
           <div className="space-y-3">
-            <label className="text-sm font-semibold">Topic focus (optional)</label>
+            <label className="text-sm font-semibold">
+              Topic focus (optional)
+            </label>
             <div className="relative">
-              <select 
-                value={topic} 
-                onChange={e => setTopic(e.target.value)}
+              <select
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
                 className="w-full appearance-none bg-background border border-border rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50"
               >
                 <option>Any topic</option>
@@ -85,52 +97,76 @@ export function InterviewSetup({ onStartInterview, pastSessions }: InterviewMode
             <label className="text-sm font-semibold">Problem</label>
             <div className="flex gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="source" 
-                  checked={source === "sheet"} 
+                <input
+                  type="radio"
+                  name="source"
+                  checked={source === "sheet"}
                   onChange={() => setSource("sheet")}
                   className="accent-primary"
                 />
                 <span className="text-sm">Pick from my sheet</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="source" 
-                  checked={source === "ai"} 
+                <input
+                  type="radio"
+                  name="source"
+                  checked={source === "ai"}
                   onChange={() => setSource("ai")}
                   className="accent-primary"
                 />
-                <span className="text-sm flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-amber-500" /> AI generates a new one</span>
+                <span className="text-sm flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" /> AI generates a
+                  new one
+                </span>
               </label>
             </div>
           </div>
 
-          <Button 
+          <Button
             className="w-full h-12 text-base gap-2"
-            onClick={() => onStartInterview({ style, difficulty, topic, source })}
+            onClick={() =>
+              onStartInterview({ style, difficulty, topic, source })
+            }
           >
             <Play className="h-4 w-4" /> Start Interview →
           </Button>
         </div>
       </div>
 
-      {pastSessions && pastSessions.length > 0 && (
+      {pastSessions.length > 0 && (
         <div className="mt-12 space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground">Previous sessions</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">
+            Previous sessions
+          </h3>
           <div className="h-px bg-border/50" />
           <div className="space-y-2">
             {pastSessions.map((session, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40 cursor-pointer">
+              <div
+                key={i}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40 cursor-pointer"
+              >
                 <div className="flex items-center gap-3">
-                  <div className={`h-2.5 w-2.5 rounded-full ${session.status === 'completed' ? 'bg-primary' : 'border border-muted-foreground'}`} />
-                  <span className="text-sm font-medium">{session.company} · {session.difficulty}</span>
-                  <span className="text-xs text-muted-foreground">· {session.duration}</span>
+                  <div
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      session.status === "completed"
+                        ? "bg-primary"
+                        : "border border-muted-foreground"
+                    }`}
+                  />
+                  <span className="text-sm font-medium">
+                    {session.company} · {session.difficulty}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    · {session.duration}
+                  </span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-sm">{session.problem}</span>
-                  {session.score && <span className="text-sm font-mono text-muted-foreground">{session.score}</span>}
+                  {session.score && (
+                    <span className="text-sm font-mono text-muted-foreground">
+                      {session.score}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

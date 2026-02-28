@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Maximize2,
@@ -30,10 +30,12 @@ import { Button } from "@/components/ui/button";
 import { DSAProblem } from "../data/sheet";
 import { cn } from "@/lib/utils";
 
+// ── Types ──────────────────────────────────────────────────────────────────
+
 interface Attempt {
   _id: string;
   problemId: string;
-  content: string; // approach
+  content: string;
   code?: string;
   language?: string;
   timeComplexity?: string;
@@ -44,6 +46,9 @@ interface Attempt {
   status: "attempting" | "resolved" | "solved_with_help" | "gave_up";
   failureReason?: string;
   failureNote?: string;
+  solveMethod?: string;
+  keyInsight?: string;
+  confidence?: string;
   notes?: string;
   timestamp: string;
   resolvedAt?: string;
@@ -57,6 +62,16 @@ interface Discussion {
   timestamp: string;
 }
 
+interface ExplanationFeedback {
+  clarity: number;
+  completeness: number;
+  conciseness: number;
+  good: string;
+  missing: string;
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
 export function ProblemDrawer({
   problem,
   onClose,
@@ -67,7 +82,9 @@ export function ProblemDrawer({
   position: { x: number; y: number };
 }) {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [activeTab, setActiveTab] = useState<"details" | "attempts" | "explain">("details");
+  const [activeTab, setActiveTab] = useState<
+    "details" | "attempts" | "explain"
+  >("details");
 
   // Attempt state
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -95,27 +112,30 @@ export function ProblemDrawer({
   };
 
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | null = null;
     if (isTimerRunning) {
       interval = setInterval(() => {
-        setTimerSeconds(prev => prev + 1);
+        setTimerSeconds((prev) => prev + 1);
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isTimerRunning]);
 
   useEffect(() => {
     if (showNewAttempt) {
-        setIsTimerRunning(true);
+      setIsTimerRunning(true);
     } else {
-        setIsTimerRunning(false);
-        setTimerSeconds(0);
+      setIsTimerRunning(false);
+      setTimerSeconds(0);
     }
   }, [showNewAttempt]);
 
   // Explain tab state
   const [explanationContent, setExplanationContent] = useState("");
-  const [explanationFeedback, setExplanationFeedback] = useState<any>(null);
+  const [explanationFeedback, setExplanationFeedback] =
+    useState<ExplanationFeedback | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [fetchingFeedback, setFetchingFeedback] = useState(false);
 
@@ -125,7 +145,10 @@ export function ProblemDrawer({
       if (activeTab !== "explain") return;
       setLoadingExplanation(true);
       try {
-        const res = await fetch(`/api/explanations?problemId=${problem.id}`);
+        const res = await fetch(
+          `/api/explanations?problemId=${problem.id}`,
+          { credentials: "include" },
+        );
         if (res.ok) {
           const data = await res.json();
           if (data.explanation) {
@@ -133,7 +156,9 @@ export function ProblemDrawer({
             setExplanationFeedback(data.explanation.feedback);
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error("Failed to fetch explanation:", err);
+      }
       setLoadingExplanation(false);
     }
     fetchExplanation();
@@ -145,24 +170,27 @@ export function ProblemDrawer({
       const res = await fetch("/api/explanations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           problemId: problem.id,
           content: explanationContent,
-          requestFeedback
-        })
+          requestFeedback,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
         setExplanationFeedback(data.explanation.feedback);
       }
-    } catch(err) {}
+    } catch (err) {
+      console.error("Failed to save explanation:", err);
+    }
     if (requestFeedback) setFetchingFeedback(false);
   };
 
   // Discussion state
-  const [discussions, setDiscussions] = useState<Record<string, Discussion[]>>(
-    {},
-  );
+  const [discussions, setDiscussions] = useState<
+    Record<string, Discussion[]>
+  >({});
   const [loadingDiscussions, setLoadingDiscussions] = useState<
     Record<string, boolean>
   >({});
@@ -170,8 +198,6 @@ export function ProblemDrawer({
   const [submittingComment, setSubmittingComment] = useState<
     Record<string, boolean>
   >({});
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Calculate initial position
   const initialX =
@@ -209,9 +235,7 @@ export function ProblemDrawer({
     try {
       const res = await fetch(
         `/api/attempts/discussions?attemptId=${attemptId}`,
-        {
-          credentials: "include",
-        },
+        { credentials: "include" },
       );
       if (res.ok) {
         const data = await res.json();
@@ -228,10 +252,18 @@ export function ProblemDrawer({
   };
 
   // Reflection state
-  const [reflectionAttempt, setReflectionAttempt] = useState<Attempt | null>(null);
-  const [reflectionType, setReflectionType] = useState<"success" | "failure" | null>(null);
+  const [reflectionAttempt, setReflectionAttempt] = useState<Attempt | null>(
+    null,
+  );
+  const [reflectionType, setReflectionType] = useState<
+    "success" | "failure" | null
+  >(null);
   const [reflectionReason, setReflectionReason] = useState("");
   const [reflectionNote, setReflectionNote] = useState("");
+  // Success reflection fields
+  const [reflectionSolveMethod, setReflectionSolveMethod] = useState("");
+  const [reflectionKeyInsight, setReflectionKeyInsight] = useState("");
+  const [reflectionConfidence, setReflectionConfidence] = useState("");
 
   // Create new attempt
   const handleCreateAttempt = async () => {
@@ -274,40 +306,66 @@ export function ProblemDrawer({
     }
   };
 
-  // Resolve attempt (opens reflection modal instead of blind resolved)
+  // Resolve attempt (opens reflection modal)
   const initiateResolve = (attempt: Attempt, isSuccess: boolean) => {
     setReflectionAttempt(attempt);
     setReflectionType(isSuccess ? "success" : "failure");
+    // Reset all reflection fields
+    setReflectionReason("");
+    setReflectionNote("");
+    setReflectionSolveMethod("");
+    setReflectionKeyInsight("");
+    setReflectionConfidence("");
   };
 
   const handleSaveReflection = async () => {
     if (!reflectionAttempt || !reflectionType) return;
-    
-    // Status depends on user choice maybe, for now:
-    const status = reflectionType === "success" ? "resolved" : "gave_up";
-    
+
+    const status =
+      reflectionType === "success" ? "resolved" : "gave_up";
+
     try {
       const res = await fetch("/api/attempts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ 
-          attemptId: reflectionAttempt._id, 
+        body: JSON.stringify({
+          attemptId: reflectionAttempt._id,
           status,
-          failureReason: reflectionType === "failure" ? reflectionReason : undefined,
-          failureNote: reflectionNote || undefined
+          // Failure fields
+          failureReason:
+            reflectionType === "failure" ? reflectionReason : undefined,
+          failureNote: reflectionNote || undefined,
+          // Success fields
+          solveMethod:
+            reflectionType === "success"
+              ? reflectionSolveMethod || undefined
+              : undefined,
+          keyInsight:
+            reflectionType === "success"
+              ? reflectionKeyInsight || undefined
+              : undefined,
+          confidence:
+            reflectionType === "success"
+              ? reflectionConfidence || undefined
+              : undefined,
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setAttempts((prev) =>
-          prev.map((a) => (a._id === reflectionAttempt._id ? data.attempt : a)),
+          prev.map((a) =>
+            a._id === reflectionAttempt._id ? data.attempt : a,
+          ),
         );
         setReflectionAttempt(null);
         setReflectionType(null);
         setReflectionReason("");
         setReflectionNote("");
+        setReflectionSolveMethod("");
+        setReflectionKeyInsight("");
+        setReflectionConfidence("");
       }
     } catch (error) {
       console.error("Failed to resolve:", error);
@@ -376,17 +434,17 @@ export function ProblemDrawer({
   };
 
   // Load problem in VS Code (create markdown file)
-  const handleLoadInVSCode = async (problem: DSAProblem) => {
-    const content = `# ${problem.title}
+  const handleLoadInVSCode = async (prob: DSAProblem) => {
+    const content = `# ${prob.title}
 
-**Platform:** ${problem.platform}  
-**URL:** ${problem.url}
+**Platform:** ${prob.platform}  
+**URL:** ${prob.url}
 
 ## Description
-${problem.description}
+${prob.description}
 
 ## Tags
-${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
+${prob.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
 
 ## Solution Approach
 *Write your solution approach here...*
@@ -400,12 +458,11 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
 *Add any additional notes here...*
 `;
 
-    // Create a blob and download it
     const blob = new Blob([content], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${problem.id}-${problem.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}.md`;
+    a.download = `${prob.id}-${prob.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -433,7 +490,12 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
           height: isMaximized ? "100%" : "600px",
         }}
         exit={{ opacity: 0, scale: 0.5, x: position.x, y: position.y }}
-        transition={{ type: "spring", damping: 25, stiffness: 300, mass: 0.8 }}
+        transition={{
+          type: "spring",
+          damping: 25,
+          stiffness: 300,
+          mass: 0.8,
+        }}
         className={cn(
           "pointer-events-auto absolute flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
           isMaximized ? "rounded-none" : "rounded-xl",
@@ -451,14 +513,24 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
             <div className="h-4 w-px bg-border" />
             <div className="flex gap-1">
               {["details", "attempts", "explain"].map((tab) => {
-                // Only show explain tab if there is at least one resolved attempt
-                if (tab === "explain" && !attempts.some(a => a.status === "resolved" || a.status === "solved_with_help")) {
+                if (
+                  tab === "explain" &&
+                  !attempts.some(
+                    (a) =>
+                      a.status === "resolved" ||
+                      a.status === "solved_with_help",
+                  )
+                ) {
                   return null;
                 }
                 return (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab as "details" | "attempts" | "explain")}
+                    onClick={() =>
+                      setActiveTab(
+                        tab as "details" | "attempts" | "explain",
+                      )
+                    }
                     className={cn(
                       "px-2.5 py-1 text-xs font-medium rounded-md transition-colors capitalize",
                       activeTab === tab
@@ -466,9 +538,11 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                         : "text-muted-foreground hover:text-foreground hover:bg-muted",
                     )}
                   >
-                    {tab === "details" ? "Details"
-                     : tab === "attempts" ? `Attempts (${attempts.length})` 
-                     : "Explain"}
+                    {tab === "details"
+                      ? "Details"
+                      : tab === "attempts"
+                        ? `Attempts (${attempts.length})`
+                        : "Explain"}
                   </button>
                 );
               })}
@@ -515,11 +589,11 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                     {problem.title}
                   </h2>
                   <div className="flex flex-wrap gap-2">
-                    <Badge>{problem.platform}</Badge>
+                    <DrawerBadge>{problem.platform}</DrawerBadge>
                     {problem.tags?.map((tag) => (
-                      <Badge key={tag} subtle>
+                      <DrawerBadge key={tag} subtle>
                         {tag}
-                      </Badge>
+                      </DrawerBadge>
                     ))}
                   </div>
                 </div>
@@ -533,7 +607,11 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
 
                 <div className="flex gap-3">
                   <Button className="flex-1" asChild>
-                    <a href={problem.url} rel="noopener noreferrer">
+                    <a
+                      href={problem.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <BookOpen className="h-4 w-4 mr-2" />
                       Solve on {problem.platform}
                     </a>
@@ -597,11 +675,17 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                           New Attempt
                         </h3>
                         <div className="flex items-center gap-3">
-                          <div 
+                          <div
                             className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground bg-muted px-2 py-1 rounded cursor-pointer hover:bg-muted/80"
-                            onClick={() => setIsTimerRunning(!isTimerRunning)}
+                            onClick={() =>
+                              setIsTimerRunning(!isTimerRunning)
+                            }
                           >
-                            {isTimerRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                            {isTimerRunning ? (
+                              <Pause className="h-3 w-3" />
+                            ) : (
+                              <Play className="h-3 w-3" />
+                            )}
                             ⏱ {formatTimer(timerSeconds)}
                           </div>
                           <button
@@ -614,67 +698,98 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Approach</label>
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Approach
+                        </label>
                         <textarea
                           placeholder="Explain your logic, e.g. Sort intervals by start time..."
                           value={newAttemptContent}
-                          onChange={(e) => setNewAttemptContent(e.target.value)}
+                          onChange={(e) =>
+                            setNewAttemptContent(e.target.value)
+                          }
                           className="w-full h-24 px-3 py-2 text-sm rounded-md border border-border bg-background resize-none focus:outline-none focus:border-primary/50"
                         />
                       </div>
 
                       <div className="space-y-1">
                         <div className="flex justify-between items-center">
-                          <label className="text-xs font-medium text-muted-foreground">Code</label>
-                          <select 
-                            value={newAttemptLanguage} 
-                            onChange={(e) => setNewAttemptLanguage(e.target.value)}
+                          <label className="text-xs font-medium text-muted-foreground">
+                            Code
+                          </label>
+                          <select
+                            value={newAttemptLanguage}
+                            onChange={(e) =>
+                              setNewAttemptLanguage(e.target.value)
+                            }
                             className="text-xs bg-background border border-border rounded px-2 py-1"
                           >
-                            {["Python", "JavaScript", "Java", "C++", "Go", "Other"].map(l => (
-                              <option key={l} value={l}>{l}</option>
+                            {[
+                              "Python",
+                              "JavaScript",
+                              "Java",
+                              "C++",
+                              "Go",
+                              "Other",
+                            ].map((l) => (
+                              <option key={l} value={l}>
+                                {l}
+                              </option>
                             ))}
                           </select>
                         </div>
                         <textarea
                           placeholder="Paste your code here..."
                           value={newAttemptCode}
-                          onChange={(e) => setNewAttemptCode(e.target.value)}
+                          onChange={(e) =>
+                            setNewAttemptCode(e.target.value)
+                          }
                           className="w-full h-32 px-3 py-2 text-sm font-mono rounded-md border border-border bg-zinc-50 dark:bg-zinc-900 resize-none focus:outline-none focus:border-primary/50"
                         />
                       </div>
 
                       <div className="flex gap-4">
                         <div className="flex-1 space-y-1">
-                          <label className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Time Complexity</label>
-                          <input 
-                            type="text" 
-                            placeholder="O(?)" 
+                          <label className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                            Time Complexity
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="O(?)"
                             value={newAttemptTime}
-                            onChange={(e) => setNewAttemptTime(e.target.value)}
+                            onChange={(e) =>
+                              setNewAttemptTime(e.target.value)
+                            }
                             className="w-full px-2 py-1.5 text-xs font-mono rounded border border-border bg-background"
                           />
                         </div>
                         <div className="flex-1 space-y-1">
-                          <label className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Space Complexity</label>
-                          <input 
-                            type="text" 
-                            placeholder="O(?)" 
+                          <label className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                            Space Complexity
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="O(?)"
                             value={newAttemptSpace}
-                            onChange={(e) => setNewAttemptSpace(e.target.value)}
+                            onChange={(e) =>
+                              setNewAttemptSpace(e.target.value)
+                            }
                             className="w-full px-2 py-1.5 text-xs font-mono rounded border border-border bg-background"
                           />
                         </div>
                         <div className="flex-1 space-y-1">
-                          <label className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Felt Difficulty</label>
+                          <label className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                            Felt Difficulty
+                          </label>
                           <div className="flex gap-1 pt-1.5">
-                            {[1,2,3,4,5].map(rating => (
-                              <button 
+                            {[1, 2, 3, 4, 5].map((rating) => (
+                              <button
                                 key={rating}
                                 onClick={() => setNewAttemptFelt(rating)}
                                 className={cn(
                                   "h-4 w-4 rounded-full text-[10px] leading-none flex items-center justify-center border",
-                                  newAttemptFelt >= rating ? "bg-primary border-primary text-primary-foreground" : "border-border text-transparent hover:border-primary/50"
+                                  newAttemptFelt >= rating
+                                    ? "bg-primary border-primary text-primary-foreground"
+                                    : "border-border text-transparent hover:border-primary/50",
                                 )}
                               >
                                 ●
@@ -685,11 +800,15 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Notes (optional)</label>
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Notes (optional)
+                        </label>
                         <textarea
                           placeholder="Edge cases, what you learned, bugs..."
                           value={newAttemptNotes}
-                          onChange={(e) => setNewAttemptNotes(e.target.value)}
+                          onChange={(e) =>
+                            setNewAttemptNotes(e.target.value)
+                          }
                           className="w-full h-12 px-3 py-2 text-xs rounded-md border border-border bg-background resize-none focus:outline-none focus:border-primary/50"
                         />
                       </div>
@@ -706,7 +825,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                           size="sm"
                           onClick={handleCreateAttempt}
                           disabled={
-                            (!newAttemptContent.trim() && !newAttemptCode.trim()) || submittingAttempt
+                            (!newAttemptContent.trim() &&
+                              !newAttemptCode.trim()) ||
+                            submittingAttempt
                           }
                         >
                           {submittingAttempt ? (
@@ -759,10 +880,10 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                           attempt.status === "resolved"
                             ? "border-green-500/30 bg-green-500/5"
                             : attempt.status === "solved_with_help"
-                            ? "border-teal-500/30 bg-teal-500/5"
-                            : attempt.status === "gave_up"
-                            ? "border-amber-500/30 bg-amber-500/5"
-                            : "border-border bg-card",
+                              ? "border-teal-500/30 bg-teal-500/5"
+                              : attempt.status === "gave_up"
+                                ? "border-amber-500/30 bg-amber-500/5"
+                                : "border-border bg-card",
                         )}
                       >
                         {/* Attempt Header */}
@@ -790,18 +911,38 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                                 {attempt.status.replace(/_/g, " ")}
                               </span>
                               <span className="text-xs text-muted-foreground ml-2">
-                                {attempt.duration ? `${Math.floor(attempt.duration/60)}m ` : ''} 
-                                {attempt.submissionCount ? `· ${attempt.submissionCount} submissions` : ''}
+                                {attempt.duration
+                                  ? `${Math.floor(attempt.duration / 60)}m `
+                                  : ""}
+                                {attempt.submissionCount
+                                  ? `· ${attempt.submissionCount} submissions`
+                                  : ""}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{formatRelativeTime(attempt.timestamp)}</span>
+                              <span>
+                                {formatRelativeTime(attempt.timestamp)}
+                              </span>
                               {attempt.feltDifficulty ? (
                                 <>
                                   <span className="opacity-50">•</span>
-                                  <span>Felt: {Array.from({length: 5}).map((_, i) => (
-                                    <span key={i} className={i < attempt.feltDifficulty! ? "text-foreground" : "text-muted-foreground/30"}>●</span>
-                                  ))}</span>
+                                  <span>
+                                    Felt:{" "}
+                                    {Array.from({ length: 5 }).map(
+                                      (_, i) => (
+                                        <span
+                                          key={i}
+                                          className={
+                                            i < attempt.feltDifficulty!
+                                              ? "text-foreground"
+                                              : "text-muted-foreground/30"
+                                          }
+                                        >
+                                          ●
+                                        </span>
+                                      ),
+                                    )}
+                                  </span>
                                 </>
                               ) : null}
                             </div>
@@ -814,7 +955,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                                   variant="ghost"
                                   size="sm"
                                   className="text-xs h-7 gap-1 bg-green-500/10 hover:bg-green-500/20 text-green-600 mb-0"
-                                  onClick={() => initiateResolve(attempt, true)}
+                                  onClick={() =>
+                                    initiateResolve(attempt, true)
+                                  }
                                 >
                                   Solved
                                 </Button>
@@ -822,7 +965,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                                   variant="ghost"
                                   size="sm"
                                   className="text-xs h-7 gap-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 mb-0"
-                                  onClick={() => initiateResolve(attempt, false)}
+                                  onClick={() =>
+                                    initiateResolve(attempt, false)
+                                  }
                                 >
                                   Gave up
                                 </Button>
@@ -832,7 +977,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDeleteAttempt(attempt._id)}
+                              onClick={() =>
+                                handleDeleteAttempt(attempt._id)
+                              }
                               title="Delete Attempt"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -841,51 +988,83 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                         </div>
 
                         {/* Failure reason if any */}
-                        {attempt.status === "gave_up" && attempt.failureReason && (
-                          <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 mt-2">
-                            <p className="text-xs font-semibold text-destructive mb-1 flex items-center gap-1.5">
-                              <AlertTriangle className="h-3.5 w-3.5" /> 
-                              Why did this fail?
-                            </p>
-                            <p className="text-xs font-medium bg-background/50 border border-border/50 inline-block px-2 py-1 rounded mb-2">
-                              {attempt.failureReason}
-                            </p>
-                            {attempt.failureNote && (
-                              <p className="text-[11px] text-muted-foreground italic">"{attempt.failureNote}"</p>
-                            )}
-                          </div>
-                        )}
+                        {attempt.status === "gave_up" &&
+                          attempt.failureReason && (
+                            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 mt-2">
+                              <p className="text-xs font-semibold text-destructive mb-1 flex items-center gap-1.5">
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                Why did this fail?
+                              </p>
+                              <p className="text-xs font-medium bg-background/50 border border-border/50 inline-block px-2 py-1 rounded mb-2">
+                                {attempt.failureReason}
+                              </p>
+                              {attempt.failureNote && (
+                                <p className="text-[11px] text-muted-foreground italic">
+                                  &ldquo;{attempt.failureNote}&rdquo;
+                                </p>
+                              )}
+                            </div>
+                          )}
 
                         {/* Content */}
                         {attempt.content && (
                           <div className="text-sm">
-                            <span className="text-xs font-medium text-muted-foreground block mb-1">Approach</span>
-                            <p className="whitespace-pre-wrap">{attempt.content}</p>
+                            <span className="text-xs font-medium text-muted-foreground block mb-1">
+                              Approach
+                            </span>
+                            <p className="whitespace-pre-wrap">
+                              {attempt.content}
+                            </p>
                           </div>
                         )}
 
                         {attempt.code && (
                           <div className="mt-3">
                             <div className="flex justify-between items-center text-xs mb-1 px-1">
-                                <span className="font-medium text-muted-foreground">Code</span>
-                                <span className="bg-muted px-2 py-0.5 rounded opacity-80">{attempt.language || 'Python'}</span>
+                              <span className="font-medium text-muted-foreground">
+                                Code
+                              </span>
+                              <span className="bg-muted px-2 py-0.5 rounded opacity-80">
+                                {attempt.language || "Python"}
+                              </span>
                             </div>
                             <pre className="text-xs font-mono bg-zinc-950 text-zinc-50 p-3 rounded-md overflow-x-auto max-h-48 border border-border">
                               <code>{attempt.code}</code>
                             </pre>
                           </div>
                         )}
-                        
-                        {(attempt.timeComplexity || attempt.spaceComplexity) && (
+
+                        {(attempt.timeComplexity ||
+                          attempt.spaceComplexity) && (
                           <div className="flex gap-4 mt-2 mb-1">
-                            {attempt.timeComplexity && <span className="text-xs"><span className="text-muted-foreground mr-1">Time:</span> <code className="bg-muted px-1.5 py-0.5 rounded">{attempt.timeComplexity}</code></span>}
-                            {attempt.spaceComplexity && <span className="text-xs"><span className="text-muted-foreground mr-1">Space:</span> <code className="bg-muted px-1.5 py-0.5 rounded">{attempt.spaceComplexity}</code></span>}
+                            {attempt.timeComplexity && (
+                              <span className="text-xs">
+                                <span className="text-muted-foreground mr-1">
+                                  Time:
+                                </span>{" "}
+                                <code className="bg-muted px-1.5 py-0.5 rounded">
+                                  {attempt.timeComplexity}
+                                </code>
+                              </span>
+                            )}
+                            {attempt.spaceComplexity && (
+                              <span className="text-xs">
+                                <span className="text-muted-foreground mr-1">
+                                  Space:
+                                </span>{" "}
+                                <code className="bg-muted px-1.5 py-0.5 rounded">
+                                  {attempt.spaceComplexity}
+                                </code>
+                              </span>
+                            )}
                           </div>
                         )}
 
                         {attempt.notes && (
                           <div className="mt-2">
-                            <span className="text-xs font-medium text-muted-foreground block mb-1">Notes</span>
+                            <span className="text-xs font-medium text-muted-foreground block mb-1">
+                              Notes
+                            </span>
                             <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 italic">
                               {attempt.notes}
                             </div>
@@ -942,7 +1121,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                                             {d.username}
                                           </span>
                                           <span className="text-muted-foreground text-[10px]">
-                                            {formatRelativeTime(d.timestamp)}
+                                            {formatRelativeTime(
+                                              d.timestamp,
+                                            )}
                                           </span>
                                         </div>
                                         <p className="mt-0.5 text-muted-foreground">
@@ -957,7 +1138,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                                     <input
                                       type="text"
                                       placeholder="Add a note or reflection..."
-                                      value={newComment[attempt._id] || ""}
+                                      value={
+                                        newComment[attempt._id] || ""
+                                      }
                                       onChange={(e) =>
                                         setNewComment((prev) => ({
                                           ...prev,
@@ -965,7 +1148,10 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                                         }))
                                       }
                                       onKeyDown={(e) => {
-                                        if (e.key === "Enter" && !e.shiftKey) {
+                                        if (
+                                          e.key === "Enter" &&
+                                          !e.shiftKey
+                                        ) {
                                           e.preventDefault();
                                           handleAddComment(attempt._id);
                                         }
@@ -979,7 +1165,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                                         handleAddComment(attempt._id)
                                       }
                                       disabled={
-                                        !newComment[attempt._id]?.trim() ||
+                                        !newComment[
+                                          attempt._id
+                                        ]?.trim() ||
                                         submittingComment[attempt._id]
                                       }
                                     >
@@ -1010,9 +1198,12 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                 className="p-6 space-y-6 flex flex-col h-full"
               >
                 <div>
-                  <h3 className="text-lg font-medium">Explain "{problem.title}"</h3>
+                  <h3 className="text-lg font-medium">
+                    Explain &ldquo;{problem.title}&rdquo;
+                  </h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Explain this problem as if teaching someone who knows basic programming but not this specific problem.
+                    Explain this problem as if teaching someone who knows
+                    basic programming but not this specific problem.
                   </p>
                 </div>
 
@@ -1025,16 +1216,29 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                     <textarea
                       placeholder="Start explaining..."
                       value={explanationContent}
-                      onChange={(e) => setExplanationContent(e.target.value)}
+                      onChange={(e) =>
+                        setExplanationContent(e.target.value)
+                      }
                       className="flex-1 min-h-[250px] w-full p-4 text-sm rounded-md border border-border bg-background focus:outline-none focus:border-primary/50 resize-y"
                     />
 
                     <div className="flex items-center justify-end gap-3">
-                      <Button variant="ghost" onClick={() => saveExplanation(false)}>
+                      <Button
+                        variant="ghost"
+                        onClick={() => saveExplanation(false)}
+                      >
                         Save explanation
                       </Button>
-                      <Button onClick={() => saveExplanation(true)} disabled={fetchingFeedback || !explanationContent.trim()}>
-                        {fetchingFeedback ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                      <Button
+                        onClick={() => saveExplanation(true)}
+                        disabled={
+                          fetchingFeedback ||
+                          !explanationContent.trim()
+                        }
+                      >
+                        {fetchingFeedback ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : null}
                         Get AI feedback →
                       </Button>
                     </div>
@@ -1049,45 +1253,62 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                           <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
                             <Lightbulb className="h-4 w-4" /> AI Feedback
                           </h4>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground">Clarity</span>
-                              <div className="flex items-center gap-2">
-                                <div className="font-mono text-xs">{explanationFeedback.clarity}/10</div>
-                                <div className="font-mono text-xs tracking-[-0.1em] text-primary">
-                                  {"█".repeat(explanationFeedback.clarity)}{"░".repeat(10 - explanationFeedback.clarity)}
+                            {(
+                              [
+                                "clarity",
+                                "completeness",
+                                "conciseness",
+                              ] as const
+                            ).map((metric) => (
+                              <div
+                                key={metric}
+                                className="flex justify-between items-center"
+                              >
+                                <span className="text-muted-foreground capitalize">
+                                  {metric}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <div className="font-mono text-xs">
+                                    {explanationFeedback[metric]}/10
+                                  </div>
+                                  <div className="font-mono text-xs tracking-[-0.1em] text-primary">
+                                    {"█".repeat(
+                                      explanationFeedback[metric],
+                                    )}
+                                    {"░".repeat(
+                                      10 -
+                                        explanationFeedback[metric],
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground">Completeness</span>
-                              <div className="flex items-center gap-2">
-                                <div className="font-mono text-xs">{explanationFeedback.completeness}/10</div>
-                                <div className="font-mono text-xs tracking-[-0.1em] text-primary">
-                                  {"█".repeat(explanationFeedback.completeness)}{"░".repeat(10 - explanationFeedback.completeness)}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground">Conciseness</span>
-                              <div className="flex items-center gap-2">
-                                <div className="font-mono text-xs">{explanationFeedback.conciseness}/10</div>
-                                <div className="font-mono text-xs tracking-[-0.1em] text-primary">
-                                  {"█".repeat(explanationFeedback.conciseness)}{"░".repeat(10 - explanationFeedback.conciseness)}
-                                </div>
-                              </div>
-                            </div>
+                            ))}
                           </div>
 
                           <div className="space-y-3 pt-3 border-t border-border/50 text-sm">
                             <div className="flex gap-2">
                               <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                              <p><span className="font-medium">Good:</span> <span className="text-muted-foreground">{explanationFeedback.good}</span></p>
+                              <p>
+                                <span className="font-medium">
+                                  Good:
+                                </span>{" "}
+                                <span className="text-muted-foreground">
+                                  {explanationFeedback.good}
+                                </span>
+                              </p>
                             </div>
                             <div className="flex gap-2">
                               <HelpCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                              <p><span className="font-medium">Missing:</span> <span className="text-muted-foreground">{explanationFeedback.missing}</span></p>
+                              <p>
+                                <span className="font-medium">
+                                  Missing:
+                                </span>{" "}
+                                <span className="text-muted-foreground">
+                                  {explanationFeedback.missing}
+                                </span>
+                              </p>
                             </div>
                           </div>
                         </motion.div>
@@ -1105,7 +1326,10 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
       <AnimatePresence>
         {reflectionAttempt && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setReflectionAttempt(null)} />
+            <div
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+              onClick={() => setReflectionAttempt(null)}
+            />
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -1125,8 +1349,8 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                   )}
                   <div>
                     <h3 className="text-base font-semibold">
-                      {reflectionType === "success" 
-                        ? `Nice — ${problem.title} resolved` 
+                      {reflectionType === "success"
+                        ? `Nice — ${problem.title} resolved`
                         : `${problem.title} — not resolved`}
                     </h3>
                   </div>
@@ -1135,36 +1359,82 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                 {reflectionType === "success" ? (
                   <div className="space-y-5">
                     <div>
-                      <p className="text-sm font-medium mb-2">How did you solve it?</p>
+                      <p className="text-sm font-medium mb-2">
+                        How did you solve it?
+                      </p>
                       <div className="flex gap-2">
-                        {["Independently", "With hints", "From editorial"].map(m => (
-                          <Button key={m} variant="outline" size="sm" className="text-xs h-7">{m}</Button>
+                        {[
+                          "Independently",
+                          "With hints",
+                          "From editorial",
+                        ].map((m) => (
+                          <Button
+                            key={m}
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "text-xs h-7",
+                              reflectionSolveMethod === m &&
+                                "bg-primary/10 border-primary/30 text-primary",
+                            )}
+                            onClick={() =>
+                              setReflectionSolveMethod(m)
+                            }
+                          >
+                            {m}
+                          </Button>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm font-medium mb-2">Key insight (one line):</p>
-                      <input type="text" className="w-full px-3 py-2 text-sm rounded border border-border bg-background h-10 placeholder:text-muted-foreground/50" placeholder="E.g. Sorting by start time makes overlaps adjacent..." />
+                      <p className="text-sm font-medium mb-2">
+                        Key insight (one line):
+                      </p>
+                      <input
+                        type="text"
+                        value={reflectionKeyInsight}
+                        onChange={(e) =>
+                          setReflectionKeyInsight(e.target.value)
+                        }
+                        className="w-full px-3 py-2 text-sm rounded border border-border bg-background h-10 placeholder:text-muted-foreground/50"
+                        placeholder="E.g. Sorting by start time makes overlaps adjacent..."
+                      />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium mb-2">Would you solve it faster next time?</p>
+                                        <div>
+                      <p className="text-sm font-medium mb-2">
+                        Would you solve it faster next time?
+                      </p>
                       <div className="flex gap-4 text-sm text-muted-foreground">
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="radio" name="faster" className="accent-primary" /> Definitely
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="radio" name="faster" className="accent-primary" /> Probably
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="radio" name="faster" className="accent-primary" /> Not sure
-                        </label>
+                        {["Definitely", "Probably", "Not sure"].map(
+                          (opt) => (
+                            <label
+                              key={opt}
+                              className="flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <input
+                                type="radio"
+                                name="faster"
+                                className="accent-primary"
+                                checked={
+                                  reflectionConfidence === opt
+                                }
+                                onChange={() =>
+                                  setReflectionConfidence(opt)
+                                }
+                              />
+                              {opt}
+                            </label>
+                          ),
+                        )}
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-5">
                     <div>
-                      <p className="text-sm font-medium mb-2">What went wrong?</p>
+                      <p className="text-sm font-medium mb-2">
+                        What went wrong?
+                      </p>
                       <div className="space-y-1">
                         {[
                           "🧠 Misunderstood the problem",
@@ -1173,18 +1443,20 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                           "🏗️ Right approach, buggy code",
                           "⏰ Knew the approach, ran out of time",
                           "📊 Right answer, wrong complexity (TLE)",
-                          "🫥 Completely stuck"
-                        ].map(reason => {
+                          "🫥 Completely stuck",
+                        ].map((reason) => {
                           const cleanReason = reason.substring(3);
                           return (
-                            <div 
+                            <div
                               key={reason}
-                              onClick={() => setReflectionReason(cleanReason)}
+                              onClick={() =>
+                                setReflectionReason(cleanReason)
+                              }
                               className={cn(
                                 "text-sm p-2 rounded cursor-pointer transition-colors border",
-                                reflectionReason === cleanReason 
-                                  ? "bg-primary/5 border-primary/30 text-foreground font-medium" 
-                                  : "border-transparent hover:bg-muted text-muted-foreground"
+                                reflectionReason === cleanReason
+                                  ? "bg-primary/5 border-primary/30 text-foreground font-medium"
+                                  : "border-transparent hover:bg-muted text-muted-foreground",
                               )}
                             >
                               {reason}
@@ -1194,22 +1466,35 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm font-medium mb-2">Quick note:</p>
-                      <textarea 
+                      <p className="text-sm font-medium mb-2">
+                        Quick note:
+                      </p>
+                      <textarea
                         value={reflectionNote}
-                        onChange={(e) => setReflectionNote(e.target.value)}
-                        className="w-full p-3 text-sm rounded-md border border-border bg-background focus:outline-none focus:border-primary/50 resize-none h-20" 
-                        placeholder="Didn't realize this was a topological sort problem..." 
+                        onChange={(e) =>
+                          setReflectionNote(e.target.value)
+                        }
+                        className="w-full p-3 text-sm rounded-md border border-border bg-background focus:outline-none focus:border-primary/50 resize-none h-20"
+                        placeholder="Didn't realize this was a topological sort problem..."
                       />
                     </div>
                   </div>
                 )}
 
                 <div className="mt-8 flex items-center justify-between border-t border-border/50 pt-4">
-                  <Button variant="ghost" size="sm" onClick={() => {
-                    // Just exit or skip
-                    setReflectionAttempt(null);
-                  }}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setReflectionAttempt(null);
+                      setReflectionType(null);
+                      setReflectionReason("");
+                      setReflectionNote("");
+                      setReflectionSolveMethod("");
+                      setReflectionKeyInsight("");
+                      setReflectionConfidence("");
+                    }}
+                  >
                     Skip
                   </Button>
                   <Button size="sm" onClick={handleSaveReflection}>
@@ -1225,7 +1510,9 @@ ${problem.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
   );
 }
 
-function Badge({
+// ── Local Badge (not shadcn — specific to drawer styling) ──────────────────
+
+function DrawerBadge({
   children,
   subtle,
 }: {

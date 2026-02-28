@@ -32,11 +32,12 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
 
   const filters = useProblemFilters({ savedProblems, completedProblems });
 
+  // Flattened once — used by stats + random picker
+  const allProblems = useMemo(() => SHEET.flatMap((t) => t.problems), []);
+
   // ── Progress stats ─────────────────────────────────────────────────────
 
   const stats = useMemo(() => {
-    const allProblems = SHEET.flatMap((t) => t.problems);
-
     const easy = allProblems.filter((p) => p.tags?.includes("Easy"));
     const medium = allProblems.filter((p) => p.tags?.includes("Medium"));
     const hard = allProblems.filter((p) => p.tags?.includes("Hard"));
@@ -55,14 +56,14 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
         total: hard.length,
       },
       savedCount: savedSet.size,
-      weeklyDelta: 5,
+      // TODO: Compute from actual completion timestamps once activity API exists
+      // weeklyDelta: computeWeeklyDelta(completedProblems, activityLog),
     };
-  }, [completedSet, savedSet]);
+  }, [allProblems, completedSet, savedSet]);
 
   // ── Random picker ──────────────────────────────────────────────────────
 
   const handleRandom = (e: React.MouseEvent) => {
-    const allProblems = SHEET.flatMap((t) => t.problems);
     const pool = allProblems.filter((p) => !completedSet.has(p.id));
     const source = pool.length > 0 ? pool : allProblems;
     if (source.length === 0) return;
@@ -79,6 +80,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
       const res = await fetch("/api/problems/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username: user.username, problemId }),
       });
       const data = await res.json();
@@ -95,6 +97,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
       const res = await fetch("/api/problems/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username: user.username, problemId }),
       });
       const data = await res.json();
@@ -117,10 +120,10 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
         className="h-full overflow-y-auto thin-scrollbar overscroll-contain"
       >
         <div className="max-w-7xl mx-auto px-8 md:px-12">
-          <div className="grid grid-cols-[240px_1fr] gap-12 min-h-full">
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12 min-h-full">
 
             {/* ── Left column: Progress + Filters — sticky, vertically centered ── */}
-            <aside className="relative sticky top-0 h-screen flex flex-col justify-center overflow-hidden">
+            <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
               {/* Top fade */}
               <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-card to-transparent z-10" />
               <div className="space-y-8 text-right py-12 overflow-y-auto thin-scrollbar max-h-[calc(100vh-8rem)]">
@@ -138,7 +141,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
                   onSortDescChange={filters.setSortDesc}
                 />
               </div>
-              {/*bottom fade */}
+              {/* Bottom fade */}
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-card to-transparent z-10" />
             </aside>
 

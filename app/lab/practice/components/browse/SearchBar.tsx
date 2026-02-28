@@ -14,8 +14,7 @@ interface SearchBarProps {
 
 /**
  * Search input + "Pick Random" button.
- * Sits sticky at the top of the Browse right column.
- * Also rendered in the PracticeHeader right slot for Browse mode.
+ * Rendered sticky at the top of the Browse right column.
  */
 export function SearchBar({ query, onQueryChange, onRandom }: SearchBarProps) {
   return (

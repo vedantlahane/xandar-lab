@@ -2,12 +2,13 @@
 
 "use client";
 
+import { useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Shuffle, RotateCcw, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SHEET } from "../../data/sheet";
 import { useAuth } from "@/components/auth/AuthContext";
-import { useMemo } from "react";
 
 /**
  * Shown in Focus mode when no problem is selected.
@@ -35,11 +36,19 @@ export function FocusEmpty() {
     router.push(`/lab/practice/focus?p=${picked.id}`);
   };
 
-  // For now, "Next Review" picks the first problem that hasn't been completed.
-  // Wire to real spaced-repetition scheduling later.
+  // Review = revisit something already completed (spaced repetition target).
+  // Random = attempt something new.
+  // When real SR data exists, this picks the problem with oldest/most-due review date.
   const pickReview = () => {
-    const candidate = allProblems.find((p) => !completedSet.has(p.id));
-    if (candidate) router.push(`/lab/practice/focus?p=${candidate.id}`);
+    const completed = allProblems.filter((p) => completedSet.has(p.id));
+    if (completed.length > 0) {
+      // TODO: Sort by lastAttempted date (oldest first) when SR data is available
+      const picked = completed[Math.floor(Math.random() * completed.length)];
+      router.push(`/lab/practice/focus?p=${picked.id}`);
+    } else {
+      // Nothing to review yet — fall back to random uncompleted
+      pickRandom();
+    }
   };
 
   return (
@@ -73,9 +82,12 @@ export function FocusEmpty() {
             ↻ Next Review Problem
           </Button>
 
+          {/* TODO: Wire to same suggestion logic as TodaysFocus in Browse mode */}
           <Button
             variant="outline"
             className="h-14 font-medium text-base hover:border-primary/50 hover:bg-primary/5"
+            disabled
+            title="Coming soon — needs spaced repetition data"
           >
             <Star className="h-5 w-5 mr-3 text-amber-500 fill-amber-500" />
             ★ Today&apos;s Suggestion
@@ -84,12 +96,12 @@ export function FocusEmpty() {
 
         <p className="text-sm text-muted-foreground">
           or{" "}
-          <a
+          <Link
             href="/lab/practice"
             className="underline underline-offset-2 hover:text-foreground transition-colors"
           >
             pick from Browse →
-          </a>
+          </Link>
         </p>
       </div>
     </div>

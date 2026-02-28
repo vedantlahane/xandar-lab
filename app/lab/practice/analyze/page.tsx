@@ -43,7 +43,7 @@ export default function PracticeAnalyzePage() {
 
       {/* Analyze content */}
       <div className="flex-1 overflow-hidden">
-        <AnalyzeDashboard />
+        <AnalyzeDashboard timeRange={timeRange} />
       </div>
     </>
   );

@@ -26,11 +26,15 @@ export function FocusView({ timer }: FocusViewProps) {
   const problem = problemId ? problemIndex.get(problemId) ?? null : null;
 
   const handleSolved = (_id: string) => {
-    // After save, go back to Browse (could open reflection card here later)
+    // TODO: Wire reflection before navigating:
+    // triggerReflection(id, "solved");
+    // ReflectionCard handles navigation after submit/skip
     router.push("/lab/practice");
   };
 
   const handleGaveUp = (_id: string) => {
+    // TODO: Wire reflection before navigating:
+    // triggerReflection(id, "gave-up");
     router.push("/lab/practice/focus");
   };
 
@@ -40,6 +44,7 @@ export function FocusView({ timer }: FocusViewProps) {
 
   return (
     <FocusCard
+      key={problem.id}
       problem={problem}
       timer={timer}
       onSolved={handleSolved}

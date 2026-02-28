@@ -32,7 +32,12 @@ interface UseProblemFiltersOptions {
   completedProblems: string[];
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Extension data (STUB — replace with real API integration) ──────────────
+//
+// MOCK: Returns hardcoded extension data for demo purposes.
+// TODO: Replace with data from GET /api/extension/data when extension ships.
+//       At that point, fetch once in BrowseView and pass as a Map<string, ExtensionData>
+//       rather than calling per-problem.
 
 export function getExtensionData(
   problemId: string,
@@ -79,12 +84,16 @@ export function useProblemFilters({
   const [sortOption, setSortOption] = useState<SortOption>(null);
   const [sortDesc, setSortDesc] = useState(true);
 
+  // TODO: Implement sorting — sort state exists in the UI (FilterPanel shows it)
+  // but doesn't apply here yet. "Staleness" and "Attempts" both depend on data
+  // that doesn't exist yet (extension timestamps, attempt counts).
+  // When implementing, add sortOption + sortDesc back to the dependency array.
   const filteredSheet = useMemo(() => {
     const savedSet = new Set(savedProblems);
     const completedSet = new Set(completedProblems);
 
     return SHEET.map((topic) => {
-      let filtered = topic.problems.filter((problem) => {
+      const filtered = topic.problems.filter((problem) => {
         // ── Search ─────────────────────────────────────────────────────────
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
@@ -134,16 +143,7 @@ export function useProblemFilters({
 
       return { ...topic, problems: filtered };
     }).filter((topic) => topic.problems.length > 0);
-  }, [
-    searchQuery,
-    statusFilter,
-    difficultyFilter,
-    platformFilter,
-    sortOption,
-    sortDesc,
-    savedProblems,
-    completedProblems,
-  ]);
+  }, [searchQuery, statusFilter, difficultyFilter, platformFilter, savedProblems, completedProblems]);
 
   return {
     // Values
