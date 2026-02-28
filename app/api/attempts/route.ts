@@ -46,7 +46,12 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { problemId, content, notes } = body;
+        const { 
+            problemId, content, notes, status,
+            code, language, timeComplexity, spaceComplexity, 
+            feltDifficulty, duration, submissionCount,
+            failureReason, failureNote
+        } = body;
 
         if (!problemId || !content) {
             return NextResponse.json({ error: 'Problem ID and content are required' }, { status: 400 });
@@ -59,7 +64,16 @@ export async function POST(req: Request) {
             userId: session.userId,
             content,
             notes,
-            status: 'attempting',
+            status: status || 'attempting',
+            code,
+            language,
+            timeComplexity,
+            spaceComplexity,
+            feltDifficulty,
+            duration,
+            submissionCount,
+            failureReason,
+            failureNote
         });
 
         return NextResponse.json({
@@ -70,7 +84,17 @@ export async function POST(req: Request) {
                 content: attempt.content,
                 status: attempt.status,
                 notes: attempt.notes,
+                code: attempt.code,
+                language: attempt.language,
+                timeComplexity: attempt.timeComplexity,
+                spaceComplexity: attempt.spaceComplexity,
+                feltDifficulty: attempt.feltDifficulty,
+                duration: attempt.duration,
+                submissionCount: attempt.submissionCount,
+                failureReason: attempt.failureReason,
+                failureNote: attempt.failureNote,
                 timestamp: attempt.timestamp,
+                resolvedAt: attempt.resolvedAt,
             }
         }, { status: 201 });
     } catch (error: any) {
@@ -88,7 +112,12 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json();
-        const { attemptId, content, notes, status } = body;
+        const { 
+            attemptId, content, notes, status,
+            code, language, timeComplexity, spaceComplexity, 
+            feltDifficulty, duration, submissionCount,
+            failureReason, failureNote
+        } = body;
 
         if (!attemptId) {
             return NextResponse.json({ error: 'Attempt ID is required' }, { status: 400 });
@@ -107,9 +136,19 @@ export async function PUT(req: Request) {
 
         if (content !== undefined) attempt.content = content;
         if (notes !== undefined) attempt.notes = notes;
-        if (status && ['attempting', 'resolved'].includes(status)) {
+        if (code !== undefined) attempt.code = code;
+        if (language !== undefined) attempt.language = language;
+        if (timeComplexity !== undefined) attempt.timeComplexity = timeComplexity;
+        if (spaceComplexity !== undefined) attempt.spaceComplexity = spaceComplexity;
+        if (feltDifficulty !== undefined) attempt.feltDifficulty = feltDifficulty;
+        if (duration !== undefined) attempt.duration = duration;
+        if (submissionCount !== undefined) attempt.submissionCount = submissionCount;
+        if (failureReason !== undefined) attempt.failureReason = failureReason;
+        if (failureNote !== undefined) attempt.failureNote = failureNote;
+        
+        if (status && ['attempting', 'resolved', 'solved_with_help', 'gave_up'].includes(status)) {
             attempt.status = status;
-            if (status === 'resolved' && !attempt.resolvedAt) {
+            if ((status === 'resolved' || status === 'solved_with_help') && !attempt.resolvedAt) {
                 attempt.resolvedAt = new Date();
             }
         }
@@ -117,7 +156,7 @@ export async function PUT(req: Request) {
         await attempt.save();
 
         // If resolved, add to user's completedProblems
-        if (status === 'resolved') {
+        if (status === 'resolved' || status === 'solved_with_help') {
             await User.findByIdAndUpdate(session.userId, {
                 $addToSet: { completedProblems: attempt.problemId }
             });
@@ -131,6 +170,15 @@ export async function PUT(req: Request) {
                 content: attempt.content,
                 status: attempt.status,
                 notes: attempt.notes,
+                code: attempt.code,
+                language: attempt.language,
+                timeComplexity: attempt.timeComplexity,
+                spaceComplexity: attempt.spaceComplexity,
+                feltDifficulty: attempt.feltDifficulty,
+                duration: attempt.duration,
+                submissionCount: attempt.submissionCount,
+                failureReason: attempt.failureReason,
+                failureNote: attempt.failureNote,
                 timestamp: attempt.timestamp,
                 resolvedAt: attempt.resolvedAt,
             }

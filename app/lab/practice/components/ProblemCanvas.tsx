@@ -2,14 +2,15 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { SHEET, DSAProblem } from "../data/sheet";
-import { Check, Bookmark, Search, Shuffle, Trophy, Hash, X, ArrowRight, RotateCcw, Star } from "lucide-react";
+import { Check, Bookmark, Search, Shuffle, Trophy, Hash, X, ArrowRight, RotateCcw, Star, Play, Pause } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface ProblemCanvasProps {
   activeProblemId: string | null;
@@ -36,8 +37,89 @@ export default function ProblemCanvas({
   const [isFocusDismissed, setIsFocusDismissed] = useState(false);
   const { user, updateUser } = useAuth();
 
+  // Focus Mode state
+  const [focusedProblemId, setFocusedProblemId] = useState<string | null>(null);
+  const [focusTimerSeconds, setFocusTimerSeconds] = useState(0);
+  const [isFocusTimerRunning, setIsFocusTimerRunning] = useState(false);
+  const [focusAttemptContent, setFocusAttemptContent] = useState("");
+  const [focusAttemptCode, setFocusAttemptCode] = useState("");
+  const [focusAttemptLanguage, setFocusAttemptLanguage] = useState("Python");
+  const [focusAttemptTime, setFocusAttemptTime] = useState("");
+  const [focusAttemptSpace, setFocusAttemptSpace] = useState("");
+  const [focusAttemptFelt, setFocusAttemptFelt] = useState(0);
+
   const savedProblems = useMemo(() => user?.savedProblems || [], [user?.savedProblems]);
   const completedProblems = useMemo(() => user?.completedProblems || [], [user?.completedProblems]);
+
+  // Handle escape key to exit focus mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activeMode === "Focus") {
+        setActiveMode("Browse");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeMode]);
+
+  // Focus Timer
+  useEffect(() => {
+    let interval: any;
+    if (isFocusTimerRunning && activeMode === "Focus" && focusedProblemId) {
+      interval = setInterval(() => setFocusTimerSeconds(s => s + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isFocusTimerRunning, activeMode, focusedProblemId]);
+
+  const focusedProblem = useMemo(() => {
+    return SHEET.flatMap(t => t.problems).find(p => p.id === focusedProblemId);
+  }, [focusedProblemId]);
+
+  const startFocus = (id: string, e?: React.MouseEvent) => {
+    if(e) e.stopPropagation();
+    setFocusedProblemId(id);
+    setFocusTimerSeconds(0);
+    setIsFocusTimerRunning(true);
+    setFocusAttemptContent("");
+    setFocusAttemptCode("");
+    setFocusAttemptTime("");
+    setFocusAttemptSpace("");
+    setFocusAttemptFelt(0);
+    setActiveMode("Focus");
+  };
+
+  const handleMarkSolvedFocus = async () => {
+    if (!focusedProblem) return;
+    try {
+      const res = await fetch("/api/attempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problemId: focusedProblem.id,
+          content: focusAttemptContent,
+          code: focusAttemptCode,
+          language: focusAttemptLanguage,
+          timeComplexity: focusAttemptTime,
+          spaceComplexity: focusAttemptSpace,
+          feltDifficulty: focusAttemptFelt,
+          duration: focusTimerSeconds,
+          status: "resolved",
+        }),
+      });
+      if (res.ok) {
+        setActiveMode("Browse");
+        setFocusedProblemId(null);
+        handleCompleteProblem(focusedProblem.id, {} as any);
+        // Can conditionally pop open the success reflection modal from ProblemDrawer here but for now just resolve it
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const quitFocus = () => {
+    setActiveMode("Browse");
+    setIsFocusTimerRunning(false);
+    // optionally save as gave up
+  };
 
   // Aggregate all problems for stats and random picker
   const allProblems = useMemo(() => {
@@ -188,6 +270,218 @@ export default function ProblemCanvas({
       };
     }).filter((topic) => topic.problems.length > 0);
   }, [searchQuery, statusFilter, difficultyFilter, platformFilter, savedProblems, completedProblems]);
+
+  const formatTimer = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  if (activeMode === "Focus") {
+    // Focus Mode Full Screen Content
+    return (
+      <div className="relative h-full bg-card pt-12 flex flex-col overflow-hidden">
+        <div className="absolute top-6 left-12 right-12 z-20">
+          <div className="flex gap-6 border-b border-border/40 pb-2 max-w-5xl mx-auto">
+            {(["Browse", "Focus", "Analyze", "Interview"] as Mode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setActiveMode(mode)}
+                className={`relative px-1 pb-2 text-sm font-medium transition-colors ${
+                  activeMode === mode
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground/80"
+                }`}
+              >
+                {mode}
+                {activeMode === mode && (
+                  <motion.div
+                    layoutId="activeMode"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 w-full relative pt-12">
+          {!focusedProblem ? (
+            <div className="max-w-2xl mx-auto h-full flex flex-col items-center justify-center space-y-8 pb-32">
+              <div className="text-center space-y-2 mb-4">
+                <p className="text-lg font-medium text-foreground">Focus mode is empty until you select a problem.</p>
+                <p className="text-sm text-muted-foreground">Pick from Browse, or select an option below:</p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
+                <Button 
+                  variant="outline" 
+                  className="h-14 font-medium text-base hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                  onClick={() => {
+                    const uncompleted = allProblems.filter(p => !completedProblems.includes(p.id));
+                    const pool = uncompleted.length > 0 ? uncompleted : allProblems;
+                    if (pool.length > 0) {
+                      const randomProblem = pool[Math.floor(Math.random() * pool.length)];
+                      startFocus(randomProblem.id);
+                    }
+                  }}
+                >
+                  <Shuffle className="h-5 w-5 mr-3 text-primary" />
+                  ✧ Pick Random Problem
+                </Button>
+                
+                <Button variant="outline" className="h-14 font-medium text-base hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                  <RotateCcw className="h-5 w-5 mr-3 text-teal-500" />
+                  ↻ Next Review Problem
+                </Button>
+
+                <Button variant="outline" className="h-14 font-medium text-base hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                  <Star className="h-5 w-5 mr-3 text-amber-500" />
+                  ★ Today's Suggestion
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto h-full overflow-y-auto thin-scrollbar pb-32 px-8 pt-8">
+              <div className="rounded-xl border border-border bg-card shadow-lg p-10 space-y-8 relative">
+                
+                {/* Timer Positioned Prominently */}
+                <div 
+                  className="absolute top-8 left-8 flex items-center gap-2 cursor-pointer group"
+                  onClick={() => setIsFocusTimerRunning(!isFocusTimerRunning)}
+                >
+                  {isFocusTimerRunning ? <Pause className="h-5 w-5 text-muted-foreground group-hover:text-foreground" /> : <Play className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />}
+                  <span className="text-2xl font-mono tracking-tight font-medium opacity-80 group-hover:opacity-100 transition-opacity">
+                    {formatTimer(focusTimerSeconds)}
+                  </span>
+                </div>
+
+                <div className="text-center space-y-3 pt-2">
+                  <h1 className="text-3xl font-bold tracking-tight">{focusedProblem.title}</h1>
+                  <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                    <span className="font-medium bg-muted px-2 py-0.5 rounded">{focusedProblem.platform}</span>
+                    <span>•</span>
+                    <span className={
+                      focusedProblem.tags?.includes("Easy") ? "text-green-500 font-medium" :
+                      focusedProblem.tags?.includes("Medium") ? "text-yellow-500 font-medium" :
+                      "text-red-500 font-medium"
+                    }>{focusedProblem.tags?.[0] || "Medium"}</span>
+                    <span>•</span>
+                    <span>{focusedProblem.tags?.slice(1).join(", ")}</span>
+                  </div>
+                </div>
+
+                <div className="h-px bg-border/50 mx-auto w-1/2" />
+
+                <div className="text-base text-muted-foreground leading-relaxed text-center max-w-2xl mx-auto">
+                  {focusedProblem.description}
+                </div>
+
+                <div className="h-px bg-border/50 mx-auto w-1/2" />
+
+                <div className="space-y-6 max-w-3xl mx-auto">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Hash className="h-4 w-4" /> Your Approach
+                    </label>
+                    <textarea
+                      placeholder="Write down your thoughts, edge cases, and approach before coding..."
+                      value={focusAttemptContent}
+                      onChange={(e) => setFocusAttemptContent(e.target.value)}
+                      className="w-full h-32 px-4 py-3 text-sm rounded-lg border border-border bg-background resize-none focus:outline-none focus:border-primary/50 shadow-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        {"</>"} Your Code
+                      </label>
+                      <select 
+                        value={focusAttemptLanguage} 
+                        onChange={(e) => setFocusAttemptLanguage(e.target.value)}
+                        className="text-xs bg-muted border-none rounded px-3 py-1 font-medium"
+                      >
+                        {["Python", "JavaScript", "Java", "C++", "Go", "Other"].map(l => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <textarea
+                      placeholder="def solution():\n    pass"
+                      value={focusAttemptCode}
+                      onChange={(e) => setFocusAttemptCode(e.target.value)}
+                      className="w-full h-64 px-4 py-3 text-sm font-mono rounded-lg border border-border bg-zinc-50 dark:bg-zinc-950 resize-none focus:outline-none focus:border-primary/50 shadow-sm whitespace-pre"
+                      spellCheck="false"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex-1 min-w-[200px] space-y-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Time Complexity</label>
+                      <input 
+                        type="text" 
+                        placeholder="O(n)" 
+                        value={focusAttemptTime}
+                        onChange={(e) => setFocusAttemptTime(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-border bg-background shadow-sm"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[200px] space-y-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Space Complexity</label>
+                      <input 
+                        type="text" 
+                        placeholder="O(1)" 
+                        value={focusAttemptSpace}
+                        onChange={(e) => setFocusAttemptSpace(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-border bg-background shadow-sm"
+                      />
+                    </div>
+                    <div className="flex-[2] min-w-[250px] space-y-2 text-center border border-border rounded-lg bg-background shadow-sm p-2 flex flex-col justify-center">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Felt Difficulty</label>
+                      <div className="flex justify-center gap-1.5 mt-1">
+                        {[1,2,3,4,5].map(rating => (
+                          <button 
+                            key={rating}
+                            onClick={() => setFocusAttemptFelt(rating)}
+                            className={cn(
+                              "h-5 w-5 rounded-full text-xs leading-none flex items-center justify-center border",
+                              focusAttemptFelt >= rating ? "bg-primary border-primary text-primary-foreground" : "border-border text-transparent hover:border-primary/50"
+                            )}
+                          >
+                            ●
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-border/50 flex justify-between items-center bg-muted/10 -mx-10 -mb-10 p-6 rounded-b-xl">
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="gap-2 bg-background" asChild>
+                      <a href={focusedProblem.url} target="_blank" rel="noopener noreferrer">
+                        ⎋ Open {focusedProblem.platform}
+                      </a>
+                    </Button>
+                    <Button variant="outline" className="gap-2 bg-background">💡 Hint</Button>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <Button variant="ghost" onClick={quitFocus} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">🏳 Quit</Button>
+                    <Button onClick={handleMarkSolvedFocus} className="gap-2">
+                      <Check className="h-4 w-4" /> Mark Solved
+                    </Button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full bg-card pt-12 flex flex-col overflow-hidden">

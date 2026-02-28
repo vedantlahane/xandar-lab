@@ -4,8 +4,17 @@ export interface IAttempt {
     _id: string;
     problemId: string;
     userId: string;
-    content: string;
-    status: 'attempting' | 'resolved';
+    content: string; // Used as approach now
+    code?: string;
+    language?: string;
+    timeComplexity?: string;
+    spaceComplexity?: string;
+    feltDifficulty?: number; // 1-5 ranking
+    duration?: number; // in seconds
+    submissionCount?: number;
+    status: 'attempting' | 'resolved' | 'solved_with_help' | 'gave_up';
+    failureReason?: string;
+    failureNote?: string;
     notes?: string;
     timestamp: Date;
     resolvedAt?: Date;
@@ -64,10 +73,47 @@ const AttemptSchema = new Schema({
         required: true,
         maxlength: 5000,
     },
+    code: {
+        type: String,
+        maxlength: 20000,
+    },
+    language: {
+        type: String,
+        default: 'Python',
+    },
+    timeComplexity: {
+        type: String,
+        maxlength: 50,
+    },
+    spaceComplexity: {
+        type: String,
+        maxlength: 50,
+    },
+    feltDifficulty: {
+        type: Number,
+        min: 1,
+        max: 5,
+    },
+    duration: {
+        type: Number,
+        default: 0,
+    },
+    submissionCount: {
+        type: Number,
+        default: 0,
+    },
     status: {
         type: String,
-        enum: ['attempting', 'resolved'],
+        enum: ['attempting', 'resolved', 'solved_with_help', 'gave_up'],
         default: 'attempting',
+    },
+    failureReason: {
+        type: String,
+        maxlength: 100,
+    },
+    failureNote: {
+        type: String,
+        maxlength: 1000,
     },
     notes: {
         type: String,
