@@ -4,6 +4,7 @@
 import { useState, useMemo } from "react";
 import { JOB_LISTINGS, STATUS_CONFIG, ApplicationStatus, JobType, JobPlatform } from "../data/jobs";
 import { Bookmark, Building2, MapPin, ExternalLink, Clock, Briefcase } from "lucide-react";
+import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { useAuth } from "@/components/auth/AuthContext";
 
 interface JobCanvasProps {
@@ -22,6 +23,7 @@ export default function JobCanvas({
     const [typeFilter, setTypeFilter] = useState<FilterType>("All");
     const [statusFilter, setStatusFilter] = useState<FilterStatus>("All");
     const [remoteFilter, setRemoteFilter] = useState<FilterRemote>("All");
+    const [searchQuery, setSearchQuery] = useState("");
     const { user, updateUser } = useAuth();
 
     const savedJobs = useMemo(() => user?.savedJobs || [], [user?.savedJobs]);
@@ -51,6 +53,15 @@ export default function JobCanvas({
     const filteredListings = useMemo(() => {
         return JOB_LISTINGS.map((category) => {
             const filteredJobs = category.jobs.filter((job) => {
+                // search query
+                if (
+                    searchQuery &&
+                    !job.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+                    !job.company.toLowerCase().includes(searchQuery.toLowerCase())
+                ) {
+                    return false;
+                }
+
                 // Type Filter
                 if (typeFilter !== "All" && job.type !== typeFilter) {
                     return false;
@@ -85,7 +96,7 @@ export default function JobCanvas({
                 jobs: filteredJobs,
             };
         }).filter((category) => category.jobs.length > 0);
-    }, [typeFilter, statusFilter, remoteFilter, savedJobs, jobApplications]);
+    }, [typeFilter, statusFilter, remoteFilter, savedJobs, jobApplications, searchQuery]);
 
     const getStatusBadge = (jobId: string) => {
         const status = jobApplications[jobId] as ApplicationStatus | undefined;
@@ -105,10 +116,13 @@ export default function JobCanvas({
 
             <div id="jobs-scroll-container" className="h-full overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
-                    <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-12">
-                        {/* Left Column: Filters */}
-                        <div className="hidden md:block">
-                            <div className="sticky top-32 text-right space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12">
+                        {/* Left Column: Filters (practice-style aside) */}
+                        <aside className="sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
+                            {/* top fade */}
+                            <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-card to-transparent z-10" />
+
+                            <div className="space-y-8 text-right py-12 overflow-y-auto thin-scrollbar max-h-[calc(100vh-8rem)]">
                                 {/* Type Filter */}
                                 <div className="space-y-2">
                                     <h3 className="font-semibold text-foreground">Job Type</h3>
@@ -160,10 +174,31 @@ export default function JobCanvas({
                                     </div>
                                 </div>
                             </div>
-                        </div>
+
+                            {/* bottom fade */}
+                            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-card to-transparent z-10" />
+                        </aside>
 
                         {/* Right Column: Jobs */}
                         <div className="space-y-3">
+                            {/* sticky header with search */}
+                            <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm py-4">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-lg font-semibold">Jobs</h2>
+                                    <div className="flex-1 ml-6">
+                                        <SearchBar
+                                            query={searchQuery}
+                                            onQueryChange={setSearchQuery}
+                                            onRandom={(e) => {
+                                                const pool = filteredListings.flatMap((c) => c.jobs);
+                                                if (pool.length === 0) return;
+                                                const pick = pool[Math.floor(Math.random() * pool.length)];
+                                                onJobSelect(pick.id, e as unknown as React.MouseEvent);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                             {filteredListings.length === 0 ? (
                                 <div className="text-center py-12 text-muted-foreground">
                                     <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-40" />

@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { HACKATHONS, HackathonStatus, HackathonType } from "../data/hackathons";
 import { Trophy, Calendar, Users, MapPin } from "lucide-react";
+import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 
 interface HackathonCanvasProps {
     activeHackId: string | null;
@@ -18,6 +19,7 @@ export default function HackathonCanvas({
 }: HackathonCanvasProps) {
     const [statusFilter, setStatusFilter] = useState<FilterStatus>("All");
     const [typeFilter, setTypeFilter] = useState<FilterType>("All");
+    const [searchQuery, setSearchQuery] = useState("");
 
     const statuses: FilterStatus[] = ["All", "Upcoming", "Registered", "In Progress", "Completed", "Missed"];
     const types: FilterType[] = ["All", "Online", "In-Person", "Hybrid"];
@@ -25,6 +27,12 @@ export default function HackathonCanvas({
     const filteredHackathons = useMemo(() => {
         return HACKATHONS.map((monthData) => {
             const filteredItems = monthData.hackathons.filter((hack) => {
+                if (
+                    searchQuery &&
+                    !hack.name.toLowerCase().includes(searchQuery.toLowerCase())
+                ) {
+                    return false;
+                }
                 if (statusFilter !== "All" && hack.status !== statusFilter) return false;
                 if (typeFilter !== "All" && hack.type !== typeFilter) return false;
                 return true;
@@ -35,7 +43,7 @@ export default function HackathonCanvas({
                 hackathons: filteredItems,
             };
         }).filter((monthData) => monthData.hackathons.length > 0);
-    }, [statusFilter, typeFilter]);
+    }, [statusFilter, typeFilter, searchQuery]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -64,10 +72,13 @@ export default function HackathonCanvas({
 
             <div id="hackathons-scroll-container" className="h-full overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
-                    <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-12">
-                        {/* Left Column: Filters */}
-                        <div className="hidden md:block">
-                            <div className="sticky top-32 text-right space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12">
+                        {/* Left Column: Filters (practice-style aside) */}
+                        <aside className="sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
+                            {/* top fade */}
+                            <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-card to-transparent z-10" />
+
+                            <div className="space-y-8 text-right py-12 overflow-y-auto thin-scrollbar max-h-[calc(100vh-8rem)]">
                                 <div className="space-y-2">
                                     <h3 className="font-semibold text-foreground">Status</h3>
                                     <div className="space-y-1 text-sm text-muted-foreground">
@@ -110,10 +121,31 @@ export default function HackathonCanvas({
                                     </div>
                                 </div>
                             </div>
-                        </div>
+
+                            {/* bottom fade */}
+                            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-card to-transparent z-10" />
+                        </aside>
 
                         {/* Right Column: Hackathons */}
                         <div className="space-y-3">
+                            {/* sticky header with search */}
+                            <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm py-4">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-lg font-semibold">Hackathons</h2>
+                                    <div className="flex-1 ml-6">
+                                        <SearchBar
+                                            query={searchQuery}
+                                            onQueryChange={setSearchQuery}
+                                            onRandom={() => {
+                                                const pool = filteredHackathons.flatMap((m) => m.hackathons);
+                                                if (pool.length === 0) return;
+                                                const pick = pool[Math.floor(Math.random() * pool.length)];
+                                                onHackSelect(pick.id, new MouseEvent('click') as unknown as React.MouseEvent);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                             {filteredHackathons.length === 0 ? (
                                 <div className="text-center py-12 text-muted-foreground">
                                     No hackathons match your filters.

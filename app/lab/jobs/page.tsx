@@ -8,6 +8,7 @@ import JobCanvas from "./components/JobCanvas";
 import { JobDrawer } from "./components/JobDrawer";
 import { Job, JOB_LISTINGS } from "./data/jobs";
 import { useAuth } from "@/components/auth/AuthContext";
+import { JobsHeader } from "./components/JobsHeader";
 
 export default function JobsPage() {
     const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -43,27 +44,31 @@ export default function JobsPage() {
     };
 
     return (
-        <div className="relative h-screen w-full bg-background text-foreground overflow-hidden">
-            <main className="h-full w-full">
-                <JobCanvas
-                    activeJobId={activeJobId}
-                    onJobSelect={handleJobSelect}
-                />
-            </main>
+        <>
+            <JobsHeader />
+            {/* content area fills remaining space from layout */}
+            <div className="flex-1 relative bg-background text-foreground overflow-hidden">
+                <main className="h-full w-full">
+                    <JobCanvas
+                        activeJobId={activeJobId}
+                        onJobSelect={handleJobSelect}
+                    />
+                </main>
 
-            {/* Drawer - z-50 to be above everything */}
-            <AnimatePresence>
-                {activeJob && clickPosition && (
-                    <div className="absolute inset-0 pointer-events-none z-50">
-                        <JobDrawer
-                            key={activeJob.id}
-                            job={activeJob}
-                            position={clickPosition}
-                            onClose={() => setActiveJobId(null)}
-                        />
-                    </div>
-                )}
-            </AnimatePresence>
-        </div>
+                {/* Drawer - z-50 to be above everything */}
+                <AnimatePresence>
+                    {activeJob && clickPosition && (
+                        <div className="absolute inset-0 pointer-events-none z-50">
+                            <JobDrawer
+                                key={activeJob.id}
+                                job={activeJob}
+                                position={clickPosition}
+                                onClose={() => setActiveJobId(null)}
+                            />
+                        </div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </>
     );
 }

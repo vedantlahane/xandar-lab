@@ -39,7 +39,7 @@ export default function PracticeTemplate({
   if (isLoading || !isAuthenticated) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-        <div className="h-12 flex-shrink-0 border-b border-border/40" />
+        <div className="h-12 shrink-0 border-b border-border/40" />
       </div>
     );
   }
