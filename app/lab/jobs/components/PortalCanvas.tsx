@@ -173,7 +173,7 @@ export default function PortalCanvas() {
                     href={p.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="group block w-full border-b border-border/40 px-4 py-4 transition-all hover:bg-linear-to-r hover:from-transparent hover:to-accent/40"
+                    className="group block w-full rounded-xl border border-border/40 px-4 py-4 transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-foreground">{p.name}</span>

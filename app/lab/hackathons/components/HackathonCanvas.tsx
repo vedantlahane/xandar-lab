@@ -72,13 +72,10 @@ export default function HackathonCanvas({
 
             <div id="hackathons-scroll-container" className="h-full overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
-                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-12">
                         {/* Left Column: Filters (practice-style aside) */}
-                        <aside className="sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
-                            {/* top fade */}
-                            <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-card to-transparent z-10" />
-
-                            <div className="space-y-8 text-right py-12 overflow-y-auto thin-scrollbar max-h-[calc(100vh-8rem)]">
+                        <div className="hidden md:block">
+                            <div className="sticky top-32 text-right space-y-6">
                                 <div className="space-y-2">
                                     <h3 className="font-semibold text-foreground">Status</h3>
                                     <div className="space-y-1 text-sm text-muted-foreground">
@@ -121,10 +118,7 @@ export default function HackathonCanvas({
                                     </div>
                                 </div>
                             </div>
-
-                            {/* bottom fade */}
-                            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-card to-transparent z-10" />
-                        </aside>
+                        </div>
 
                         {/* Right Column: Hackathons */}
                         <div className="space-y-3">
@@ -173,7 +167,7 @@ export default function HackathonCanvas({
                                                     <button
                                                         key={hack.id}
                                                         onClick={(e) => onHackSelect(hack.id, e)}
-                                                        className={`group relative w-full border-b border-border/40 px-4 py-4 text-left transition-all hover:bg-gradient-to-r hover:from-transparent hover:to-accent/40 ${isActive ? "bg-accent/50" : ""
+                                                        className={`group relative w-full rounded-xl border border-border/40 px-4 py-4 text-left transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2 ${isActive ? "bg-white/50 dark:bg-zinc-900/30 border-zinc-200/60 dark:border-zinc-800/60 shadow-sm" : ""
                                                             }`}
                                                     >
                                                         <div className="flex items-start justify-between gap-3">
