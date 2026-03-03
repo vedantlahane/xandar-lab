@@ -8,7 +8,6 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthContext";
-import { ProfileDropdown } from "@/components/auth/ProfileDropdown";
 
 const smoothSpring = {
   type: "spring",
@@ -102,8 +101,8 @@ export default function LabSidebar() {
                       exit={{ opacity: 0, width: 0, x: -10 }}
                       transition={smoothSpring}
                       className={cn(
-                        "whitespace-nowrap text-sm font-medium overflow-hidden",
-                        isActive ? "text-foreground" : "text-muted-foreground"
+                        "whitespace-nowrap text-sm font-medium overflow-hidden transition-colors duration-300",
+                        isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                       )}
                     >
                       {item.label}
@@ -116,18 +115,6 @@ export default function LabSidebar() {
         </motion.div>
       </aside>
 
-      {/* Profile Section - Bottom Left */}
-      <aside className="fixed left-0 bottom-0 z-40 flex items-end justify-start pl-4 pb-4 pointer-events-none">
-        <motion.div
-          layout
-          transition={{ layout: smoothSpring }}
-          className="pointer-events-auto"
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
-        >
-          <ProfileDropdown isExpanded={isHovered} />
-        </motion.div>
-      </aside>
     </>
   );
 }
