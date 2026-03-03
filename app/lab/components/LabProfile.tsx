@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, type Transition } from "framer-motion";
 import { ProfileDropdown } from "@/components/auth/ProfileDropdown";
+import { cn } from "@/lib/utils";
 
 const smoothSpring = {
     type: "spring",
@@ -19,11 +20,20 @@ export default function LabProfile() {
             <motion.div
                 layout
                 transition={{ layout: smoothSpring }}
-                className="pointer-events-auto"
+                className={cn(
+                    "pointer-events-auto relative rounded-2xl transition-all duration-300",
+                    isHovered ? "bg-white/40 dark:bg-zinc-900/40 shadow-xl shadow-black/5 ring-1 ring-black/5 dark:ring-white/10 backdrop-blur-xl" : ""
+                )}
                 onHoverStart={() => setIsHovered(true)}
                 onHoverEnd={() => setIsHovered(false)}
             >
-                <ProfileDropdown isExpanded={isHovered} />
+                <div className={cn(
+                    "absolute inset-0 rounded-2xl transition-opacity duration-300 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10",
+                    isHovered ? "opacity-100" : "opacity-0"
+                )} />
+                <div className="relative z-10">
+                    <ProfileDropdown isExpanded={isHovered} />
+                </div>
             </motion.div>
         </aside>
     );

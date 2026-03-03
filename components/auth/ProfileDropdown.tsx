@@ -19,10 +19,10 @@ const smoothSpring = {
 
 // Static â€” defined outside component so the array reference is stable
 const MENU_ITEMS = [
-    { icon: User,     label: "Profile",    path: "/lab/profile" },
+    { icon: User, label: "Profile", path: "/lab/profile" },
     { icon: Activity, label: "Statistics", path: "/lab/profile?tab=stats" },
-    { icon: Settings, label: "Settings",   path: "/lab/profile?tab=profile" },
-    { icon: Shield,   label: "Security",   path: "/lab/profile?tab=password" },
+    { icon: Settings, label: "Settings", path: "/lab/profile?tab=profile" },
+    { icon: Shield, label: "Security", path: "/lab/profile?tab=password" },
 ] as const;
 
 interface ProfileDropdownProps {
@@ -67,10 +67,10 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
             <motion.button
                 onClick={handleProfileClick}
                 className={cn(
-                    "group flex items-center gap-3 rounded-xl transition-all duration-200",
+                    "group flex items-center gap-3 rounded-xl transition-all duration-300",
                     isExpanded
-                        ? "w-full px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-900"
-                        : "p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                        ? "w-full px-3 py-2.5 hover:bg-black/5 dark:hover:bg-white/5"
+                        : "p-2 hover:bg-black/5 dark:hover:bg-white/5"
                 )}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -78,8 +78,8 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                 {/* Avatar */}
                 <div
                     className={cn(
-                        "flex items-center justify-center rounded-full transition-all duration-200",
-                        isExpanded ? "h-9 w-9" : "h-8 w-8",
+                        "flex items-center justify-center rounded-full transition-all duration-300 ring-2 ring-transparent group-hover:ring-primary/20",
+                        isExpanded ? "h-9 w-9 shadow-[0_0_15px_-3px_rgba(var(--primary),0.3)]" : "h-8 w-8",
                         isAuthenticated && user
                             ? `bg-linear-to-br ${avatarGradient}`
                             : "bg-zinc-200 dark:bg-zinc-800"
@@ -105,7 +105,7 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                             className="flex flex-1 items-center justify-between overflow-hidden"
                         >
                             <div className="text-left">
-                                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-25">
+                                <p className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate max-w-32 group-hover:text-primary transition-colors">
                                     {isAuthenticated && user ? user.username : "Sign In"}
                                 </p>
                                 {isAuthenticated && (
@@ -136,15 +136,16 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={smoothSpring}
                         className={cn(
-                            "absolute z-50 min-w-50 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 overflow-hidden",
+                            "absolute z-50 min-w-56 rounded-2xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden ring-1 ring-black/5 dark:ring-white/10",
                             isExpanded
-                                ? "bottom-full left-0 right-0 mb-2"
-                                : "bottom-full left-0 mb-2"
+                                ? "bottom-full left-0 right-0 mb-3"
+                                : "bottom-full left-0 mb-3"
                         )}
                     >
                         {/* User info header */}
-                        <div className="px-3 py-3 border-b border-zinc-200/60 dark:border-zinc-800/60">
-                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        <div className="px-4 py-3 border-b border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
+                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 relative z-10">
                                 {user?.username}
                             </p>
                             {user?.email && (
@@ -155,7 +156,7 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                         </div>
 
                         {/* Nav items */}
-                        <div className="py-1">
+                        <div className="p-1 space-y-0.5">
                             {MENU_ITEMS.map((item, index) => (
                                 <motion.button
                                     key={item.label}
@@ -163,24 +164,24 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.05 }}
                                     onClick={() => handleNavigate(item.path)}
-                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
+                                    className="group/item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/5 dark:hover:bg-white/10 transition-all rounded-xl"
                                 >
-                                    <item.icon className="h-4 w-4" />
+                                    <item.icon className="h-4 w-4 transition-transform group-hover/item:scale-110 group-hover/item:text-primary" />
                                     {item.label}
                                 </motion.button>
                             ))}
                         </div>
 
                         {/* Logout */}
-                        <div className="border-t border-zinc-200/60 dark:border-zinc-800/60 py-1">
+                        <div className="border-t border-black/5 dark:border-white/10 p-1">
                             <motion.button
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: MENU_ITEMS.length * 0.05 }}
                                 onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                                className="group/logout w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all rounded-xl"
                             >
-                                <LogOut className="h-4 w-4" />
+                                <LogOut className="h-4 w-4 transition-transform group-hover/logout:-translate-x-1" />
                                 Sign out
                             </motion.button>
                         </div>

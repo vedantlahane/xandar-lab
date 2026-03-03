@@ -89,7 +89,7 @@ export default function Home() {
         {/* Radial highlight */}
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-77.5 w-77.5 rounded-full bg-teal-400 opacity-20 blur-[100px]" />
         {/* Top fade */}
-        <div className="absolute right-0 top-0 -z-10 h-screen w-screen bg-linear-to-b from-white via-transparent to-transparent dark:from-zinc-950" />
+        <div className="absolute right-0 top-0 -z-10 h-screen w-screen bg-linear-to-b from-white via-transparent to-transparent dark:from-black" />
       </div>
 
       {/* Noise texture */}
