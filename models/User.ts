@@ -23,6 +23,15 @@ export interface IUser {
   sessions: ISession[];   // Active sessions
   createdAt: Date;
   lastLoginAt?: Date;
+  // Community fields
+  isProfilePublic: boolean;
+  followers: string[];      // Array of User ObjectIds (stored as strings)
+  following: string[];      // Array of User ObjectIds (stored as strings)
+  reputationScore: number;
+  sharingPreferences: {
+    autoShareCompletedProblems: boolean;
+    autoShareHackathonResults: boolean;
+  };
 }
 
 const SessionSchema = new Schema<ISession>({
@@ -99,6 +108,27 @@ const UserSchema = new Schema({
   lastLoginAt: {
     type: Date,
   },
+  // Community Fields
+  isProfilePublic: {
+    type: Boolean,
+    default: false,
+  },
+  followers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  following: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  reputationScore: {
+    type: Number,
+    default: 0,
+  },
+  sharingPreferences: {
+    autoShareCompletedProblems: { type: Boolean, default: false },
+    autoShareHackathonResults: { type: Boolean, default: false },
+  }
 });
 
 // Clean up expired sessions before saving

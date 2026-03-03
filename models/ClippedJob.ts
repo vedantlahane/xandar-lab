@@ -31,6 +31,8 @@ export interface IClippedJob extends Document {
     username?: string;
     /** Server-side creation timestamp */
     createdAt: Date;
+    /** Community sharing visibility */
+    visibility: 'private' | 'public';
 }
 
 const PageContextSchema = new Schema<IPageContext>({
@@ -67,6 +69,11 @@ const ClippedJobSchema = new Schema<IClippedJob>({
     createdAt: {
         type: Date,
         default: Date.now,
+    },
+    visibility: {
+        type: String,
+        enum: ['private', 'public'],
+        default: 'private',
     },
 });
 

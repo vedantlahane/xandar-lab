@@ -37,6 +37,9 @@ export interface IInterviewSession {
     report?: IReport;
     startedAt: Date;
     endedAt?: Date;
+    // Community sharing
+    visibility: 'private' | 'unlisted' | 'public';
+    likes: number; // Cache for quick sorting
 }
 
 const MessageSchema = new Schema({
@@ -84,6 +87,12 @@ const InterviewSessionSchema = new Schema({
     report: ReportSchema,
     startedAt: { type: Date, default: Date.now },
     endedAt: { type: Date },
+    visibility: {
+        type: String,
+        enum: ['private', 'unlisted', 'public'],
+        default: 'private',
+    },
+    likes: { type: Number, default: 0 },
 });
 
 InterviewSessionSchema.index({ userId: 1, startedAt: -1 });
