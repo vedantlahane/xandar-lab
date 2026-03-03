@@ -50,7 +50,7 @@ export default function DocumentCanvas({
     };
 
     return (
-        <div className="relative h-full bg-card pt-12">
+        <div className="relative h-full pt-12">
             {/* Top Fade */}
             <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-card to-transparent z-20" />
 
@@ -109,7 +109,7 @@ export default function DocumentCanvas({
                                         data-section-title={section.sectionName}
                                         className="space-y-5"
                                     >
-                                        <div className="sticky top-0 z-10 bg-card/95 py-4 backdrop-blur">
+                                        <div className="sticky top-0 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{section.sectionName}</h2>
                                             <p className="text-sm text-muted-foreground">
                                                 {section.documents.length} documents
@@ -132,8 +132,8 @@ export default function DocumentCanvas({
                                                                     <FileText className={`h-4 w-4 ${getCategoryColor(doc.category)}`} />
                                                                     <div
                                                                         className={`text-sm font-medium transition-colors ${isActive
-                                                                                ? "text-primary"
-                                                                                : "text-foreground group-hover:text-primary"
+                                                                            ? "text-primary"
+                                                                            : "text-foreground group-hover:text-primary"
                                                                             }`}
                                                                     >
                                                                         {doc.title}

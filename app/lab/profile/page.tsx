@@ -47,7 +47,7 @@ const itemVariants = {
 // Animated loading dots
 function LoadingDots() {
     return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+        <div className="flex min-h-screen items-center justify-center">
             <div className="flex items-center gap-1.5">
                 {[0, 1, 2].map((i) => (
                     <motion.div
@@ -304,7 +304,7 @@ export default function ProfilePage() {
     ];
 
     return (
-        <div className="relative flex min-h-screen bg-zinc-50 text-zinc-800 dark:bg-black dark:text-zinc-200 overflow-hidden">
+        <div className="relative flex min-h-screen text-zinc-800 dark:text-zinc-200 overflow-hidden">
             {/* Subtle noise texture overlay */}
             <div
                 className="pointer-events-none fixed inset-0 opacity-[0.015] dark:opacity-[0.025]"

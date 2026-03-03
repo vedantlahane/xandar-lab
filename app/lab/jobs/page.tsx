@@ -47,7 +47,7 @@ export default function JobsPage() {
         <>
             <JobsHeader />
             {/* content area fills remaining space from layout */}
-            <div className="flex-1 relative bg-background text-foreground overflow-hidden">
+            <div className="flex-1 relative text-foreground overflow-hidden">
                 <main className="h-full w-full">
                     <JobCanvas
                         activeJobId={activeJobId}

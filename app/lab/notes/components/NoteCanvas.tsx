@@ -68,7 +68,7 @@ export default function NoteCanvas({
     };
 
     return (
-        <div className="relative h-full bg-card pt-12">
+        <div className="relative h-full pt-12">
             {/* Top Fade */}
             <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-card to-transparent z-20" />
 
@@ -102,8 +102,8 @@ export default function NoteCanvas({
                                                 key={filter}
                                                 onClick={() => setColorFilter(colorFilter === filter ? "All" : filter)}
                                                 className={`w-5 h-5 rounded-full transition-all border-2 ${colorFilter === filter
-                                                        ? "border-primary scale-110"
-                                                        : "border-transparent hover:scale-105"
+                                                    ? "border-primary scale-110"
+                                                    : "border-transparent hover:scale-105"
                                                     } ${filter === "All" ? "bg-gradient-to-br from-yellow-400 via-pink-400 to-blue-400" : getColorFilterDot(filter)}`}
                                                 title={filter === "All" ? "All colors" : filter}
                                             />
@@ -128,7 +128,7 @@ export default function NoteCanvas({
                                         data-group-title={group.groupName}
                                         className="space-y-5"
                                     >
-                                        <div className="sticky top-0 z-10 bg-card/95 py-4 backdrop-blur">
+                                        <div className="sticky top-0 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{group.groupName}</h2>
                                             <p className="text-sm text-muted-foreground">
                                                 {group.notes.length} notes
@@ -154,8 +154,8 @@ export default function NoteCanvas({
                                                                     )}
                                                                     <div
                                                                         className={`text-sm font-medium transition-colors ${isActive
-                                                                                ? "text-primary"
-                                                                                : "text-foreground group-hover:text-primary"
+                                                                            ? "text-primary"
+                                                                            : "text-foreground group-hover:text-primary"
                                                                             }`}
                                                                     >
                                                                         {note.title}

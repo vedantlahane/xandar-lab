@@ -51,7 +51,7 @@ export default function PortalCanvas() {
   );
 
   return (
-    <div className="relative h-full bg-card">
+    <div className="relative h-full">
       {/* top fade */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-card to-transparent z-10" />
 
@@ -76,9 +76,8 @@ export default function PortalCanvas() {
                       <div
                         key={f}
                         onClick={() => setTypeFilter(f)}
-                        className={`cursor-pointer transition-colors ${
-                          typeFilter === f ? "text-primary font-medium" : "hover:text-foreground"
-                        }`}
+                        className={`cursor-pointer transition-colors ${typeFilter === f ? "text-primary font-medium" : "hover:text-foreground"
+                          }`}
                       >
                         {f === "All" ? "All Types" : f}
                       </div>
@@ -94,9 +93,8 @@ export default function PortalCanvas() {
                         <div
                           key={r}
                           onClick={() => setRegionFilter(r)}
-                          className={`cursor-pointer transition-colors ${
-                            regionFilter === r ? "text-primary font-medium" : "hover:text-foreground"
-                          }`}
+                          className={`cursor-pointer transition-colors ${regionFilter === r ? "text-primary font-medium" : "hover:text-foreground"
+                            }`}
                         >
                           {r === "All" ? "All Regions" : r}
                         </div>
@@ -112,9 +110,8 @@ export default function PortalCanvas() {
                       <div
                         key={f}
                         onClick={() => setIntlFilter(f)}
-                        className={`cursor-pointer transition-colors ${
-                          intlFilter === f ? "text-primary font-medium" : "hover:text-foreground"
-                        }`}
+                        className={`cursor-pointer transition-colors ${intlFilter === f ? "text-primary font-medium" : "hover:text-foreground"
+                          }`}
                       >
                         {f}
                       </div>
@@ -129,9 +126,8 @@ export default function PortalCanvas() {
                       <div
                         key={f}
                         onClick={() => setRemoteFilter(f)}
-                        className={`cursor-pointer transition-colors ${
-                          remoteFilter === f ? "text-primary font-medium" : "hover:text-foreground"
-                        }`}
+                        className={`cursor-pointer transition-colors ${remoteFilter === f ? "text-primary font-medium" : "hover:text-foreground"
+                          }`}
                       >
                         {f}
                       </div>
@@ -147,7 +143,7 @@ export default function PortalCanvas() {
             {/* content column */}
             <div className="space-y-4 pb-48 pt-8">
               {/* sticky title row with search */}
-              <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm py-4">
+              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold">Job portals</h2>
                   <div className="flex-1 ml-6">

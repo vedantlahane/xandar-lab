@@ -40,7 +40,7 @@ export function TodaysFocus() {
         if (data.suggestions) setSuggestions(data.suggestions);
         if (data.progress) setProgress(data.progress);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -64,7 +64,7 @@ export function TodaysFocus() {
   };
 
   return (
-    <div className="rounded-xl border border-border/40 bg-card p-5 space-y-4 mb-2">
+    <div className="rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-5 space-y-4 mb-2">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

@@ -8,7 +8,7 @@ export default function JobsLayout({
 }) {
     return (
         <JobsProvider>
-            <div className="relative h-screen flex flex-col bg-background text-foreground overflow-hidden">
+            <div className="relative h-screen flex flex-col text-foreground overflow-hidden">
                 <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                     {children}
                 </div>

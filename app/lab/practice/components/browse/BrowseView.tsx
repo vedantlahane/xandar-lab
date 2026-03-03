@@ -46,7 +46,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
           setExtensionMap(map);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const filters = useProblemFilters({ savedProblems, completedProblems, extensionMap });
@@ -61,7 +61,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
     fetch("/api/analytics/activity", { credentials: "include" })
       .then(res => res.json())
       .then(data => setWeeklyDelta(data.weeklyDelta))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const stats = useMemo(() => {
@@ -136,9 +136,9 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative h-full bg-card">
+    <div className="relative h-full">
       {/* Top edge fade */}
-      <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-card to-transparent z-10" />
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background to-transparent z-10" />
 
       {/* Scrollable content */}
       <div
@@ -151,7 +151,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
             {/* ── Left column: Progress + Filters — sticky, vertically centered ── */}
             <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
               {/* Top fade */}
-              <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-card to-transparent z-10" />
+              <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-background to-transparent z-10" />
               <div className="space-y-8 text-right py-12 overflow-y-auto thin-scrollbar max-h-[calc(100vh-8rem)]">
                 <ProgressCard stats={stats} />
                 <FilterPanel
@@ -168,13 +168,13 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
                 />
               </div>
               {/* Bottom fade */}
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-card to-transparent z-10" />
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-background to-transparent z-10" />
             </aside>
 
             {/* ── Right column: Search + Problem list ── */}
             <div className="space-y-4 pb-48 pt-8">
               {/* Sticky search bar */}
-              <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm py-4">
+              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
                 <SearchBar
                   query={filters.searchQuery}
                   onQueryChange={filters.setSearchQuery}
@@ -201,7 +201,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
       </div>
 
       {/* Bottom edge fade */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-card to-transparent z-10" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent z-10" />
 
       {/* Topic dot sidebar — only in Browse, lives/dies with this view */}
       <TopicSidebar />

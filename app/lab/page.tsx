@@ -277,7 +277,7 @@ export default function LabPage() {
     };
 
     return (
-        <div className="relative min-h-screen bg-zinc-50 dark:bg-black text-zinc-800 dark:text-zinc-200 overflow-hidden selection:bg-teal-100 selection:text-teal-900 dark:selection:bg-teal-900 dark:selection:text-teal-100">
+        <div className="relative min-h-screen text-zinc-800 dark:text-zinc-200 overflow-hidden selection:bg-teal-100 selection:text-teal-900 dark:selection:bg-teal-900 dark:selection:text-teal-100">
             {/* Grid pattern background - matching landing page */}
             <div className="pointer-events-none absolute inset-0 z-0">
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]" />

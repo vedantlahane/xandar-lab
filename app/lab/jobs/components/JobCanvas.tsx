@@ -110,9 +110,9 @@ export default function JobCanvas({
     };
 
     return (
-        <div className="relative h-full bg-card pt-12">
+        <div className="relative h-full pt-12">
             {/* Top Fade */}
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-card to-transparent z-20" />
+            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-background to-transparent z-20" />
 
             <div id="jobs-scroll-container" className="h-full overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
@@ -120,7 +120,7 @@ export default function JobCanvas({
                         {/* Left Column: Filters (practice-style aside) */}
                         <aside className="sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
                             {/* top fade */}
-                            <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-card to-transparent z-10" />
+                            <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-background to-transparent z-10" />
 
                             <div className="space-y-8 text-right py-12 overflow-y-auto thin-scrollbar max-h-[calc(100vh-8rem)]">
                                 {/* Type Filter */}
@@ -176,13 +176,13 @@ export default function JobCanvas({
                             </div>
 
                             {/* bottom fade */}
-                            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-card to-transparent z-10" />
+                            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-background to-transparent z-10" />
                         </aside>
 
                         {/* Right Column: Jobs */}
                         <div className="space-y-3">
                             {/* sticky header with search */}
-                            <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm py-4">
+                            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-semibold">Jobs</h2>
                                     <div className="flex-1 ml-6">
@@ -214,7 +214,7 @@ export default function JobCanvas({
                                         data-category-title={category.categoryName}
                                         className="space-y-5"
                                     >
-                                        <div className="sticky top-0 z-10 bg-card/95 py-4 backdrop-blur">
+                                        <div className="sticky top-0 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{category.categoryName}</h2>
                                             <p className="text-sm text-muted-foreground">
                                                 {category.jobs.length} {category.jobs.length === 1 ? 'opportunity' : 'opportunities'}
@@ -236,8 +236,8 @@ export default function JobCanvas({
                                                             <div className="space-y-2 flex-1">
                                                                 <div className="flex items-center gap-2 flex-wrap">
                                                                     <span className={`text-sm font-medium transition-colors ${isActive
-                                                                            ? "text-primary"
-                                                                            : "text-foreground group-hover:text-primary"
+                                                                        ? "text-primary"
+                                                                        : "text-foreground group-hover:text-primary"
                                                                         }`}>
                                                                         {job.title}
                                                                     </span>
@@ -282,8 +282,8 @@ export default function JobCanvas({
                                                                     role="button"
                                                                     onClick={(e) => handleSaveJob(job.id, e)}
                                                                     className={`rounded-md p-1.5 hover:bg-background hover:shadow-sm transition-colors ${isSaved
-                                                                            ? 'text-amber-500'
-                                                                            : 'text-muted-foreground hover:text-foreground'
+                                                                        ? 'text-amber-500'
+                                                                        : 'text-muted-foreground hover:text-foreground'
                                                                         }`}
                                                                     title={isSaved ? "Remove from saved" : "Save job"}
                                                                 >
@@ -314,7 +314,7 @@ export default function JobCanvas({
             </div>
 
             {/* Bottom Fade */}
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-card to-transparent z-20" />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-20" />
         </div>
     );
 }

@@ -44,7 +44,7 @@ export default function DocsPage() {
     };
 
     return (
-        <div className="relative h-screen w-full bg-background text-foreground overflow-hidden">
+        <div className="relative h-screen w-full text-foreground overflow-hidden">
             <main className="h-full w-full">
                 <DocumentCanvas
                     activeDocId={activeDocId}

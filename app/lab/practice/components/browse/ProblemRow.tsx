@@ -37,9 +37,9 @@ export function ProblemRow({
     <button
       onClick={(e) => onSelect(problem.id, e)}
       className={cn(
-        "group relative w-full border-b border-border/40 px-4 py-3 text-left",
-        "transition-all hover:bg-linear-to-r hover:from-transparent hover:to-accent/40",
-        isActive && "bg-accent/50",
+        "group relative w-full border-b border-border/40 px-4 py-3 text-left backdrop-blur-md",
+        "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10",
+        isActive && "bg-white/10 dark:bg-white/10",
       )}
     >
       <div className="flex items-start justify-between gap-3">

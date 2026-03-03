@@ -14,7 +14,7 @@ export default function LabLayout({
   return (
 
     <AuthProvider>
-      <div className="flex min-h-screen bg-zinc-50 dark:bg-black">
+      <div className="flex min-h-screen">
         {/* Left Sidebar */}
         <LabSidebar />
         <LabProfile />

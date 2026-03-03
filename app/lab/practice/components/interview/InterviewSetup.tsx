@@ -23,7 +23,7 @@ export function InterviewSetup({
 
   return (
     <div className="max-w-2xl mx-auto pt-16 pb-32 px-6">
-      <div className="rounded-xl border border-border bg-card p-10 space-y-10 shadow-sm">
+      <div className="rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-10 space-y-10">
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight">
             Start a Mock Interview
@@ -147,11 +147,10 @@ export function InterviewSetup({
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      session.status === "completed"
+                    className={`h-2.5 w-2.5 rounded-full ${session.status === "completed"
                         ? "bg-primary"
                         : "border border-muted-foreground"
-                    }`}
+                      }`}
                   />
                   <span className="text-sm font-medium">
                     {session.company} · {session.difficulty}

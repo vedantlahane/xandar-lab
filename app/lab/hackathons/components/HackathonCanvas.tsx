@@ -66,7 +66,7 @@ export default function HackathonCanvas({
     };
 
     return (
-        <div className="relative h-full bg-card pt-12">
+        <div className="relative h-full pt-12">
             {/* Top Fade */}
             <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-card to-transparent z-20" />
 
@@ -129,7 +129,7 @@ export default function HackathonCanvas({
                         {/* Right Column: Hackathons */}
                         <div className="space-y-3">
                             {/* sticky header with search */}
-                            <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm py-4">
+                            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-semibold">Hackathons</h2>
                                     <div className="flex-1 ml-6">
@@ -159,7 +159,7 @@ export default function HackathonCanvas({
                                         data-month-title={monthData.month}
                                         className="space-y-5"
                                     >
-                                        <div className="sticky top-0 z-10 bg-card/95 py-4 backdrop-blur">
+                                        <div className="sticky top-0 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{monthData.month}</h2>
                                             <p className="text-sm text-muted-foreground">
                                                 {monthData.hackathons.length} hackathon{monthData.hackathons.length !== 1 ? 's' : ''}
@@ -182,8 +182,8 @@ export default function HackathonCanvas({
                                                                     <Trophy className={`h-4 w-4 ${getStatusColor(hack.status)}`} />
                                                                     <div
                                                                         className={`text-sm font-medium transition-colors ${isActive
-                                                                                ? "text-primary"
-                                                                                : "text-foreground group-hover:text-primary"
+                                                                            ? "text-primary"
+                                                                            : "text-foreground group-hover:text-primary"
                                                                             }`}
                                                                     >
                                                                         {hack.name}

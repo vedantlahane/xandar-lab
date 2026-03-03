@@ -24,7 +24,7 @@ export default function PracticeLayout({
   return (
     <PracticeProvider>
       {/* Full-height container — modes are flex columns that fill this */}
-      <div className="relative h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      <div className="relative h-screen flex flex-col text-foreground overflow-hidden">
         {/* Mode content — each child renders <PracticeHeader> + its own layout */}
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           {children}

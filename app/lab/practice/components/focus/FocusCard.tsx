@@ -103,7 +103,7 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
   return (
     <div className="h-full flex items-start justify-center overflow-y-auto thin-scrollbar py-8 px-6">
       <div className="w-full max-w-3xl">
-        <div className="border border-border/40 rounded-xl bg-card shadow-sm p-8 space-y-6">
+        <div className="border border-zinc-200/60 dark:border-zinc-800/60 rounded-xl bg-white/50 dark:bg-zinc-900/30 backdrop-blur-md shadow-sm p-8 space-y-6">
 
           {/* Problem header */}
           <div>
@@ -117,7 +117,7 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
                   className={cn(
                     "text-xs px-2 py-0.5 rounded border",
                     DIFFICULTY_COLORS[difficultyTag] ??
-                      "bg-muted/30 text-muted-foreground",
+                    "bg-muted/30 text-muted-foreground",
                   )}
                 >
                   {difficultyTag}

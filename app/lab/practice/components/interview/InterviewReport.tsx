@@ -87,7 +87,7 @@ export function InterviewReport({ config, onClose }: InterviewReportProps) {
         <p className="text-muted-foreground">Mock Interview · {sessionLabel}</p>
 
         {/* Overall Score Banner */}
-        <div className="mt-8 p-6 bg-secondary/50 rounded-xl border border-secondary flex flex-wrap gap-8 items-center justify-between shadow-sm">
+        <div className="mt-8 p-6 bg-linear-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900/40 dark:to-zinc-900/10 rounded-xl border border-white/40 dark:border-white/5 backdrop-blur-md shadow-xl shadow-black/5 flex flex-wrap gap-8 items-center justify-between">
           <div>
             <h3 className="text-sm uppercase tracking-wider font-semibold text-muted-foreground mb-1">
               Overall Assessment
@@ -182,10 +182,8 @@ export function InterviewReport({ config, onClose }: InterviewReportProps) {
             {suggestedProblems.map((prob) => (
               <div
                 key={prob.id}
-                className="p-4 rounded-xl border border-border bg-card shadow-sm hover:border-primary/50 transition-colors cursor-pointer group"
-                onClick={() =>
-                  router.push(`/lab/practice/focus?p=${prob.id}`)
-                }
+                className="p-4 rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 hover:from-white/70 hover:to-white/40 dark:hover:from-zinc-900/50 dark:hover:to-zinc-900/20 backdrop-blur-md shadow-lg shadow-black/5 hover:border-primary/50 transition-all duration-300 cursor-pointer group"
+                onClick={() => router.push(`/lab/practice/focus?p=${prob.id}`)}
               >
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">

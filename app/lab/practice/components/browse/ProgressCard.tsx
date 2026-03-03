@@ -31,7 +31,7 @@ export function ProgressCard({ stats }: ProgressCardProps) {
   const hardPct = hard.total > 0 ? (hard.completed / hard.total) * 100 : 0;
 
   return (
-    <div className="space-y-4 bg-muted/30 p-4 rounded-xl border border-border/50 hover:bg-muted/50 transition-colors">
+    <div className="space-y-4 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md p-4 rounded-xl border border-white/40 dark:border-white/5 shadow-xl shadow-black/5 hover:from-white/70 hover:to-white/40 dark:hover:from-zinc-900/50 dark:hover:to-zinc-900/20 transition-all duration-300">
       {/* Header */}
       <div className="flex items-center justify-end gap-2 text-sm font-semibold text-foreground">
         <Trophy className="h-4 w-4 text-yellow-500" />
