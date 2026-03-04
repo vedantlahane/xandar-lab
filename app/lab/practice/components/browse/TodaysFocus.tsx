@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, RotateCcw, Star, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { X, RotateCcw, Star, Sparkles, ArrowRight, Swords, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePracticeContext } from "../../context/PracticeContext";
 
@@ -63,6 +63,13 @@ export function TodaysFocus() {
     }
   };
 
+  const handleStartInterview = () => {
+    const first = suggestions[0];
+    if (first) {
+      router.push(`/lab/practice/interview?p=${first.problemId}`);
+    }
+  };
+
   return (
     <div className="rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-5 space-y-4 mb-2">
       {/* Header */}
@@ -117,7 +124,14 @@ export function TodaysFocus() {
         )}
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end gap-3 pt-2">
+        <Button
+          variant="ghost"
+          className="gap-2 text-sm h-8 hover:bg-transparent hover:text-primary p-0"
+          onClick={handleStartInterview}
+        >
+          <Swords className="h-3.5 w-3.5" /> Interview this
+        </Button>
         <Button
           variant="ghost"
           className="gap-2 text-sm h-8 hover:bg-transparent hover:text-primary p-0"

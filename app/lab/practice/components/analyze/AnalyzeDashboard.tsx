@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -11,6 +12,7 @@ import {
   AlertTriangle,
   TrendingUp,
   ChevronRight,
+  Swords,
   Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +42,7 @@ interface AnalyzeDashboardProps {
 
 export function AnalyzeDashboard({ timeRange }: AnalyzeDashboardProps) {
   const { openDrawer } = usePracticeContext();
+  const router = useRouter();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -148,6 +151,14 @@ export function AnalyzeDashboard({ timeRange }: AnalyzeDashboardProps) {
                   <p className="text-xs text-muted-foreground mt-1 text-destructive/80">
                     {data.summary.topBarrier?.failureRate ?? 0}% failure rate
                   </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 px-0"
+                    onClick={() => router.push(`/lab/practice/interview?topic=${encodeURIComponent(data.summary.topBarrier?.topic ?? '')}`)}
+                  >
+                    <Swords className="h-3.5 w-3.5" /> Interview This Topic
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -283,12 +294,30 @@ export function AnalyzeDashboard({ timeRange }: AnalyzeDashboardProps) {
                               {prob.attempts} failed attempts
                             </p>
                           </div>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-muted-foreground hover:text-primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/lab/practice/focus?p=${prob.problemId}`);
+                              }}
+                            >
+                              Focus
+                            </Button>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                          </div>
                         </div>
                       ))}
                     </div>
-
-
+                    <Button
+                      variant="outline"
+                      className="w-full mt-4 text-xs h-8"
+                      onClick={() => router.push('/lab/practice?filter=Unresolved')}
+                    >
+                      Review All in Browse →
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

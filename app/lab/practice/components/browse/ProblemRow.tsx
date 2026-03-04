@@ -3,7 +3,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Bookmark, Check, Target, RefreshCcw, Circle } from "lucide-react";
+import { Bookmark, Check, Target, Swords, RefreshCcw, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DSAProblem } from "../../data/sheet";
 import type { ExtensionData } from "../../hooks/useProblemFilters";
@@ -126,6 +126,19 @@ export function ProblemRow({
                 title="Open in Focus mode"
               >
                 <Target className="h-4 w-4" />
+              </div>
+
+              {/* Interview */}
+              <div
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/lab/practice/interview?p=${problem.id}`);
+                }}
+                className="rounded-md p-1.5 hover:bg-background hover:shadow-sm transition-colors cursor-pointer text-muted-foreground hover:text-primary"
+                title="Interview with this problem"
+              >
+                <Swords className="h-4 w-4" />
               </div>
 
               {/* Save */}

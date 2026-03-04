@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Check, X, AlertCircle, ArrowRight, BarChart2, Save, Loader2 } from "lucide-react";
+import { Check, X, AlertCircle, ArrowRight, BarChart2, Save, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { InterviewConfig } from "./InterviewManager";
 
@@ -70,6 +70,17 @@ export function InterviewReport({ config, sessionId, onClose }: InterviewReportP
   const [loading, setLoading] = useState(!!sessionId);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Try to get PracticeContext for openDrawer (safe — may not be available)
+  let openDrawerFn: ((id: string) => void) | null = null;
+  try {
+    // Dynamic import to avoid hard dependency when used outside PracticeProvider
+    const { usePracticeContext } = require("../../context/PracticeContext");
+    const ctx = usePracticeContext();
+    openDrawerFn = ctx?.openDrawer ?? null;
+  } catch {
+    // Not inside a PracticeProvider — no drawer available
+  }
 
   // Fetch real session data from API
   useEffect(() => {
@@ -180,12 +191,12 @@ export function InterviewReport({ config, sessionId, onClose }: InterviewReportP
                 <span className="text-xl text-muted-foreground">/ 10</span>
                 <div
                   className={`ml-4 px-3 py-1 rounded-md text-sm font-medium border ${verdict.color === "green"
-                      ? "bg-green-500/10 text-green-500 border-green-500/20"
-                      : verdict.color === "blue"
-                        ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                        : verdict.color === "yellow"
-                          ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
-                          : "bg-red-500/10 text-red-500 border-red-500/20"
+                    ? "bg-green-500/10 text-green-500 border-green-500/20"
+                    : verdict.color === "blue"
+                      ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                      : verdict.color === "yellow"
+                        ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
+                        : "bg-red-500/10 text-red-500 border-red-500/20"
                     }`}
                 >
                   {verdict.label}
@@ -282,6 +293,17 @@ export function InterviewReport({ config, sessionId, onClose }: InterviewReportP
               ) : (
                 <><Save className="h-4 w-4" /> Save to Attempts</>
               )}
+            </Button>
+          )}
+
+          {/* Open in Browse drawer */}
+          {session?.problemId && openDrawerFn && (
+            <Button
+              onClick={() => openDrawerFn!(session.problemId!)}
+              variant="outline"
+              className="gap-2 px-6"
+            >
+              <Eye className="h-4 w-4" /> Open in Browse
             </Button>
           )}
 
