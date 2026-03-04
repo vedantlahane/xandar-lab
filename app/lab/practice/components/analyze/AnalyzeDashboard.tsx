@@ -248,10 +248,10 @@ export function AnalyzeDashboard({ timeRange }: AnalyzeDashboardProps) {
                           </div>
                           <div
                             className={`text-sm font-mono font-medium ${d.status === "danger"
-                                ? "text-destructive"
-                                : d.status === "warning"
-                                  ? "text-amber-500"
-                                  : "text-green-500"
+                              ? "text-destructive"
+                              : d.status === "warning"
+                                ? "text-amber-500"
+                                : "text-green-500"
                               }`}
                           >
                             {d.time}
@@ -287,14 +287,8 @@ export function AnalyzeDashboard({ timeRange }: AnalyzeDashboardProps) {
                         </div>
                       ))}
                     </div>
-                    <Button
-                      variant="outline"
-                      className="w-full mt-6 text-xs h-8"
-                      disabled
-                      title="Coming soon"
-                    >
-                      Review All History
-                    </Button>
+
+
                   </CardContent>
                 </Card>
               </div>

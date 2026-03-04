@@ -19,12 +19,41 @@ export interface IReport {
     suggestedProblemIds: string[];
 }
 
+export type InterviewStyle = 'guided' | 'realistic' | 'pressure';
+
+export const INTERVIEW_STYLES: Record<InterviewStyle, {
+    label: string;
+    description: string;
+    hintBudget: number;
+    silenceThreshold: number;
+}> = {
+    guided: {
+        label: 'Guided',
+        description: 'Patient, educational. Lots of hints. For learning.',
+        hintBudget: 5,
+        silenceThreshold: 120,
+    },
+    realistic: {
+        label: 'Realistic',
+        description: 'Like a real FAANG interview. Balanced help.',
+        hintBudget: 3,
+        silenceThreshold: 300,
+    },
+    pressure: {
+        label: 'Pressure Test',
+        description: 'Tough interviewer. Interruptions. Time pressure.',
+        hintBudget: 1,
+        silenceThreshold: 600,
+    },
+};
+
 export interface IInterviewSession {
     _id: string;
     userId: mongoose.Types.ObjectId;
     config: {
-        style: string;
-        difficulty: string;
+        style: InterviewStyle;
+        difficulty: number;        // 1-5
+        hintBudget: number;
         topic?: string;
         source?: 'sheet' | 'ai';
     };
@@ -69,8 +98,9 @@ const InterviewSessionSchema = new Schema({
         index: true,
     },
     config: {
-        style: { type: String, required: true },
-        difficulty: { type: String, required: true },
+        style: { type: String, enum: ['guided', 'realistic', 'pressure'], required: true },
+        difficulty: { type: Number, required: true, min: 1, max: 5 },
+        hintBudget: { type: Number, default: 3 },
         topic: { type: String },
         source: { type: String, enum: ['sheet', 'ai'] },
     },

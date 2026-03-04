@@ -11,7 +11,19 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { InterviewConfig } from "./InterviewManager";
+import type { InterviewConfig, InterviewStyle } from "./InterviewManager";
+
+const HINT_BUDGETS: Record<InterviewStyle, number> = {
+  guided: 5,
+  realistic: 3,
+  pressure: 1,
+};
+
+const STYLE_LABELS: Record<InterviewStyle, string> = {
+  guided: "Guided",
+  realistic: "Realistic",
+  pressure: "Pressure Test",
+};
 
 interface Message {
   id: string;
@@ -59,10 +71,11 @@ export function ActiveInterview({ config, sessionId, onEnd }: ActiveInterviewPro
           setHintsUsed(data.session.hintsUsed);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [sessionId]);
-  const [inputMessage, setInputMessage] = useState("");
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [inputMessage, setInputMessage] = useState("");
+  const maxHints = HINT_BUDGETS[config.style] ?? 3;
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const totalSeconds = 45 * 60;
@@ -154,7 +167,7 @@ export function ActiveInterview({ config, sessionId, onEnd }: ActiveInterviewPro
   };
 
   const handleHint = () => {
-    if (hintsUsed >= 3) return;
+    if (hintsUsed >= maxHints) return;
 
     setMessages((prev) => [
       ...prev,
@@ -185,14 +198,18 @@ export function ActiveInterview({ config, sessionId, onEnd }: ActiveInterviewPro
 
   const handleEnd = async () => {
     setIsRunning(false);
-    // End the session via API
+    // End the session via API with session data
     if (sessionId) {
       try {
         await fetch(`/api/interviews/${sessionId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ action: "end" }),
+          body: JSON.stringify({
+            action: "end",
+            duration: elapsedSeconds,
+            phases: [phase],
+          }),
         });
       } catch {
         // Continue to report view regardless
@@ -207,7 +224,7 @@ export function ActiveInterview({ config, sessionId, onEnd }: ActiveInterviewPro
       <div className="flex items-center justify-between pb-4 border-b border-border/40">
         <div>
           <h2 className="text-sm font-semibold">
-            {config.style} Style · {config.difficulty}
+            {STYLE_LABELS[config.style] ?? config.style} · Level {typeof config.difficulty === 'number' ? config.difficulty : '?'}
           </h2>
           <p className="text-xs text-muted-foreground mt-1">Phase: {phase}</p>
         </div>
@@ -284,10 +301,10 @@ export function ActiveInterview({ config, sessionId, onEnd }: ActiveInterviewPro
             variant="outline"
             className="gap-2 shrink-0"
             onClick={handleHint}
-            disabled={hintsUsed >= 3}
-            title={hintsUsed >= 3 ? "No hints remaining" : "Request a hint"}
+            disabled={hintsUsed >= maxHints}
+            title={hintsUsed >= maxHints ? "No hints remaining" : "Request a hint"}
           >
-            <Lightbulb className="h-4 w-4" /> Hint ({hintsUsed}/3)
+            <Lightbulb className="h-4 w-4" /> Hint ({hintsUsed}/{maxHints})
           </Button>
         </div>
 

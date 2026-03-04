@@ -12,7 +12,7 @@ export default function PracticeInterviewPage() {
       <PracticeHeader />
 
       {/* Interview content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         <InterviewManager />
       </div>
     </>

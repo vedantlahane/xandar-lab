@@ -221,17 +221,6 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
               </a>
             </Button>
 
-            {/* TODO: Implement hint system — needs AI integration or curated hints per problem */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              disabled
-              title="Coming soon"
-            >
-              <Lightbulb size={14} />
-              Hint
-            </Button>
 
             <div className="flex-1" />
 

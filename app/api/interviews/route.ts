@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import InterviewSession from '@/models/InterviewSession';
+import InterviewSession, { INTERVIEW_STYLES, type InterviewStyle } from '@/models/InterviewSession';
 import { getValidatedSession } from '@/lib/auth';
+import { calculateNextDifficulty, difficultyLabel } from '@/lib/adaptiveDifficulty';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,25 +38,51 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { config, problemId } = body;
 
-        if (!config?.style || !config?.difficulty) {
-            return NextResponse.json({ error: 'Config with style and difficulty is required' }, { status: 400 });
+        const style = (config?.style || 'realistic') as InterviewStyle;
+        if (!INTERVIEW_STYLES[style]) {
+            return NextResponse.json({ error: 'Invalid style. Use: guided, realistic, or pressure' }, { status: 400 });
         }
 
         await connectDB();
 
-        // Generate initial AI message based on config
-        const openerMessages: Record<string, string> = {
-            Google: `Welcome. Let's simulate a Google-style interview at ${config.difficulty} level${config.topic ? ` focusing on ${config.topic}` : ''}. I'll present you with a problem and we'll work through it together. Ready?\n\nHere's your problem: You're given an array of meeting intervals [start, end]. Find the minimum number of conference rooms required.\n\nBefore jumping to code — can you think about what determines whether two meetings conflict?`,
-            Meta: `Hey! Let's do a Meta-style coding interview — ${config.difficulty} difficulty${config.topic ? `, topic: ${config.topic}` : ''}. I'll walk you through a problem step by step.\n\nHere's what we're working with: Given an array of integers, return all unique triplets that sum to zero.\n\nFirst question — what's your initial reaction? How might you approach this?`,
-            Amazon: `Let's start your Amazon-style interview. Difficulty: ${config.difficulty}${config.topic ? `, focus on ${config.topic}` : ''}.\n\nHere's the problem: Design a data structure that supports insert, delete, and getRandom, all in O(1) time.\n\nWalk me through your thought process — what data structure properties do we need?`,
-            General: `Good, let's begin. This will be a ${config.difficulty}-level technical interview${config.topic ? ` on ${config.topic}` : ''}.\n\nHere's your problem: Given a binary tree, find the maximum path sum. A path can start and end at any node.\n\nStart by telling me — how do you understand this problem?`,
+        // ── Resolve difficulty ─────────────────────────────────────────────
+        let difficulty: number;
+        if (config?.difficulty === 'auto' || config?.difficulty === undefined) {
+            // Adaptive: calculate from past sessions
+            const pastSessions = await InterviewSession.find({
+                userId: session.userId,
+                status: 'completed',
+            }).sort({ startedAt: -1 }).limit(5).lean();
+            difficulty = calculateNextDifficulty(pastSessions as any[]);
+        } else {
+            difficulty = Math.max(1, Math.min(5, Number(config.difficulty) || 2));
+        }
+
+        const styleConfig = INTERVIEW_STYLES[style];
+        const hintBudget = styleConfig.hintBudget;
+        const diffLabel = difficultyLabel(difficulty);
+        const topicNote = config?.topic && config.topic !== 'Any topic'
+            ? ` focusing on ${config.topic}`
+            : '';
+
+        // ── Generate style-appropriate opener ──────────────────────────────
+        const openers: Record<InterviewStyle, string> = {
+            guided: `Welcome! This is a guided interview session — I'm here to help you learn, not just evaluate. We'll work through a ${diffLabel}-level problem${topicNote} together.\n\nI'll give you plenty of hints along the way (you have ${hintBudget} hint tokens). Take your time, think out loud, and don't worry about getting it perfect.\n\nReady? Let's start with the problem. First, can you tell me how you'd approach the given problem?`,
+            realistic: `Good, let's begin. This will be a ${diffLabel}-level technical interview${topicNote}. I'll behave like you'd expect in a real interview — friendly but I won't volunteer information.\n\nYou have ${hintBudget} hints available if you get stuck. Walk me through your thinking as you go.\n\nHere's your problem. Before jumping to code — tell me how you understand the problem and what approach comes to mind.`,
+            pressure: `Let's go. ${diffLabel} difficulty${topicNote}. You have limited time and only ${hintBudget} hint. I'll challenge your assumptions and push for optimal solutions.\n\nDon't waste time on pleasantries. Start by stating your approach clearly and concisely.\n\nWhat's your initial reaction to this problem?`,
         };
 
-        const initialMessage = openerMessages[config.style] || openerMessages.General;
+        const initialMessage = openers[style];
 
         const interviewSession = await InterviewSession.create({
             userId: session.userId,
-            config,
+            config: {
+                style,
+                difficulty,
+                hintBudget,
+                topic: config?.topic,
+                source: config?.source,
+            },
             problemId,
             messages: [{
                 sender: 'ai',
@@ -72,3 +99,4 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Failed to create interview' }, { status: 500 });
     }
 }
+

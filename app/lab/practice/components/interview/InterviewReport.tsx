@@ -2,70 +2,150 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Check, X, AlertCircle, ArrowRight, BarChart2 } from "lucide-react";
+import { Check, X, AlertCircle, ArrowRight, BarChart2, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { InterviewConfig } from "./InterviewManager";
 
-// TODO: Replace ALL hardcoded data with response from POST /api/interviews/end
-// The API should return: overallScore, metrics[], feedback[], suggestedProblems[]
+// ── Types ──────────────────────────────────────────────────────────────────
+
+interface Metric {
+  name: string;
+  score: number;
+}
+
+interface ReportData {
+  overallScore: number;
+  metrics: Metric[];
+  strengths: string[];
+  improvements: string[];
+  suggestedProblemIds: string[];
+}
+
+interface SessionData {
+  _id: string;
+  config: { style: string; difficulty: number; topic?: string };
+  problemId?: string;
+  duration?: number;
+  report?: ReportData;
+  hintsUsed?: number;
+  messages?: { sender: string; text: string }[];
+}
+
+// ── Props ──────────────────────────────────────────────────────────────────
 
 interface InterviewReportProps {
   config: InterviewConfig | null;
+  sessionId: string | null;
   onClose: () => void;
 }
 
-export function InterviewReport({ config, onClose }: InterviewReportProps) {
+// ── Helper ─────────────────────────────────────────────────────────────────
+
+function scoreToBar(score: number, max = 10): string {
+  const filled = Math.round((score / max) * 10);
+  return "█".repeat(filled) + "░".repeat(10 - filled);
+}
+
+function scoreToVerdict(score: number): { label: string; color: string } {
+  if (score >= 8) return { label: "Strong Hire", color: "green" };
+  if (score >= 6) return { label: "Lean Hire", color: "blue" };
+  if (score >= 4) return { label: "Borderline", color: "yellow" };
+  return { label: "Below Bar", color: "red" };
+}
+
+function performanceToStatus(score: number): "resolved" | "solved_with_help" | "gave_up" {
+  if (score >= 8) return "resolved";
+  if (score >= 5) return "solved_with_help";
+  return "gave_up";
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+export function InterviewReport({ config, sessionId, onClose }: InterviewReportProps) {
   const router = useRouter();
+  const [session, setSession] = useState<SessionData | null>(null);
+  const [loading, setLoading] = useState(!!sessionId);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  // Mock performance data
-  const overallScore = 7.5;
-  const metrics = [
-    { name: "Communication", score: 8, max: 10, fill: "████████░░" },
-    { name: "Problem Solving", score: 7, max: 10, fill: "███████░░░" },
-    { name: "Code Quality", score: 9, max: 10, fill: "█████████░" },
-    { name: "Speed", score: 6, max: 10, fill: "██████░░░░" },
-  ];
+  // Fetch real session data from API
+  useEffect(() => {
+    if (!sessionId) {
+      setLoading(false);
+      return;
+    }
 
-  const feedback = [
-    {
-      type: "strength",
-      text: "Excellent job breaking down the problem into smaller, testable chunks.",
-    },
-    {
-      type: "strength",
-      text: "You proactively identified edge cases before writing code.",
-    },
-    {
-      type: "improvement",
-      text: "Consider discussing space complexity earlier in the Approach phase.",
-    },
-    {
-      type: "improvement",
-      text: "You took a bit long on syntax errors during the dry run.",
-    },
-  ];
+    fetch(`/api/interviews/${sessionId}`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.session) {
+          setSession(data.session);
+        }
+      })
+      .catch(() => { })
+      .finally(() => setLoading(false));
+  }, [sessionId]);
 
-  const suggestedProblems = [
-    {
-      title: "Merge Intervals",
-      id: "interval-1",
-      difficulty: "Medium",
-      reason: "Practice handling overlapping bounds without extra space.",
-    },
-    {
-      title: "Insert Interval",
-      id: "interval-2",
-      difficulty: "Medium",
-      reason: "Focus on clean single-pass implementations.",
-    },
-  ];
+  // ── Save to Attempts ───────────────────────────────────────────────────
+  const handleSaveToAttempts = async () => {
+    if (!session?.problemId || !session?.report) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/attempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          problemId: session.problemId,
+          content: `Interview session (${session.config.style} style, Level ${session.config.difficulty}).\n\nStrengths: ${session.report.strengths.join(", ")}.\n\nAreas to improve: ${session.report.improvements.join(", ")}.`,
+          feltDifficulty: session.config.difficulty,
+          duration: session.duration ?? 0,
+          status: performanceToStatus(session.report.overallScore),
+          source: "interview",
+          interviewSessionId: session._id,
+          solveMethod: session.config.style === "guided" ? "With hints" : "Independently",
+          keyInsight: session.report.strengths[0] || "",
+        }),
+      });
+
+      if (res.ok) {
+        setSaved(true);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Derive display data ────────────────────────────────────────────────
+  const report = session?.report;
+  const overallScore = report?.overallScore ?? 0;
+  const metrics = report?.metrics ?? [];
+  const strengths = report?.strengths ?? [];
+  const improvements = report?.improvements ?? [];
+  const verdict = scoreToVerdict(overallScore);
 
   const sessionLabel = config
-    ? `${config.style} Style · ${config.difficulty}`
-    : "Mock Interview";
+    ? `${config.style.charAt(0).toUpperCase() + config.style.slice(1)} · Level ${typeof config.difficulty === "number" ? config.difficulty : "Auto"}`
+    : session
+      ? `${session.config.style} · Level ${session.config.difficulty}`
+      : "Mock Interview";
 
+  // ── Loading state ──────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="h-full overflow-y-auto w-full max-w-4xl mx-auto p-8 relative thin-scrollbar">
       <Button
@@ -87,134 +167,138 @@ export function InterviewReport({ config, onClose }: InterviewReportProps) {
         <p className="text-muted-foreground">Mock Interview · {sessionLabel}</p>
 
         {/* Overall Score Banner */}
-        <div className="mt-8 p-6 bg-linear-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900/40 dark:to-zinc-900/10 rounded-xl border border-white/40 dark:border-white/5 backdrop-blur-md shadow-xl shadow-black/5 flex flex-wrap gap-8 items-center justify-between">
-          <div>
-            <h3 className="text-sm uppercase tracking-wider font-semibold text-muted-foreground mb-1">
-              Overall Assessment
-            </h3>
-            <div className="flex items-center gap-4">
-              <span className="text-4xl font-bold tabular-nums tracking-tighter">
-                {overallScore}
-              </span>
-              <span className="text-xl text-muted-foreground">/ 10</span>
-              <div className="ml-4 px-3 py-1 bg-green-500/10 text-green-500 rounded-md text-sm font-medium border border-green-500/20">
-                Strong Hire
+        {report && (
+          <div className="mt-8 p-6 bg-linear-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900/40 dark:to-zinc-900/10 rounded-xl border border-white/40 dark:border-white/5 backdrop-blur-md shadow-xl shadow-black/5 flex flex-wrap gap-8 items-center justify-between">
+            <div>
+              <h3 className="text-sm uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+                Overall Assessment
+              </h3>
+              <div className="flex items-center gap-4">
+                <span className="text-4xl font-bold tabular-nums tracking-tighter">
+                  {overallScore}
+                </span>
+                <span className="text-xl text-muted-foreground">/ 10</span>
+                <div
+                  className={`ml-4 px-3 py-1 rounded-md text-sm font-medium border ${verdict.color === "green"
+                      ? "bg-green-500/10 text-green-500 border-green-500/20"
+                      : verdict.color === "blue"
+                        ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                        : verdict.color === "yellow"
+                          ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
+                          : "bg-red-500/10 text-red-500 border-red-500/20"
+                    }`}
+                >
+                  {verdict.label}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-[300px]">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4 font-mono text-sm">
+                {metrics.map((m) => (
+                  <div
+                    key={m.name}
+                    className="flex justify-between items-center group"
+                  >
+                    <span className="text-muted-foreground">{m.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-foreground tracking-[0.1em] text-xs">
+                        {scoreToBar(m.score)}
+                      </span>
+                      <span className="w-8 text-right font-medium">
+                        {m.score}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+        )}
 
-          <div className="flex-1 min-w-[300px]">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4 font-mono text-sm">
-              {metrics.map((m) => (
-                <div
-                  key={m.name}
-                  className="flex justify-between items-center group"
-                >
-                  <span className="text-muted-foreground">{m.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-foreground tracking-[0.1em] text-xs">
-                      {m.fill}
-                    </span>
-                    <span className="w-8 text-right font-medium">
-                      {m.score}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* No report state */}
+        {!report && (
+          <div className="mt-8 p-6 bg-muted/20 rounded-xl border border-border/40 text-center">
+            <p className="text-muted-foreground">Report data unavailable for this session.</p>
           </div>
-        </div>
+        )}
 
         {/* Feedback Section */}
-        <div className="mt-12 grid md:grid-cols-2 gap-8">
-          {/* Strengths */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Check className="h-5 w-5 text-green-500" /> Strengths
-            </h3>
-            <ul className="space-y-3">
-              {feedback
-                .filter((f) => f.type === "strength")
-                .map((f, i) => (
+        {(strengths.length > 0 || improvements.length > 0) && (
+          <div className="mt-12 grid md:grid-cols-2 gap-8">
+            {/* Strengths */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" /> Strengths
+              </h3>
+              <ul className="space-y-3">
+                {strengths.map((text, i) => (
                   <li
                     key={i}
                     className="flex gap-3 text-sm leading-relaxed text-muted-foreground bg-green-500/5 p-3 rounded-lg border border-green-500/10"
                   >
                     <div className="mt-0.5">•</div>
-                    {f.text}
+                    {text}
                   </li>
                 ))}
-            </ul>
-          </div>
+              </ul>
+            </div>
 
-          {/* Areas to Improve */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500" /> Areas to
-              Improve
-            </h3>
-            <ul className="space-y-3">
-              {feedback
-                .filter((f) => f.type === "improvement")
-                .map((f, i) => (
+            {/* Areas to Improve */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-amber-500" /> Areas to
+                Improve
+              </h3>
+              <ul className="space-y-3">
+                {improvements.map((text, i) => (
                   <li
                     key={i}
                     className="flex gap-3 text-sm leading-relaxed text-muted-foreground bg-amber-500/5 p-3 rounded-lg border border-amber-500/10"
                   >
                     <div className="mt-0.5">•</div>
-                    {f.text}
+                    {text}
                   </li>
                 ))}
-            </ul>
+              </ul>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Next Steps */}
-        <div className="mt-12 mb-16 space-y-4">
-          <h3 className="text-lg font-semibold border-b border-border/40 pb-2">
-            Follow-up Practice
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Based on this session, you should focus on interval merging and
-            space optimization.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-            {suggestedProblems.map((prob) => (
-              <div
-                key={prob.id}
-                className="p-4 rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 hover:from-white/70 hover:to-white/40 dark:hover:from-zinc-900/50 dark:hover:to-zinc-900/20 backdrop-blur-md shadow-lg shadow-black/5 hover:border-primary/50 transition-all duration-300 cursor-pointer group"
-                onClick={() => router.push(`/lab/practice/focus?p=${prob.id}`)}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
-                    {prob.title}
-                  </h4>
-                  <span className="text-xs bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full font-medium">
-                    {prob.difficulty}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mb-4">
-                  {prob.reason}
-                </p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="w-full text-xs h-7"
-                >
-                  Solve <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Actions */}
+        <div className="mt-12 mb-16 flex flex-wrap gap-4 justify-center">
+          {/* Save to Attempts — the bridge */}
+          {session?.problemId && report && (
+            <Button
+              onClick={handleSaveToAttempts}
+              disabled={saving || saved}
+              variant={saved ? "secondary" : "default"}
+              className="gap-2 px-6"
+            >
+              {saving ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
+              ) : saved ? (
+                <><Check className="h-4 w-4" /> Saved to Attempts</>
+              ) : (
+                <><Save className="h-4 w-4" /> Save to Attempts</>
+              )}
+            </Button>
+          )}
 
-        <div className="flex justify-center mb-16">
           <Button
             onClick={() => router.push("/lab/practice/analyze")}
-            size="lg"
-            className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg transition-all"
+            variant="outline"
+            className="gap-2 px-6"
           >
-            <BarChart2 className="h-4 w-4" /> View Full Analytics
+            <BarChart2 className="h-4 w-4" /> View Analytics
+          </Button>
+
+          <Button
+            onClick={onClose}
+            variant="outline"
+            className="gap-2 px-6"
+          >
+            New Session <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </motion.div>

@@ -9,18 +9,21 @@ import { InterviewReport } from "./InterviewReport";
 
 // ── Types (shared across interview components) ─────────────────────────────
 
+export type InterviewStyle = "guided" | "realistic" | "pressure";
+
 export interface InterviewConfig {
-  style: string;
-  difficulty: string;
+  style: InterviewStyle;
+  difficulty: number | "auto";
   topic: string;
   source: "sheet" | "ai";
 }
 
 export interface PastSession {
-  company: string;
-  difficulty: string;
+  id: string;
+  style: string;
+  difficulty: number;
   duration: string;
-  problem: string;
+  topic: string;
   score?: string;
   status: "completed" | "in-progress";
 }
@@ -41,25 +44,27 @@ export function InterviewManager() {
       .then(data => {
         if (data.sessions) {
           const mapped: PastSession[] = data.sessions.map((s: {
-            config: { style: string; difficulty: string; topic: string };
+            _id: string;
+            config: { style: string; difficulty: number; topic: string };
             status: string;
             startedAt: string;
             endedAt?: string;
             report?: { overallScore: number };
           }) => ({
-            company: s.config.style,
+            id: s._id,
+            style: s.config.style,
             difficulty: s.config.difficulty,
             duration: s.endedAt
               ? `${Math.round((new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime()) / 60000)}m`
               : "–",
-            problem: s.config.topic,
-            score: s.report?.overallScore ? `${s.report.overallScore}%` : undefined,
+            topic: s.config.topic || "General",
+            score: s.report?.overallScore ? `${s.report.overallScore}/10` : undefined,
             status: s.status === "completed" ? "completed" : "in-progress",
           }));
           setPastSessions(mapped);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleStart = async (selectedConfig: InterviewConfig) => {
@@ -69,7 +74,7 @@ export function InterviewManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(selectedConfig),
+        body: JSON.stringify({ config: selectedConfig }),
       });
       const data = await res.json();
       if (res.ok && data.session?._id) {
@@ -105,5 +110,5 @@ export function InterviewManager() {
     return <ActiveInterview config={config} sessionId={sessionId} onEnd={handleEnd} />;
   }
 
-  return <InterviewReport config={config} onClose={handleCloseReport} />;
+  return <InterviewReport config={config} sessionId={sessionId} onClose={handleCloseReport} />;
 }

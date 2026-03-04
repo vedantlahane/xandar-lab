@@ -21,6 +21,8 @@ export interface IAttempt {
     keyInsight?: string;
     confidence?: string;     // "Definitely" | "Probably" | "Not sure"
     notes?: string;
+    source?: 'manual' | 'interview';
+    interviewSessionId?: string;
     timestamp: Date;
     resolvedAt?: Date;
 }
@@ -135,6 +137,15 @@ const AttemptSchema = new Schema({
     notes: {
         type: String,
         maxlength: 2000,
+    },
+    source: {
+        type: String,
+        enum: ['manual', 'interview'],
+        default: 'manual',
+    },
+    interviewSessionId: {
+        type: Schema.Types.ObjectId,
+        ref: 'InterviewSession',
     },
     timestamp: {
         type: Date,

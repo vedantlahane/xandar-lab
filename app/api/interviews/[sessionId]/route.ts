@@ -61,25 +61,41 @@ export async function PUT(
             return NextResponse.json({ error: 'Session not found' }, { status: 404 });
         }
 
-        // Generate mock report
+        // ── Generate semi-deterministic report from session data ───────────
+        const messageCount = interviewSession.messages?.length ?? 0;
+        const hintsUsed = interviewSession.hintsUsed ?? 0;
+        const hintBudget = interviewSession.config?.hintBudget ?? 3;
+        const phasesReached = (phases ?? interviewSession.phases ?? []).length;
+        const totalPhases = 4; // Understanding, Approach, Code, Review
+
+        // Base score: scale from message engagement + phase progress
+        const engagementBonus = Math.min(2, messageCount / 5);        // 0-2 from conversation depth
+        const phaseBonus = (phasesReached / totalPhases) * 3;         // 0-3 from phase completion
+        const hintPenalty = (hintsUsed / Math.max(1, hintBudget)) * 1.5; // 0-1.5 penalty
+        const baseScore = Math.min(10, Math.max(3, 4 + engagementBonus + phaseBonus - hintPenalty));
+        const overallScore = Math.round(baseScore * 10) / 10;
+
+        // Individual metrics vary around overall score
+        const vary = (base: number, min = 3, max = 10) =>
+            Math.max(min, Math.min(max, Math.round(base + (Math.random() - 0.5) * 2)));
+
         const report = {
-            overallScore: Math.floor(Math.random() * 3) + 6, // 6-8
+            overallScore,
             metrics: [
-                { name: 'Problem Understanding', score: Math.floor(Math.random() * 3) + 7 },
-                { name: 'Approach & Algorithm', score: Math.floor(Math.random() * 4) + 5 },
-                { name: 'Code Quality', score: Math.floor(Math.random() * 3) + 6 },
-                { name: 'Communication', score: Math.floor(Math.random() * 3) + 7 },
-                { name: 'Time Management', score: Math.floor(Math.random() * 4) + 5 },
+                { name: 'Problem Understanding', score: vary(baseScore + (phasesReached >= 1 ? 1 : -1)) },
+                { name: 'Approach Quality', score: vary(baseScore) },
+                { name: 'Code Quality', score: vary(baseScore + (phasesReached >= 3 ? 1 : -1)) },
+                { name: 'Communication', score: vary(baseScore + engagementBonus * 0.5) },
+                { name: 'Time Management', score: vary(baseScore - (hintsUsed > 2 ? 1 : 0)) },
             ],
-            strengths: [
-                'Clear communication of thought process',
-                'Good problem decomposition',
-                'Considered edge cases early',
-            ],
+            strengths: phasesReached >= 3
+                ? ['Good problem decomposition', 'Progressed through all phases', 'Engaged in thorough discussion']
+                : ['Attempted the problem', 'Showed initial understanding'],
             improvements: [
-                'Could optimize initial brute force faster',
-                'Practice writing cleaner code under pressure',
-                'Work on time complexity analysis during explanation',
+                ...(hintsUsed > 1 ? ['Try to rely less on hints — develop independent problem-solving'] : []),
+                ...(phasesReached < 3 ? ['Work on progressing through all interview phases'] : []),
+                ...(messageCount < 6 ? ['Communicate your thought process more — talk through your approach'] : []),
+                'Practice time complexity analysis during explanations',
             ],
             suggestedProblemIds: ['arr-5', 'dp-3', 'graph-5'],
         };
@@ -98,3 +114,4 @@ export async function PUT(
         return NextResponse.json({ error: 'Failed to end session' }, { status: 500 });
     }
 }
+

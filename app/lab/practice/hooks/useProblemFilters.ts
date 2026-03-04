@@ -47,16 +47,22 @@ export function useProblemFilters({
   const [sortOption, setSortOption] = useState<SortOption>(null);
   const [sortDesc, setSortDesc] = useState(true);
 
-  // TODO: Implement sorting — sort state exists in the UI (FilterPanel shows it)
-  // but doesn't apply here yet. "Staleness" and "Attempts" both depend on data
-  // that doesn't exist yet (extension timestamps, attempt counts).
-  // When implementing, add sortOption + sortDesc back to the dependency array.
   const filteredSheet = useMemo(() => {
     const savedSet = new Set(savedProblems);
     const completedSet = new Set(completedProblems);
 
+    const DIFFICULTY_ORDER: Record<string, number> = { Easy: 1, Medium: 2, Hard: 3 };
+
+    const getDifficultyRank = (tags?: string[]) => {
+      if (!tags) return 2; // default Medium
+      for (const t of tags) {
+        if (DIFFICULTY_ORDER[t] !== undefined) return DIFFICULTY_ORDER[t];
+      }
+      return 2;
+    };
+
     return SHEET.map((topic) => {
-      const filtered = topic.problems.filter((problem) => {
+      let filtered = topic.problems.filter((problem) => {
         // ── Search ─────────────────────────────────────────────────────────
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
@@ -104,9 +110,32 @@ export function useProblemFilters({
         return true;
       });
 
+      // ── Sorting ───────────────────────────────────────────────────────
+      if (sortOption) {
+        filtered = [...filtered].sort((a, b) => {
+          let cmp = 0;
+
+          if (sortOption === "Difficulty") {
+            cmp = getDifficultyRank(a.tags) - getDifficultyRank(b.tags);
+          } else if (sortOption === "Staleness") {
+            const aExt = extensionMap.get(a.id);
+            const bExt = extensionMap.get(b.id);
+            const aTime = aExt?.lastAttempted ? new Date(aExt.lastAttempted).getTime() : 0;
+            const bTime = bExt?.lastAttempted ? new Date(bExt.lastAttempted).getTime() : 0;
+            cmp = aTime - bTime; // oldest first by default
+          } else if (sortOption === "Attempts") {
+            const aSubs = extensionMap.get(a.id)?.subs ?? 0;
+            const bSubs = extensionMap.get(b.id)?.subs ?? 0;
+            cmp = aSubs - bSubs;
+          }
+
+          return sortDesc ? -cmp : cmp;
+        });
+      }
+
       return { ...topic, problems: filtered };
     }).filter((topic) => topic.problems.length > 0);
-  }, [searchQuery, statusFilter, difficultyFilter, platformFilter, savedProblems, completedProblems, extensionMap]);
+  }, [searchQuery, statusFilter, difficultyFilter, platformFilter, sortOption, sortDesc, savedProblems, completedProblems, extensionMap]);
 
   return {
     // Values

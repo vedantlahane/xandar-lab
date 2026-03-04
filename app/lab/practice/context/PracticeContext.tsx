@@ -28,13 +28,6 @@ interface PracticeContextValue {
   activeDrawer: DrawerState | null;
   openDrawer: (problemId: string, event?: React.MouseEvent) => void;
   closeDrawer: () => void;
-
-  // Cross-mode problem selection (Browse → Focus entry)
-  // NOTE: Currently unused — Focus reads problem from URL params (bookmarkable, shareable).
-  // Keep for potential flows where URL isn't appropriate (e.g., multi-problem queue).
-  // Remove if no concrete use case emerges by the time Interview mode ships.
-  selectedProblemId: string | null;
-  selectProblem: (id: string | null) => void;
 }
 
 // ── Context ────────────────────────────────────────────────────────────────
@@ -53,7 +46,6 @@ export function usePracticeContext(): PracticeContextValue {
 
 export function PracticeProvider({ children }: { children: ReactNode }) {
   const [activeDrawer, setActiveDrawer] = useState<DrawerState | null>(null);
-  const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
 
   // Build problem lookup map once
   const problemIndex = useMemo(() => {
@@ -78,10 +70,6 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
 
   const closeDrawer = useCallback(() => setActiveDrawer(null), []);
 
-  const selectProblem = useCallback((id: string | null) => {
-    setSelectedProblemId(id);
-  }, []);
-
   return (
     <PracticeContext.Provider
       value={{
@@ -90,8 +78,6 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
         activeDrawer,
         openDrawer,
         closeDrawer,
-        selectedProblemId,
-        selectProblem,
       }}
     >
       {children}
