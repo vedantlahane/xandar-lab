@@ -103,7 +103,7 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
   return (
     <div className="h-full flex items-start justify-center overflow-y-auto thin-scrollbar py-8 px-6">
       <div className="w-full max-w-3xl">
-        <div className="border border-zinc-200/60 dark:border-zinc-800/60 rounded-xl bg-white/50 dark:bg-zinc-900/30 backdrop-blur-md shadow-sm p-8 space-y-6">
+        <div className="border border-white/40 dark:border-white/5 rounded-xl bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-8 space-y-6">
 
           {/* Problem header */}
           <div>
@@ -115,11 +115,17 @@ export function FocusCard({ problem, timer, onSolved, onGaveUp }: FocusCardProps
               {difficultyTag && (
                 <span
                   className={cn(
-                    "text-xs px-2 py-0.5 rounded border",
+                    "text-xs px-2.5 py-0.5 rounded-lg border flex items-center gap-1.5",
                     DIFFICULTY_COLORS[difficultyTag] ??
                     "bg-muted/30 text-muted-foreground",
                   )}
                 >
+                  <div className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    difficultyTag === "Easy" && "bg-green-500",
+                    difficultyTag === "Medium" && "bg-yellow-500",
+                    difficultyTag === "Hard" && "bg-red-500",
+                  )} />
                   {difficultyTag}
                 </span>
               )}

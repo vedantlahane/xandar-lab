@@ -23,22 +23,22 @@ export default function PracticeAnalyzePage() {
     <>
       {/* Header: mode pills + time range selector */}
       <PracticeHeader>
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-          className={cn(
-            "text-sm border border-border/40 rounded-md px-2.5 py-1",
-            "bg-transparent text-muted-foreground",
-            "hover:border-border/70 hover:text-foreground transition-colors",
-            "focus:outline-none",
-          )}
-        >
+        <div className="flex items-center gap-1">
           {TIME_RANGES.map((r) => (
-            <option key={r.value} value={r.value}>
+            <button
+              key={r.value}
+              onClick={() => setTimeRange(r.value as TimeRange)}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-medium border transition-all",
+                timeRange === r.value
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+              )}
+            >
               {r.label}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       </PracticeHeader>
 
       {/* Analyze content */}
