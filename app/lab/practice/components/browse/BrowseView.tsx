@@ -149,10 +149,8 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
           <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-10 min-h-full">
 
             {/* ── Left column: Progress + Filters — sticky, vertically centered ── */}
-            <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
-              {/* Top fade */}
-              <div className="pointer-events-none absolute top-0 left-0 right-0 h-40 bg-linear-to-b from-background to-transparent z-10" />
-              <div className="space-y-6 py-10 overflow-y-auto thin-scrollbar max-h-[calc(100vh-6rem)]">
+            <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
+              <div className="space-y-5 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
                 <ProgressCard stats={stats} />
                 <FilterPanel
                   statusFilter={filters.statusFilter}
@@ -167,8 +165,6 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
                   onSortDescChange={filters.setSortDesc}
                 />
               </div>
-              {/* Bottom fade */}
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-linear-to-t from-background to-transparent z-10" />
             </aside>
 
             {/* ── Right column: Search + Problem list ── */}

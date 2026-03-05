@@ -108,10 +108,10 @@ export function FilterPanel({
   onSortDescChange,
 }: FilterPanelProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* ── Activity / Status ── */}
-      <div className="space-y-1.5">
-        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-2">
+      <div className="space-y-0.5">
+        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
           Activity
         </h3>
         {STATUS_ITEMS.map((item) => {
@@ -141,8 +141,8 @@ export function FilterPanel({
       </div>
 
       {/* ── Difficulty ── */}
-      <div className="space-y-1.5">
-        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-2">
+      <div className="space-y-1">
+        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
           Difficulty
         </h3>
         <div className="flex gap-1.5">
@@ -172,8 +172,8 @@ export function FilterPanel({
       </div>
 
       {/* ── Platform ── */}
-      <div className="space-y-1.5">
-        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-2">
+      <div className="space-y-1">
+        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
           Platform
         </h3>
         <div className="flex gap-1.5">
@@ -200,8 +200,8 @@ export function FilterPanel({
       </div>
 
       {/* ── Sort ── */}
-      <div className="space-y-1.5">
-        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-2 flex items-center gap-1.5">
+      <div className="space-y-1">
+        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
           <ArrowUpDown className="h-3 w-3" />
           Sort by
         </h3>

@@ -103,19 +103,19 @@ export function ProgressCard({ stats }: ProgressCardProps) {
     totalProblems > 0 ? (totalCompleted / totalProblems) * 100 : 0;
 
   return (
-    <div className="rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-5 space-y-5">
+    <div className="rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-4 space-y-3">
       {/* Top: Circular progress + stats */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <div className="relative">
-          <CircularProgress value={progressPct} size={72} strokeWidth={5} />
+          <CircularProgress value={progressPct} size={60} strokeWidth={5} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-bold tabular-nums tracking-tight">
+            <span className="text-base font-bold tabular-nums tracking-tight">
               {Math.round(progressPct)}%
             </span>
           </div>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-2xl font-bold tabular-nums tracking-tight leading-none">
+          <div className="text-xl font-bold tabular-nums tracking-tight leading-none">
             {totalCompleted}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
@@ -141,7 +141,7 @@ export function ProgressCard({ stats }: ProgressCardProps) {
       <div className="h-px bg-border/40" />
 
       {/* Difficulty breakdown */}
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         <DifficultyRow
           label="Easy"
           completed={easy.completed}
