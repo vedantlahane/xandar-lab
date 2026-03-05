@@ -3,7 +3,14 @@
 
 import { useState, useMemo } from "react";
 import { JOB_LISTINGS, STATUS_CONFIG, ApplicationStatus, JobType, JobPlatform } from "../data/jobs";
-import { Bookmark, Building2, MapPin, ExternalLink, Clock, Briefcase } from "lucide-react";
+import {
+    Bookmark, Building2, MapPin, ExternalLink, Clock, Briefcase,
+    Layers, GraduationCap, Clock4, FileSignature, Handshake,
+    Wifi, Building, Globe,
+    Linkedin, Code2, Github,
+    ArrowUpDown, ChevronDown, ChevronUp,
+    Tag, DollarSign,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { useAuth } from "@/components/auth/AuthContext";
@@ -16,6 +23,43 @@ interface JobCanvasProps {
 type FilterType = "All" | JobType;
 type FilterStatus = "All" | "Saved" | "Applied" | "Interviewing";
 type FilterRemote = "All" | "Remote" | "On-site";
+type FilterPlatform = "All" | string;
+type SortOption = "Company" | "Title" | "Salary";
+
+// ── Type filter config ──────────────────────────────────────────────────
+const TYPE_ITEMS: { value: FilterType; label: string; icon: typeof Layers; dotColor: string }[] = [
+    { value: "All", label: "All Types", icon: Layers, dotColor: "bg-muted-foreground" },
+    { value: "Internship", label: "Internship", icon: GraduationCap, dotColor: "bg-blue-500" },
+    { value: "Full-time", label: "Full-time", icon: Briefcase, dotColor: "bg-green-500" },
+    { value: "Part-time", label: "Part-time", icon: Clock4, dotColor: "bg-yellow-500" },
+    { value: "Contract", label: "Contract", icon: FileSignature, dotColor: "bg-orange-500" },
+    { value: "Freelance", label: "Freelance", icon: Handshake, dotColor: "bg-pink-500" },
+];
+
+// ── Work style filter config ────────────────────────────────────────────
+const REMOTE_ITEMS: { value: FilterRemote; label: string; dotColor: string; activeColor: string }[] = [
+    { value: "Remote", label: "Remote", dotColor: "bg-emerald-500", activeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
+    { value: "On-site", label: "On-site", dotColor: "bg-blue-500", activeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30" },
+];
+
+// ── Status filter config ────────────────────────────────────────────────
+const STATUS_ITEMS: { value: FilterStatus; label: string }[] = [
+    { value: "Saved", label: "Saved" },
+    { value: "Applied", label: "Applied" },
+    { value: "Interviewing", label: "Interviewing" },
+];
+
+// ── Sort config ─────────────────────────────────────────────────────────
+const SORT_ITEMS: { value: SortOption; label: string }[] = [
+    { value: "Company", label: "Company" },
+    { value: "Title", label: "Title" },
+    { value: "Salary", label: "Salary" },
+];
+
+// Extract unique platforms
+const ALL_PLATFORMS = Array.from(
+    new Set(JOB_LISTINGS.flatMap(c => c.jobs.map(j => j.platform)))
+).sort();
 
 export default function JobCanvas({
     activeJobId,
@@ -24,6 +68,9 @@ export default function JobCanvas({
     const [typeFilter, setTypeFilter] = useState<FilterType>("All");
     const [statusFilter, setStatusFilter] = useState<FilterStatus>("All");
     const [remoteFilter, setRemoteFilter] = useState<FilterRemote>("All");
+    const [platformFilter, setPlatformFilter] = useState<FilterPlatform>("All");
+    const [sortOption, setSortOption] = useState<SortOption>("Company");
+    const [sortDesc, setSortDesc] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const { user, updateUser } = useAuth();
 
@@ -54,24 +101,21 @@ export default function JobCanvas({
     const filteredListings = useMemo(() => {
         return JOB_LISTINGS.map((category) => {
             const filteredJobs = category.jobs.filter((job) => {
-                // search query
                 if (
                     searchQuery &&
                     !job.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-                    !job.company.toLowerCase().includes(searchQuery.toLowerCase())
+                    !job.company.toLowerCase().includes(searchQuery.toLowerCase()) &&
+                    !job.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
                 ) {
                     return false;
                 }
 
-                // Type Filter
-                if (typeFilter !== "All" && job.type !== typeFilter) {
-                    return false;
-                }
+                if (typeFilter !== "All" && job.type !== typeFilter) return false;
+                if (platformFilter !== "All" && job.platform !== platformFilter) return false;
+                if (remoteFilter === "Remote" && !job.remote) return false;
+                if (remoteFilter === "On-site" && job.remote) return false;
 
-                // Status Filter
-                if (statusFilter === "Saved" && !savedJobs.includes(job.id)) {
-                    return false;
-                }
+                if (statusFilter === "Saved" && !savedJobs.includes(job.id)) return false;
                 if (statusFilter === "Applied") {
                     const status = jobApplications[job.id];
                     if (!status || status === 'bookmarked') return false;
@@ -81,23 +125,24 @@ export default function JobCanvas({
                     if (!status || !['phone-screen', 'technical-interview', 'onsite'].includes(status)) return false;
                 }
 
-                // Remote Filter
-                if (remoteFilter === "Remote" && !job.remote) {
-                    return false;
-                }
-                if (remoteFilter === "On-site" && job.remote) {
-                    return false;
-                }
-
                 return true;
             });
 
-            return {
-                ...category,
-                jobs: filteredJobs,
-            };
+            // Sort
+            const sorted = [...filteredJobs].sort((a, b) => {
+                let cmp = 0;
+                if (sortOption === "Company") cmp = a.company.localeCompare(b.company);
+                else if (sortOption === "Title") cmp = a.title.localeCompare(b.title);
+                else if (sortOption === "Salary") {
+                    const extractNum = (s: string | undefined) => parseInt(s?.replace(/[^0-9]/g, '') || '0');
+                    cmp = extractNum(a.salary) - extractNum(b.salary);
+                }
+                return sortDesc ? -cmp : cmp;
+            });
+
+            return { ...category, jobs: sorted };
         }).filter((category) => category.jobs.length > 0);
-    }, [typeFilter, statusFilter, remoteFilter, savedJobs, jobApplications, searchQuery]);
+    }, [typeFilter, statusFilter, remoteFilter, platformFilter, savedJobs, jobApplications, searchQuery, sortOption, sortDesc]);
 
     const getStatusBadge = (jobId: string) => {
         const status = jobApplications[jobId] as ApplicationStatus | undefined;
@@ -110,95 +155,187 @@ export default function JobCanvas({
         );
     };
 
-    return (
-        <div className="relative h-full pt-12">
-            {/* Top Fade */}
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-background to-transparent z-20" />
+    // Stats
+    const allJobs = JOB_LISTINGS.flatMap(c => c.jobs);
+    const totalCount = allJobs.length;
+    const remoteCount = allJobs.filter(j => j.remote).length;
+    const internCount = allJobs.filter(j => j.type === 'Internship').length;
 
-            <div id="jobs-scroll-container" className="h-full overflow-y-auto">
-                <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
-                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12">
-                        {/* Left Column: Filters */}
-                        <aside className="sticky top-0 h-screen hidden md:flex flex-col justify-center">
+    return (
+        <div className="relative h-full">
+            {/* Top Fade */}
+            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background to-transparent z-10" />
+
+            <div id="jobs-scroll-container" className="h-full overflow-y-auto thin-scrollbar overscroll-contain">
+                <div className="max-w-7xl mx-auto px-8 md:px-12">
+                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-10 min-h-full">
+
+                        {/* ── Left column: Filters — sticky, vertically centered ── */}
+                        <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
                             <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
-                                {/* Type Filter */}
+
+                                {/* Stats card */}
+                                <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                                        <Briefcase className="h-4 w-4 text-cyan-500" />
+                                        Overview
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-center">
+                                        <div>
+                                            <div className="text-lg font-bold text-foreground">{totalCount}</div>
+                                            <div className="text-[10px] text-muted-foreground">Total</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-emerald-500">{remoteCount}</div>
+                                            <div className="text-[10px] text-muted-foreground">Remote</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-blue-500">{internCount}</div>
+                                            <div className="text-[10px] text-muted-foreground">Interns</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* ── Job Type ── */}
                                 <div className="space-y-0.5">
                                     <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
                                         Job Type
                                     </h3>
-                                    {(["All", "Internship", "Full-time", "Part-time", "Contract"] as FilterType[]).map((filter) => {
-                                        const isActive = typeFilter === filter;
+                                    {TYPE_ITEMS.map((item) => {
+                                        const Icon = item.icon;
+                                        const isActive = typeFilter === item.value;
                                         return (
                                             <button
-                                                key={filter}
-                                                onClick={() => setTypeFilter(filter)}
+                                                key={item.value}
+                                                onClick={() => setTypeFilter(item.value)}
                                                 className={cn(
-                                                    "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all text-left",
+                                                    "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
                                                     isActive
                                                         ? "bg-primary/10 text-primary font-medium"
-                                                        : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
                                                 )}
                                             >
-                                                <div className={cn(
-                                                    "h-1.5 w-1.5 rounded-full shrink-0",
-                                                    filter === "All" && "bg-muted-foreground",
-                                                    filter === "Internship" && "bg-blue-500",
-                                                    filter === "Full-time" && "bg-green-500",
-                                                    filter === "Part-time" && "bg-yellow-500",
-                                                    filter === "Contract" && "bg-orange-500",
-                                                )} />
-                                                {filter === "All" ? "All Types" : filter}
+                                                <Icon
+                                                    className={cn(
+                                                        "h-3.5 w-3.5 shrink-0",
+                                                        isActive ? "text-primary" : "text-muted-foreground/50",
+                                                    )}
+                                                />
+                                                <span className="truncate">{item.label}</span>
                                             </button>
                                         );
                                     })}
                                 </div>
 
-                                {/* Status Filter */}
+                                {/* ── Work Style ── */}
                                 <div className="space-y-1">
                                     <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                                        Status
+                                        Work Style
                                     </h3>
-                                    <div className="flex gap-1.5 flex-wrap px-1">
-                                        {(["All", "Saved", "Applied", "Interviewing"] as FilterStatus[]).map((filter) => {
-                                            const isActive = statusFilter === filter;
+                                    <div className="flex gap-1.5">
+                                        {REMOTE_ITEMS.map((item) => {
+                                            const isActive = remoteFilter === item.value;
                                             return (
                                                 <button
-                                                    key={filter}
-                                                    onClick={() => setStatusFilter(statusFilter === filter ? "All" : filter)}
+                                                    key={item.value}
+                                                    onClick={() => setRemoteFilter(isActive ? "All" : item.value)}
                                                     className={cn(
-                                                        "px-3 py-1 rounded-lg text-xs font-medium border transition-all",
+                                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex-1 justify-center",
                                                         isActive
-                                                            ? "bg-primary/10 text-primary border-primary/30"
-                                                            : "border-border/40 text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                                            ? item.activeColor
+                                                            : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground",
                                                     )}
                                                 >
-                                                    {filter}
+                                                    <div className={cn("h-1.5 w-1.5 rounded-full", item.dotColor)} />
+                                                    {item.label}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
 
-                                {/* Remote Filter */}
+                                {/* ── Status ── */}
                                 <div className="space-y-1">
                                     <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                                        Work Style
+                                        Application
                                     </h3>
-                                    <div className="flex gap-1.5 flex-wrap px-1">
-                                        {(["All", "Remote", "On-site"] as FilterRemote[]).map((filter) => {
-                                            const isActive = remoteFilter === filter;
+                                    <div className="flex gap-1.5 flex-wrap">
+                                        {STATUS_ITEMS.map((item) => {
+                                            const isActive = statusFilter === item.value;
                                             return (
                                                 <button
-                                                    key={filter}
-                                                    onClick={() => setRemoteFilter(remoteFilter === filter ? "All" : filter)}
+                                                    key={item.value}
+                                                    onClick={() => setStatusFilter(isActive ? "All" : item.value)}
                                                     className={cn(
-                                                        "px-3 py-1 rounded-lg text-xs font-medium border transition-all",
+                                                        "px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
                                                         isActive
                                                             ? "bg-primary/10 text-primary border-primary/30"
-                                                            : "border-border/40 text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                                            : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground",
                                                     )}
                                                 >
-                                                    {filter}
+                                                    {item.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* ── Platform ── */}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
+                                        <Globe className="h-3 w-3" />
+                                        Platform
+                                    </h3>
+                                    <div className="flex gap-1 flex-wrap">
+                                        {ALL_PLATFORMS.map((platform) => {
+                                            const isActive = platformFilter === platform;
+                                            return (
+                                                <button
+                                                    key={platform}
+                                                    onClick={() => setPlatformFilter(isActive ? "All" : platform)}
+                                                    className={cn(
+                                                        "px-2 py-0.5 rounded-md text-[11px] font-medium border transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary border-primary/30"
+                                                            : "border-transparent text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground",
+                                                    )}
+                                                >
+                                                    {platform}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* ── Sort ── */}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
+                                        <ArrowUpDown className="h-3 w-3" />
+                                        Sort by
+                                    </h3>
+                                    <div className="space-y-0.5">
+                                        {SORT_ITEMS.map((item) => {
+                                            const isActive = sortOption === item.value;
+                                            return (
+                                                <button
+                                                    key={item.value}
+                                                    onClick={() => {
+                                                        if (isActive) setSortDesc(!sortDesc);
+                                                        else { setSortOption(item.value); setSortDesc(true); }
+                                                    }}
+                                                    className={cn(
+                                                        "flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary font-medium"
+                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
+                                                    )}
+                                                >
+                                                    <span>{item.label}</span>
+                                                    {isActive ? (
+                                                        sortDesc ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                                                    )}
                                                 </button>
                                             );
                                         })}
@@ -207,26 +344,22 @@ export default function JobCanvas({
                             </div>
                         </aside>
 
-                        {/* Right Column: Jobs */}
-                        <div className="space-y-3">
-                            {/* sticky header with search */}
+                        {/* ── Right column: Search + Jobs ── */}
+                        <div className="space-y-4 pb-48 pt-8">
+                            {/* Sticky search bar */}
                             <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-lg font-semibold">Jobs</h2>
-                                    <div className="flex-1 ml-6">
-                                        <SearchBar
-                                            query={searchQuery}
-                                            onQueryChange={setSearchQuery}
-                                            onRandom={(e) => {
-                                                const pool = filteredListings.flatMap((c) => c.jobs);
-                                                if (pool.length === 0) return;
-                                                const pick = pool[Math.floor(Math.random() * pool.length)];
-                                                onJobSelect(pick.id, e as unknown as React.MouseEvent);
-                                            }}
-                                        />
-                                    </div>
-                                </div>
+                                <SearchBar
+                                    query={searchQuery}
+                                    onQueryChange={setSearchQuery}
+                                    onRandom={(e) => {
+                                        const pool = filteredListings.flatMap((c) => c.jobs);
+                                        if (pool.length === 0) return;
+                                        const pick = pool[Math.floor(Math.random() * pool.length)];
+                                        onJobSelect(pick.id, e as unknown as React.MouseEvent);
+                                    }}
+                                />
                             </div>
+
                             {filteredListings.length === 0 ? (
                                 <div className="text-center py-12 text-muted-foreground">
                                     <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-40" />
@@ -242,7 +375,7 @@ export default function JobCanvas({
                                         data-category-title={category.categoryName}
                                         className="space-y-5"
                                     >
-                                        <div className="sticky top-0 z-10 bg-background/95 py-4 backdrop-blur">
+                                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{category.categoryName}</h2>
                                             <p className="text-sm text-muted-foreground">
                                                 {category.jobs.length} {category.jobs.length === 1 ? 'opportunity' : 'opportunities'}
@@ -257,8 +390,7 @@ export default function JobCanvas({
                                                     <button
                                                         key={job.id}
                                                         onClick={(e) => onJobSelect(job.id, e)}
-                                                        className={`group relative w-full border-b border-border/40 px-4 py-4 text-left transition-all hover:bg-gradient-to-r hover:from-transparent hover:to-accent/40 ${isActive ? "bg-accent/50" : ""
-                                                            }`}
+                                                        className={`group relative w-full rounded-xl border border-border/40 px-4 py-4 text-left transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2 ${isActive ? "bg-white/50 dark:bg-zinc-900/30 border-zinc-200/60 dark:border-zinc-800/60 shadow-sm" : ""}`}
                                                     >
                                                         <div className="flex items-start justify-between gap-3">
                                                             <div className="space-y-2 flex-1">
@@ -301,6 +433,11 @@ export default function JobCanvas({
                                                                             • {tag}
                                                                         </span>
                                                                     ))}
+                                                                    {job.salary && (
+                                                                        <span className="text-emerald-500/70 flex items-center gap-0.5">
+                                                                            • <DollarSign className="h-3 w-3" /> {job.salary}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
 
@@ -337,12 +474,13 @@ export default function JobCanvas({
                                 ))
                             )}
                         </div>
+
                     </div>
                 </div>
             </div>
 
             {/* Bottom Fade */}
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-20" />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent z-10" />
         </div>
     );
 }

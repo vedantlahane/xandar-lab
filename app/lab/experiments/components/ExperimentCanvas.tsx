@@ -3,8 +3,15 @@
 
 import { useState, useMemo } from "react";
 import { EXPERIMENTS, ExperimentStatus, ExperimentType } from "../data/experiments";
-import { Beaker, Calendar, GitBranch } from "lucide-react";
+import {
+    Beaker, Calendar, GitBranch, ExternalLink,
+    Layers, Activity, CheckCircle2, Archive, ClipboardList,
+    Monitor, Server, Boxes, Brain, Smartphone, Settings,
+    ArrowUpDown, ChevronDown, ChevronUp,
+    Tag
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 
 interface ExperimentCanvasProps {
     activeExpId: string | null;
@@ -13,6 +20,45 @@ interface ExperimentCanvasProps {
 
 type FilterStatus = "All" | ExperimentStatus;
 type FilterType = "All" | ExperimentType;
+type FilterTech = "All" | string;
+type SortOption = "Date" | "Name" | "Status";
+
+// ── Status filter config ────────────────────────────────────────────────
+const STATUS_ITEMS: { value: FilterStatus; label: string; icon: typeof Layers }[] = [
+    { value: "All", label: "All Experiments", icon: Layers },
+    { value: "Active", label: "Active", icon: Activity },
+    { value: "Completed", label: "Completed", icon: CheckCircle2 },
+    { value: "Planning", label: "Planning", icon: ClipboardList },
+    { value: "Archived", label: "Archived", icon: Archive },
+];
+
+// ── Type filter config ──────────────────────────────────────────────────
+const TYPE_ITEMS: {
+    value: Exclude<FilterType, "All">;
+    label: string;
+    icon: typeof Monitor;
+    dotColor: string;
+    activeColor: string;
+}[] = [
+        { value: "Frontend", label: "Frontend", icon: Monitor, dotColor: "bg-purple-500", activeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30" },
+        { value: "Backend", label: "Backend", icon: Server, dotColor: "bg-orange-500", activeColor: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30" },
+        { value: "Full Stack", label: "Full Stack", icon: Boxes, dotColor: "bg-cyan-500", activeColor: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30" },
+        { value: "AI/ML", label: "AI/ML", icon: Brain, dotColor: "bg-pink-500", activeColor: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/30" },
+        { value: "Mobile", label: "Mobile", icon: Smartphone, dotColor: "bg-indigo-500", activeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30" },
+        { value: "DevOps", label: "DevOps", icon: Settings, dotColor: "bg-emerald-500", activeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
+    ];
+
+// ── Sort config ─────────────────────────────────────────────────────────
+const SORT_ITEMS: { value: SortOption; label: string }[] = [
+    { value: "Date", label: "Date" },
+    { value: "Name", label: "Name" },
+    { value: "Status", label: "Status" },
+];
+
+// Extract unique technologies
+const ALL_TECHNOLOGIES = Array.from(
+    new Set(EXPERIMENTS.flatMap(c => c.experiments.flatMap(e => e.technologies)))
+).sort();
 
 export default function ExperimentCanvas({
     activeExpId,
@@ -20,31 +66,17 @@ export default function ExperimentCanvas({
 }: ExperimentCanvasProps) {
     const [statusFilter, setStatusFilter] = useState<FilterStatus>("All");
     const [typeFilter, setTypeFilter] = useState<FilterType>("All");
-
-    const statuses: FilterStatus[] = ["All", "Active", "Completed", "Planning", "Archived"];
-    const types: FilterType[] = ["All", "Frontend", "Backend", "Full Stack", "AI/ML", "Mobile", "DevOps"];
-
-    const filteredExperiments = useMemo(() => {
-        return EXPERIMENTS.map((category) => {
-            const filteredItems = category.experiments.filter((exp) => {
-                if (statusFilter !== "All" && exp.status !== statusFilter) return false;
-                if (typeFilter !== "All" && exp.type !== typeFilter) return false;
-                return true;
-            });
-
-            return {
-                ...category,
-                experiments: filteredItems,
-            };
-        }).filter((category) => category.experiments.length > 0);
-    }, [statusFilter, typeFilter]);
+    const [techFilter, setTechFilter] = useState<FilterTech>("All");
+    const [sortOption, setSortOption] = useState<SortOption>("Date");
+    const [sortDesc, setSortDesc] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Active': return 'text-green-400';
-            case 'Completed': return 'text-blue-400';
+            case 'Active': return 'text-green-500';
+            case 'Completed': return 'text-blue-500';
             case 'Archived': return 'text-gray-400';
-            case 'Planning': return 'text-yellow-400';
+            case 'Planning': return 'text-yellow-500';
             default: return 'text-muted-foreground';
         }
     };
@@ -61,80 +93,216 @@ export default function ExperimentCanvas({
         }
     };
 
-    return (
-        <div className="relative h-full pt-12">
-            {/* Top Fade */}
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-card to-transparent z-20" />
+    const filteredExperiments = useMemo(() => {
+        const statusOrder: Record<string, number> = { Active: 0, Planning: 1, Completed: 2, Archived: 3 };
+        return EXPERIMENTS.map((category) => {
+            const filteredItems = category.experiments.filter((exp) => {
+                if (searchQuery) {
+                    const q = searchQuery.toLowerCase();
+                    if (!exp.title.toLowerCase().includes(q) && !exp.description.toLowerCase().includes(q) && !exp.technologies.some(t => t.toLowerCase().includes(q))) return false;
+                }
+                if (statusFilter !== "All" && exp.status !== statusFilter) return false;
+                if (typeFilter !== "All" && exp.type !== typeFilter) return false;
+                if (techFilter !== "All" && !exp.technologies.includes(techFilter)) return false;
+                return true;
+            });
 
-            <div id="experiments-scroll-container" className="h-full overflow-y-auto">
-                <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
-                    <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-12">
-                        {/* Left Column: Filters */}
-                        <div className="hidden md:block">
-                            <div className="sticky top-32 space-y-4">
+            const sorted = [...filteredItems].sort((a, b) => {
+                let cmp = 0;
+                if (sortOption === "Date") cmp = new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+                else if (sortOption === "Name") cmp = a.title.localeCompare(b.title);
+                else if (sortOption === "Status") cmp = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+                return sortDesc ? -cmp : cmp;
+            });
+
+            return { ...category, experiments: sorted };
+        }).filter((category) => category.experiments.length > 0);
+    }, [statusFilter, typeFilter, techFilter, searchQuery, sortOption, sortDesc]);
+
+    // Stats
+    const allExperiments = EXPERIMENTS.flatMap(c => c.experiments);
+    const totalCount = allExperiments.length;
+    const activeCount = allExperiments.filter(e => e.status === 'Active').length;
+    const completedCount = allExperiments.filter(e => e.status === 'Completed').length;
+
+    return (
+        <div className="relative h-full">
+            {/* Top Fade */}
+            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-card to-transparent z-10" />
+
+            <div id="experiments-scroll-container" className="h-full overflow-y-auto thin-scrollbar overscroll-contain">
+                <div className="max-w-7xl mx-auto px-8 md:px-12">
+                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-10 min-h-full">
+
+                        {/* ── Left column: Filters — sticky, vertically centered ── */}
+                        <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
+                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
+
+                                {/* Stats card */}
+                                <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                                        <Beaker className="h-4 w-4 text-rose-500" />
+                                        Overview
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-center">
+                                        <div>
+                                            <div className="text-lg font-bold text-foreground">{totalCount}</div>
+                                            <div className="text-[10px] text-muted-foreground">Total</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-green-500">{activeCount}</div>
+                                            <div className="text-[10px] text-muted-foreground">Active</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-blue-500">{completedCount}</div>
+                                            <div className="text-[10px] text-muted-foreground">Done</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* ── Status ── */}
                                 <div className="space-y-0.5">
                                     <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
                                         Status
                                     </h3>
-                                    {statuses.map((filter) => {
-                                        const isActive = statusFilter === filter;
+                                    {STATUS_ITEMS.map((item) => {
+                                        const Icon = item.icon;
+                                        const isActive = statusFilter === item.value;
                                         return (
                                             <button
-                                                key={filter}
-                                                onClick={() => setStatusFilter(filter)}
+                                                key={item.value}
+                                                onClick={() => setStatusFilter(item.value)}
                                                 className={cn(
-                                                    "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all text-left",
+                                                    "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
                                                     isActive
                                                         ? "bg-primary/10 text-primary font-medium"
-                                                        : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
                                                 )}
                                             >
-                                                <div className={cn(
-                                                    "h-1.5 w-1.5 rounded-full shrink-0",
-                                                    filter === "All" && "bg-muted-foreground",
-                                                    filter === "Active" && "bg-green-500",
-                                                    filter === "Completed" && "bg-blue-500",
-                                                    filter === "Planning" && "bg-yellow-500",
-                                                    filter === "Archived" && "bg-gray-400",
-                                                )} />
-                                                {filter === "All" ? "All Status" : filter}
+                                                <Icon
+                                                    className={cn(
+                                                        "h-3.5 w-3.5 shrink-0",
+                                                        isActive ? "text-primary" : "text-muted-foreground/50",
+                                                    )}
+                                                />
+                                                <span className="truncate">{item.label}</span>
                                             </button>
                                         );
                                     })}
                                 </div>
 
+                                {/* ── Type ── */}
                                 <div className="space-y-1">
                                     <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
                                         Type
                                     </h3>
-                                    <div className="flex gap-1.5 flex-wrap px-1">
-                                        {types.map((filter) => {
-                                            const isActive = typeFilter === filter;
+                                    <div className="flex gap-1.5 flex-wrap">
+                                        {TYPE_ITEMS.map((item) => {
+                                            const isActive = typeFilter === item.value;
                                             return (
                                                 <button
-                                                    key={filter}
-                                                    onClick={() => setTypeFilter(typeFilter === filter ? "All" : filter)}
+                                                    key={item.value}
+                                                    onClick={() => setTypeFilter(isActive ? "All" : item.value)}
                                                     className={cn(
-                                                        "px-3 py-1 rounded-lg text-xs font-medium border transition-all",
+                                                        "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
                                                         isActive
-                                                            ? "bg-primary/10 text-primary border-primary/30"
-                                                            : "border-border/40 text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                                            ? item.activeColor
+                                                            : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground",
                                                     )}
                                                 >
-                                                    {filter}
+                                                    <div className={cn("h-1.5 w-1.5 rounded-full", item.dotColor)} />
+                                                    {item.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* ── Technologies ── */}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
+                                        <Tag className="h-3 w-3" />
+                                        Tech Stack
+                                    </h3>
+                                    <div className="flex gap-1 flex-wrap">
+                                        {ALL_TECHNOLOGIES.slice(0, 12).map((tech) => {
+                                            const isActive = techFilter === tech;
+                                            return (
+                                                <button
+                                                    key={tech}
+                                                    onClick={() => setTechFilter(isActive ? "All" : tech)}
+                                                    className={cn(
+                                                        "px-2 py-0.5 rounded-md text-[11px] font-medium border transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary border-primary/30"
+                                                            : "border-transparent text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground",
+                                                    )}
+                                                >
+                                                    {tech}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* ── Sort ── */}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
+                                        <ArrowUpDown className="h-3 w-3" />
+                                        Sort by
+                                    </h3>
+                                    <div className="space-y-0.5">
+                                        {SORT_ITEMS.map((item) => {
+                                            const isActive = sortOption === item.value;
+                                            return (
+                                                <button
+                                                    key={item.value}
+                                                    onClick={() => {
+                                                        if (isActive) setSortDesc(!sortDesc);
+                                                        else { setSortOption(item.value); setSortDesc(true); }
+                                                    }}
+                                                    className={cn(
+                                                        "flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary font-medium"
+                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
+                                                    )}
+                                                >
+                                                    <span>{item.label}</span>
+                                                    {isActive ? (
+                                                        sortDesc ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="h-3 w-3 opacity-30" />
+                                                    )}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </aside>
 
-                        {/* Right Column: Experiments */}
-                        <div className="space-y-3">
+                        {/* ── Right column: Search + Experiments ── */}
+                        <div className="space-y-4 pb-48 pt-8">
+                            {/* Sticky search bar */}
+                            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
+                                <SearchBar
+                                    query={searchQuery}
+                                    onQueryChange={setSearchQuery}
+                                    onRandom={(e) => {
+                                        const pool = filteredExperiments.flatMap((c) => c.experiments);
+                                        if (pool.length === 0) return;
+                                        const pick = pool[Math.floor(Math.random() * pool.length)];
+                                        onExpSelect(pick.id, e as unknown as React.MouseEvent);
+                                    }}
+                                />
+                            </div>
+
                             {filteredExperiments.length === 0 ? (
                                 <div className="text-center py-12 text-muted-foreground">
-                                    No experiments match your filters.
+                                    <Beaker className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                                    <p className="text-lg font-medium">No experiments match your filters</p>
+                                    <p className="text-sm mt-1">Try adjusting your filters to see more experiments</p>
                                 </div>
                             ) : (
                                 filteredExperiments.map((category) => (
@@ -145,7 +313,7 @@ export default function ExperimentCanvas({
                                         data-category-title={category.categoryName}
                                         className="space-y-5"
                                     >
-                                        <div className="sticky top-0 z-10 bg-background/95 py-4 backdrop-blur">
+                                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{category.categoryName}</h2>
                                             <p className="text-sm text-muted-foreground">
                                                 {category.experiments.length} experiments
@@ -159,19 +327,13 @@ export default function ExperimentCanvas({
                                                     <button
                                                         key={exp.id}
                                                         onClick={(e) => onExpSelect(exp.id, e)}
-                                                        className={`group relative w-full rounded-xl border border-border/40 px-4 py-4 text-left transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2 ${isActive ? "bg-white/50 dark:bg-zinc-900/30 border-zinc-200/60 dark:border-zinc-800/60 shadow-sm" : ""
-                                                            }`}
+                                                        className={`group relative w-full rounded-xl border border-border/40 px-4 py-4 text-left transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2 ${isActive ? "bg-white/50 dark:bg-zinc-900/30 border-zinc-200/60 dark:border-zinc-800/60 shadow-sm" : ""}`}
                                                     >
                                                         <div className="flex items-start justify-between gap-3">
                                                             <div className="space-y-2">
                                                                 <div className="flex items-center gap-2">
                                                                     <Beaker className={`h-4 w-4 ${getStatusColor(exp.status)}`} />
-                                                                    <div
-                                                                        className={`text-sm font-medium transition-colors ${isActive
-                                                                            ? "text-primary"
-                                                                            : "text-foreground group-hover:text-primary"
-                                                                            }`}
-                                                                    >
+                                                                    <div className={`text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
                                                                         {exp.title}
                                                                     </div>
                                                                 </div>
@@ -186,10 +348,7 @@ export default function ExperimentCanvas({
                                                                         • {exp.type}
                                                                     </span>
                                                                     {exp.technologies.slice(0, 3).map((tech) => (
-                                                                        <span
-                                                                            key={tech}
-                                                                            className="text-xs text-muted-foreground/50"
-                                                                        >
+                                                                        <span key={tech} className="text-xs text-muted-foreground/50">
                                                                             • {tech}
                                                                         </span>
                                                                     ))}
@@ -198,9 +357,8 @@ export default function ExperimentCanvas({
 
                                                             {/* Hover Info */}
                                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3 opacity-0 transition-opacity group-hover:opacity-100">
-                                                                {exp.githubUrl && (
-                                                                    <GitBranch className="h-4 w-4 text-muted-foreground" />
-                                                                )}
+                                                                {exp.githubUrl && <GitBranch className="h-4 w-4 text-muted-foreground" />}
+                                                                {exp.demoUrl && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
                                                                 <div className="flex items-center gap-1 text-xs text-muted-foreground/50">
                                                                     <Calendar className="h-3 w-3" />
                                                                     {exp.startDate}
@@ -215,12 +373,13 @@ export default function ExperimentCanvas({
                                 ))
                             )}
                         </div>
+
                     </div>
                 </div>
             </div>
 
             {/* Bottom Fade */}
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-card to-transparent z-20" />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-card to-transparent z-10" />
         </div>
     );
 }
