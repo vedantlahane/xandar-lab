@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { HACKATHONS, HackathonStatus, HackathonType } from "../data/hackathons";
-import { Trophy, Calendar, Users, MapPin } from "lucide-react";
+import { Trophy, Calendar, Users, MapPin, Globe, Navigation, RotateCcw, CircleDot } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 
 interface HackathonCanvasProps {
@@ -73,48 +74,84 @@ export default function HackathonCanvas({
             <div id="hackathons-scroll-container" className="h-full overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
                     <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-12">
-                        {/* Left Column: Filters (practice-style aside) */}
+                        {/* Left Column: Filters */}
                         <div className="hidden md:block">
-                            <div className="sticky top-32 text-right space-y-6">
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Status</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {statuses.map((filter) => (
-                                            <div
+                            <div className="sticky top-32 space-y-4">
+                                <div className="space-y-0.5">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Status
+                                    </h3>
+                                    {statuses.map((filter) => {
+                                        const isActive = statusFilter === filter;
+                                        return (
+                                            <button
                                                 key={filter}
                                                 onClick={() => setStatusFilter(filter)}
-                                                className={`cursor-pointer transition-colors ${statusFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
+                                                className={cn(
+                                                    "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all text-left",
+                                                    isActive
+                                                        ? "bg-primary/10 text-primary font-medium"
+                                                        : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                                                )}
                                             >
+                                                <div className={cn(
+                                                    "h-1.5 w-1.5 rounded-full shrink-0",
+                                                    filter === "All" && "bg-muted-foreground",
+                                                    filter === "Upcoming" && "bg-blue-500",
+                                                    filter === "Registered" && "bg-green-500",
+                                                    filter === "In Progress" && "bg-yellow-500",
+                                                    filter === "Completed" && "bg-purple-500",
+                                                    filter === "Missed" && "bg-gray-400",
+                                                )} />
                                                 {filter === "All" ? "All Hackathons" : filter}
-                                            </div>
-                                        ))}
-                                    </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Type</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {types.map((filter) => (
-                                            <div
-                                                key={filter}
-                                                onClick={() => setTypeFilter(typeFilter === filter ? "All" : filter)}
-                                                className={`cursor-pointer transition-colors ${typeFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
-                                            >
-                                                {filter === "All" ? filter : `${getTypeIcon(filter)} ${filter}`}
-                                            </div>
-                                        ))}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Type
+                                    </h3>
+                                    <div className="flex gap-1.5 flex-wrap px-1">
+                                        {types.map((filter) => {
+                                            const isActive = typeFilter === filter;
+                                            return (
+                                                <button
+                                                    key={filter}
+                                                    onClick={() => setTypeFilter(typeFilter === filter ? "All" : filter)}
+                                                    className={cn(
+                                                        "px-3 py-1 rounded-lg text-xs font-medium border transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary border-primary/30"
+                                                            : "border-border/40 text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                                    )}
+                                                >
+                                                    {filter === "All" ? "All" : `${getTypeIcon(filter)} ${filter}`}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
                                 {/* Stats */}
-                                <div className="pt-4 border-t border-border/40 space-y-2">
-                                    <h3 className="font-semibold text-foreground text-sm">Stats</h3>
-                                    <div className="space-y-1 text-xs text-muted-foreground">
-                                        <div>Total: {HACKATHONS.reduce((acc, m) => acc + m.hackathons.length, 0)}</div>
-                                        <div>Completed: {HACKATHONS.reduce((acc, m) => acc + m.hackathons.filter(h => h.status === 'Completed').length, 0)}</div>
-                                        <div>Won: {HACKATHONS.reduce((acc, m) => acc + m.hackathons.filter(h => h.result?.placement?.includes('Best') || h.result?.placement?.includes('Top') || h.result?.placement?.includes('Won')).length, 0)}</div>
+                                <div className="pt-3 border-t border-border/40 space-y-1.5">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Stats
+                                    </h3>
+                                    <div className="space-y-1 text-xs text-muted-foreground px-2">
+                                        <div className="flex items-center justify-between">
+                                            <span>Total</span>
+                                            <span className="font-mono">{HACKATHONS.reduce((acc, m) => acc + m.hackathons.length, 0)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span>Completed</span>
+                                            <span className="font-mono">{HACKATHONS.reduce((acc, m) => acc + m.hackathons.filter(h => h.status === 'Completed').length, 0)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span>Won</span>
+                                            <span className="font-mono">{HACKATHONS.reduce((acc, m) => acc + m.hackathons.filter(h => h.result?.placement?.includes('Best') || h.result?.placement?.includes('Top') || h.result?.placement?.includes('Won')).length, 0)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

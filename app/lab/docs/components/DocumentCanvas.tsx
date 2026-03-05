@@ -4,6 +4,7 @@
 import { useState, useMemo } from "react";
 import { DOCUMENTS, DocCategory, DocTechnology } from "../data/documents";
 import { FileText, Star, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DocumentCanvasProps {
     activeDocId: string | null;
@@ -59,36 +60,61 @@ export default function DocumentCanvas({
                     <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-12">
                         {/* Left Column: Filters */}
                         <div className="hidden md:block">
-                            <div className="sticky top-32 text-right space-y-6">
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Category</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {categories.map((filter) => (
-                                            <div
+                            <div className="sticky top-32 space-y-4">
+                                <div className="space-y-0.5">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Category
+                                    </h3>
+                                    {categories.map((filter) => {
+                                        const isActive = categoryFilter === filter;
+                                        return (
+                                            <button
                                                 key={filter}
                                                 onClick={() => setCategoryFilter(filter)}
-                                                className={`cursor-pointer transition-colors ${categoryFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
+                                                className={cn(
+                                                    "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all text-left",
+                                                    isActive
+                                                        ? "bg-primary/10 text-primary font-medium"
+                                                        : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                                                )}
                                             >
+                                                <div className={cn(
+                                                    "h-1.5 w-1.5 rounded-full shrink-0",
+                                                    filter === "All" && "bg-muted-foreground",
+                                                    filter === "Cheatsheet" && "bg-blue-400",
+                                                    filter === "Guide" && "bg-green-400",
+                                                    filter === "Reference" && "bg-purple-400",
+                                                    filter === "Tutorial" && "bg-orange-400",
+                                                    filter === "Notes" && "bg-yellow-400",
+                                                )} />
                                                 {filter === "All" ? "All Categories" : filter}
-                                            </div>
-                                        ))}
-                                    </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Technology</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {technologies.map((filter) => (
-                                            <div
-                                                key={filter}
-                                                onClick={() => setTechFilter(techFilter === filter ? "All" : filter)}
-                                                className={`cursor-pointer transition-colors ${techFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
-                                            >
-                                                {filter}
-                                            </div>
-                                        ))}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Technology
+                                    </h3>
+                                    <div className="flex gap-1.5 flex-wrap px-1">
+                                        {technologies.map((filter) => {
+                                            const isActive = techFilter === filter;
+                                            return (
+                                                <button
+                                                    key={filter}
+                                                    onClick={() => setTechFilter(techFilter === filter ? "All" : filter)}
+                                                    className={cn(
+                                                        "px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary border-primary/30"
+                                                            : "border-border/40 text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                                    )}
+                                                >
+                                                    {filter}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>

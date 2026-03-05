@@ -4,6 +4,7 @@
 import { useState, useMemo } from "react";
 import { JOB_LISTINGS, STATUS_CONFIG, ApplicationStatus, JobType, JobPlatform } from "../data/jobs";
 import { Bookmark, Building2, MapPin, ExternalLink, Clock, Briefcase } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { useAuth } from "@/components/auth/AuthContext";
 
@@ -117,66 +118,93 @@ export default function JobCanvas({
             <div id="jobs-scroll-container" className="h-full overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-8 md:px-12 pb-48 pt-12">
                     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-12">
-                        {/* Left Column: Filters (practice-style aside) */}
-                        <aside className="sticky top-0 h-screen hidden md:flex flex-col justify-center overflow-hidden">
-                            {/* top fade */}
-                            <div className="pointer-events-none absolute top-0 left-0 right-0 h-80 bg-linear-to-b from-background to-transparent z-10" />
-
-                            <div className="space-y-8 text-right py-12 overflow-y-auto thin-scrollbar max-h-[calc(100vh-8rem)]">
+                        {/* Left Column: Filters */}
+                        <aside className="sticky top-0 h-screen hidden md:flex flex-col justify-center">
+                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
                                 {/* Type Filter */}
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Job Type</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {(["All", "Internship", "Full-time", "Part-time", "Contract"] as FilterType[]).map((filter) => (
-                                            <div
+                                <div className="space-y-0.5">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Job Type
+                                    </h3>
+                                    {(["All", "Internship", "Full-time", "Part-time", "Contract"] as FilterType[]).map((filter) => {
+                                        const isActive = typeFilter === filter;
+                                        return (
+                                            <button
                                                 key={filter}
                                                 onClick={() => setTypeFilter(filter)}
-                                                className={`cursor-pointer transition-colors ${typeFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
+                                                className={cn(
+                                                    "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all text-left",
+                                                    isActive
+                                                        ? "bg-primary/10 text-primary font-medium"
+                                                        : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                                                )}
                                             >
+                                                <div className={cn(
+                                                    "h-1.5 w-1.5 rounded-full shrink-0",
+                                                    filter === "All" && "bg-muted-foreground",
+                                                    filter === "Internship" && "bg-blue-500",
+                                                    filter === "Full-time" && "bg-green-500",
+                                                    filter === "Part-time" && "bg-yellow-500",
+                                                    filter === "Contract" && "bg-orange-500",
+                                                )} />
                                                 {filter === "All" ? "All Types" : filter}
-                                            </div>
-                                        ))}
-                                    </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Status Filter */}
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Status</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {(["All", "Saved", "Applied", "Interviewing"] as FilterStatus[]).map((filter) => (
-                                            <div
-                                                key={filter}
-                                                onClick={() => setStatusFilter(statusFilter === filter ? "All" : filter)}
-                                                className={`cursor-pointer transition-colors ${statusFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
-                                            >
-                                                {filter}
-                                            </div>
-                                        ))}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Status
+                                    </h3>
+                                    <div className="flex gap-1.5 flex-wrap px-1">
+                                        {(["All", "Saved", "Applied", "Interviewing"] as FilterStatus[]).map((filter) => {
+                                            const isActive = statusFilter === filter;
+                                            return (
+                                                <button
+                                                    key={filter}
+                                                    onClick={() => setStatusFilter(statusFilter === filter ? "All" : filter)}
+                                                    className={cn(
+                                                        "px-3 py-1 rounded-lg text-xs font-medium border transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary border-primary/30"
+                                                            : "border-border/40 text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                                    )}
+                                                >
+                                                    {filter}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
                                 {/* Remote Filter */}
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Work Style</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {(["All", "Remote", "On-site"] as FilterRemote[]).map((filter) => (
-                                            <div
-                                                key={filter}
-                                                onClick={() => setRemoteFilter(remoteFilter === filter ? "All" : filter)}
-                                                className={`cursor-pointer transition-colors ${remoteFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
-                                            >
-                                                {filter}
-                                            </div>
-                                        ))}
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Work Style
+                                    </h3>
+                                    <div className="flex gap-1.5 flex-wrap px-1">
+                                        {(["All", "Remote", "On-site"] as FilterRemote[]).map((filter) => {
+                                            const isActive = remoteFilter === filter;
+                                            return (
+                                                <button
+                                                    key={filter}
+                                                    onClick={() => setRemoteFilter(remoteFilter === filter ? "All" : filter)}
+                                                    className={cn(
+                                                        "px-3 py-1 rounded-lg text-xs font-medium border transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary border-primary/30"
+                                                            : "border-border/40 text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                                    )}
+                                                >
+                                                    {filter}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
-
-                            {/* bottom fade */}
-                            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-72 bg-linear-to-t from-background to-transparent z-10" />
                         </aside>
 
                         {/* Right Column: Jobs */}

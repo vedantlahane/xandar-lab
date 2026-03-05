@@ -4,6 +4,7 @@
 import { useState, useMemo } from "react";
 import { NOTES, NoteCategory, NoteColor } from "../data/notes";
 import { StickyNote, Pin, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NoteCanvasProps {
     activeNoteId: string | null;
@@ -77,34 +78,56 @@ export default function NoteCanvas({
                     <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-12">
                         {/* Left Column: Filters */}
                         <div className="hidden md:block">
-                            <div className="sticky top-32 text-right space-y-6">
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Category</h3>
-                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                        {categories.map((filter) => (
-                                            <div
+                            <div className="sticky top-32 space-y-4">
+                                <div className="space-y-0.5">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Category
+                                    </h3>
+                                    {categories.map((filter) => {
+                                        const isActive = categoryFilter === filter;
+                                        return (
+                                            <button
                                                 key={filter}
                                                 onClick={() => setCategoryFilter(filter)}
-                                                className={`cursor-pointer transition-colors ${categoryFilter === filter ? "text-primary font-medium" : "hover:text-foreground"
-                                                    }`}
+                                                className={cn(
+                                                    "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all text-left",
+                                                    isActive
+                                                        ? "bg-primary/10 text-primary font-medium"
+                                                        : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                                                )}
                                             >
+                                                <div className={cn(
+                                                    "h-1.5 w-1.5 rounded-full shrink-0",
+                                                    filter === "All" && "bg-muted-foreground",
+                                                    filter === "Learning" && "bg-blue-400",
+                                                    filter === "Ideas" && "bg-pink-400",
+                                                    filter === "Todo" && "bg-orange-400",
+                                                    filter === "Reference" && "bg-green-400",
+                                                    filter === "Personal" && "bg-purple-400",
+                                                    filter === "Work" && "bg-cyan-400",
+                                                )} />
                                                 {filter === "All" ? "All Categories" : filter}
-                                            </div>
-                                        ))}
-                                    </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-foreground">Color</h3>
-                                    <div className="flex justify-end gap-2 flex-wrap">
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                                        Color
+                                    </h3>
+                                    <div className="flex gap-2 flex-wrap px-2">
                                         {colors.map((filter) => (
                                             <button
                                                 key={filter}
                                                 onClick={() => setColorFilter(colorFilter === filter ? "All" : filter)}
-                                                className={`w-5 h-5 rounded-full transition-all border-2 ${colorFilter === filter
-                                                    ? "border-primary scale-110"
-                                                    : "border-transparent hover:scale-105"
-                                                    } ${filter === "All" ? "bg-gradient-to-br from-yellow-400 via-pink-400 to-blue-400" : getColorFilterDot(filter)}`}
+                                                className={cn(
+                                                    "w-5 h-5 rounded-full transition-all border-2",
+                                                    colorFilter === filter
+                                                        ? "border-primary scale-110"
+                                                        : "border-transparent hover:scale-105",
+                                                    filter === "All" ? "bg-gradient-to-br from-yellow-400 via-pink-400 to-blue-400" : getColorFilterDot(filter),
+                                                )}
                                                 title={filter === "All" ? "All colors" : filter}
                                             />
                                         ))}
