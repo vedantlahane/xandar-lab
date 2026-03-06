@@ -9,7 +9,7 @@ export function useDocScroll() {
         if (!container) return;
 
         const sections = Array.from(
-            container.querySelectorAll<HTMLElement>("[data-section]")
+            container.querySelectorAll<HTMLElement>("[data-category]")
         );
 
         const observer = new IntersectionObserver(

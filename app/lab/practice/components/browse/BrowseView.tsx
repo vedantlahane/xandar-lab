@@ -175,6 +175,8 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
                   query={filters.searchQuery}
                   onQueryChange={filters.setSearchQuery}
                   onRandom={handleRandom}
+                  placeholder="Search problems, tags..."
+                  randomLabel="Pick Random"
                 />
               </div>
 

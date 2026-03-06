@@ -10,7 +10,7 @@ export function useNoteScroll() {
         if (!container) return;
 
         const sections = Array.from(
-            container.querySelectorAll<HTMLElement>("[data-group]")
+            container.querySelectorAll<HTMLElement>("[data-category]")
         );
 
         const observer = new IntersectionObserver(

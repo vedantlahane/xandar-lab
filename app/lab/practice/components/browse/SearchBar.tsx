@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 interface SearchBarProps {
   query: string;
   onQueryChange: (q: string) => void;
-  onRandom: (e: React.MouseEvent) => void;
+  onRandom?: (e: React.MouseEvent) => void;
   placeholder?: string;
   randomLabel?: string;
 }
@@ -36,15 +36,17 @@ export function SearchBar({
           className="pl-9 bg-background/50 border-border/50 focus:border-primary/50 text-sm h-10 transition-all hover:bg-background/80"
         />
       </div>
-      <Button
-        variant="outline"
-        className="gap-2 h-10 hover:bg-primary/10 hover:text-primary transition-colors"
-        onClick={onRandom}
-        title={randomLabel}
-      >
-        <Shuffle className="h-4 w-4" />
-        <span className="hidden sm:inline">{randomLabel}</span>
-      </Button>
+      {onRandom && (
+        <Button
+          variant="outline"
+          className="gap-2 h-10 hover:bg-primary/10 hover:text-primary transition-colors"
+          onClick={onRandom}
+          title={randomLabel}
+        >
+          <Shuffle className="h-4 w-4" />
+          <span className="hidden sm:inline">{randomLabel}</span>
+        </Button>
+      )}
     </div>
   );
 }

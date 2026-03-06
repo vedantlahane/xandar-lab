@@ -351,12 +351,7 @@ export default function JobCanvas({
                                 <SearchBar
                                     query={searchQuery}
                                     onQueryChange={setSearchQuery}
-                                    onRandom={(e) => {
-                                        const pool = filteredListings.flatMap((c) => c.jobs);
-                                        if (pool.length === 0) return;
-                                        const pick = pool[Math.floor(Math.random() * pool.length)];
-                                        onJobSelect(pick.id, e as unknown as React.MouseEvent);
-                                    }}
+                                    placeholder="Search jobs, companies, tags..."
                                 />
                             </div>
 

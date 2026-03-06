@@ -289,12 +289,7 @@ export default function ExperimentCanvas({
                                 <SearchBar
                                     query={searchQuery}
                                     onQueryChange={setSearchQuery}
-                                    onRandom={(e) => {
-                                        const pool = filteredExperiments.flatMap((c) => c.experiments);
-                                        if (pool.length === 0) return;
-                                        const pick = pool[Math.floor(Math.random() * pool.length)];
-                                        onExpSelect(pick.id, e as unknown as React.MouseEvent);
-                                    }}
+                                    placeholder="Search experiments, tech..."
                                 />
                             </div>
 

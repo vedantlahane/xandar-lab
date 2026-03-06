@@ -10,7 +10,7 @@ export function useHackathonScroll() {
         if (!container) return;
 
         const sections = Array.from(
-            container.querySelectorAll<HTMLElement>("[data-month]")
+            container.querySelectorAll<HTMLElement>("[data-category]")
         );
 
         const observer = new IntersectionObserver(

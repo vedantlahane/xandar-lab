@@ -284,12 +284,7 @@ export default function HackathonCanvas({
                                 <SearchBar
                                     query={searchQuery}
                                     onQueryChange={setSearchQuery}
-                                    onRandom={(e) => {
-                                        const pool = filteredHackathons.flatMap((m) => m.hackathons);
-                                        if (pool.length === 0) return;
-                                        const pick = pool[Math.floor(Math.random() * pool.length)];
-                                        onHackSelect(pick.id, e as unknown as React.MouseEvent);
-                                    }}
+                                    placeholder="Search hackathons, themes..."
                                 />
                             </div>
 
