@@ -130,7 +130,7 @@ export default function HackathonCanvas({
 
                         {/* ── Left column: Filters — sticky, vertically centered ── */}
                         <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
-                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
+                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-10rem)]">
 
                                 {/* Stats card */}
                                 <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">

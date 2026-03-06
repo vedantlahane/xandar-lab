@@ -1,36 +1,58 @@
-// app/lab/notes/hooks/useNoteScroll.ts
 "use client"
 import { useEffect, useState } from "react";
 
-export function useNoteScroll() {
+export function useNoteScroll () {
     const [activeGroup, setActiveGroup] = useState<string | null>(null);
+    const [categories, setCategories] = useState<{ id: string, title: string }[]>([]);
 
     useEffect(() => {
         const container = document.getElementById("notes-scroll-container");
         if (!container) return;
 
-        const sections = Array.from(
-            container.querySelectorAll<HTMLElement>("[data-category]")
-        );
+        let observer: IntersectionObserver | null = null;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActiveGroup(entry.target.id);
-                    }
-                });
-            },
-            {
-                root: container,
-                threshold: 0.4,
-            }
-        );
+        const setupObservers = () => {
+            const sections = Array.from(
+                container.querySelectorAll<HTMLElement>("[data-category]")
+            );
+            
+            setCategories(sections.map(s => ({
+                id: s.id,
+                title: s.getAttribute("data-category-title") || s.id
+            })));
 
-        sections.forEach((section) => observer.observe(section));
+            if (observer) observer.disconnect();
+            
+            observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            setActiveGroup(entry.target.id);
+                        }
+                    });
+                },
+                {
+                    root: container,
+                    threshold: 0.4,
+                }
+            );
 
-        return () => observer.disconnect();
+            sections.forEach((section) => observer?.observe(section));
+        };
+
+        setupObservers();
+
+        const mutationObserver = new MutationObserver(() => {
+            setupObservers();
+        });
+
+        mutationObserver.observe(container, { childList: true, subtree: true });
+
+        return () => {
+            mutationObserver.disconnect();
+            if (observer) observer.disconnect();
+        };
     }, []);
 
-    return { activeGroup };
+    return { activeGroup, categories };
 }

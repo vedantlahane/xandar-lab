@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { useAuth } from "@/components/auth/AuthContext";
+import JobSidebar from "./JobSidebar";
 
 interface JobCanvasProps {
     activeJobId: string | null;
@@ -166,13 +167,15 @@ export default function JobCanvas({
             {/* Top Fade */}
             <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background to-transparent z-10" />
 
+            <JobSidebar />
+
             <div id="jobs-scroll-container" className="h-full overflow-y-auto thin-scrollbar overscroll-contain">
                 <div className="max-w-7xl mx-auto px-8 md:px-12">
                     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-10 min-h-full">
 
                         {/* ── Left column: Filters — sticky, vertically centered ── */}
                         <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
-                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
+                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-10rem)]">
 
                                 {/* Stats card */}
                                 <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">

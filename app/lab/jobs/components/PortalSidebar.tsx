@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Transition } from "framer-motion";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNoteScroll } from "../hooks/useNoteScroll";
+import { usePortalScroll } from "../hooks/usePortalScroll";
 import { cn } from "@/lib/utils";
 
 const smoothSpring = {
@@ -13,8 +13,8 @@ const smoothSpring = {
     mass: 0.6,
 } satisfies Transition;
 
-export default function GroupSidebar() {
-    const { activeGroup, categories } = useNoteScroll();
+export default function PortalSidebar() {
+    const { activeCategory, categories } = usePortalScroll();
     const [isHovered, setIsHovered] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -27,11 +27,11 @@ export default function GroupSidebar() {
 
     // Auto-scroll the sidebar container so the active dot is visible
     useEffect(() => {
-        if (!activeGroup) return;
+        if (!activeCategory) return;
         
         // slight delay to allow layout animations to settle
         const timer = setTimeout(() => {
-            const btn = document.getElementById(`sidebar-item-${activeGroup}`);
+            const btn = document.getElementById(`sidebar-item-${activeCategory}`);
             if (btn && scrollRef.current) {
                 const container = scrollRef.current;
                 const btnTop = btn.offsetTop;
@@ -48,7 +48,7 @@ export default function GroupSidebar() {
         }, 100);
 
         return () => clearTimeout(timer);
-    }, [activeGroup, isHovered]);
+    }, [activeCategory, isHovered]);
 
     return (
         <aside className="fixed right-0 top-0 z-40 flex h-full items-center pr-6 pointer-events-none">
@@ -67,7 +67,7 @@ export default function GroupSidebar() {
                     >
                         <AnimatePresence initial={false}>
                             {categories.map((section, index) => {
-                                const isActive = activeGroup === section.id;
+                                const isActive = activeCategory === section.id;
                                 const isBig = index % 3 === 0;
 
                                 return (

@@ -1,36 +1,58 @@
-// app/lab/practice/hooks/useScrollSync.ts
 "use client"
 import { useEffect, useState } from "react";
 
-export function useScrollSync() {
-  const [activeTopic, setActiveTopic] = useState<string | null>(null);
+export function useScrollSync () {
+    const [activeTopic, setActiveTopic] = useState<string | null>(null);
+    const [categories, setCategories] = useState<{ id: string, title: string }[]>([]);
 
-  useEffect(() => {
-    const container = document.getElementById("problem-scroll-container");
-    if (!container) return;
+    useEffect(() => {
+        const container = document.getElementById("problem-scroll-container");
+        if (!container) return;
 
-    const sections = Array.from(
-      container.querySelectorAll<HTMLElement>("[data-topic]")
-    );
+        let observer: IntersectionObserver | null = null;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveTopic(entry.target.id);
-          }
+        const setupObservers = () => {
+            const sections = Array.from(
+                container.querySelectorAll<HTMLElement>("[data-topic]")
+            );
+            
+            setCategories(sections.map(s => ({
+                id: s.id,
+                title: s.getAttribute("data-topic-title") || s.id
+            })));
+
+            if (observer) observer.disconnect();
+            
+            observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            setActiveTopic(entry.target.id);
+                        }
+                    });
+                },
+                {
+                    root: container,
+                    threshold: 0.4,
+                }
+            );
+
+            sections.forEach((section) => observer?.observe(section));
+        };
+
+        setupObservers();
+
+        const mutationObserver = new MutationObserver(() => {
+            setupObservers();
         });
-      },
-      {
-        root: container,
-        threshold: 0.4,
-      }
-    );
 
-    sections.forEach((section) => observer.observe(section));
+        mutationObserver.observe(container, { childList: true, subtree: true });
 
-    return () => observer.disconnect();
-  }, []);
+        return () => {
+            mutationObserver.disconnect();
+            if (observer) observer.disconnect();
+        };
+    }, []);
 
-  return { activeTopic };
+    return { activeTopic, categories };
 }

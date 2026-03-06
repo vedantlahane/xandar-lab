@@ -1,12 +1,12 @@
 "use client"
 import { useEffect, useState } from "react";
 
-export function useHackathonScroll () {
-    const [activeMonth, setActiveMonth] = useState<string | null>(null);
+export function useJobScroll () {
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [categories, setCategories] = useState<{ id: string, title: string }[]>([]);
 
     useEffect(() => {
-        const container = document.getElementById("hackathons-scroll-container");
+        const container = document.getElementById("jobs-scroll-container");
         if (!container) return;
 
         let observer: IntersectionObserver | null = null;
@@ -27,7 +27,7 @@ export function useHackathonScroll () {
                 (entries) => {
                     entries.forEach((entry) => {
                         if (entry.isIntersecting) {
-                            setActiveMonth(entry.target.id);
+                            setActiveCategory(entry.target.id);
                         }
                     });
                 },
@@ -54,5 +54,5 @@ export function useHackathonScroll () {
         };
     }, []);
 
-    return { activeMonth, categories };
+    return { activeCategory, categories };
 }

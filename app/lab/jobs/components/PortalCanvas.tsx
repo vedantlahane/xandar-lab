@@ -6,6 +6,7 @@ import { useJobsContext } from "../context/JobsContext";
 import type { Portal } from "../data/portals";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { cn } from "@/lib/utils";
+import PortalSidebar from "./PortalSidebar";
 
 // filter types
 type FilterType = "All" | Portal["type"];
@@ -56,6 +57,22 @@ export default function PortalCanvas() {
     return result;
   }, [portals, typeFilter, regionFilter, intlFilter, remoteFilter, searchQuery, sortOption, sortDesc]);
 
+  const groupedPortals = useMemo(() => {
+    const groups: { title: string; portals: Portal[] }[] = [];
+    filtered.forEach(p => {
+      let title = sortOption === "Name" ? p.name[0].toUpperCase() : p.type;
+      if (!title || !title.trim()) title = "#";
+
+      let group = groups.find(g => g.title === title);
+      if (!group) {
+        group = { title, portals: [] };
+        groups.push(group);
+      }
+      group.portals.push(p);
+    });
+    return groups;
+  }, [filtered, sortOption]);
+
   const types = useMemo(
     () => Array.from(new Set(portals.map((p) => p.type))) as Portal["type"][],
     [portals],
@@ -97,6 +114,8 @@ export default function PortalCanvas() {
       {/* top fade */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background to-transparent z-10" />
 
+      <PortalSidebar />
+
       {/* scroll container */}
       <div
         id="portal-scroll-container"
@@ -107,7 +126,7 @@ export default function PortalCanvas() {
 
             {/* sidebar filters */}
             <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
-              <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
+              <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-10rem)]">
 
                 {/* Stats card */}
                 <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
@@ -304,25 +323,38 @@ export default function PortalCanvas() {
                   <p className="text-lg font-medium">No portals match your filters</p>
                 </div>
               ) : (
-                filtered.map((p) => (
-                  <a
-                    key={p.id}
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group block w-full rounded-xl border border-border/40 px-4 py-4 transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2"
+                groupedPortals.map((group) => (
+                  <section
+                    key={group.title}
+                    id={`portal-${group.title}`}
+                    data-category
+                    data-category-title={group.title}
+                    className="space-y-2 mb-8"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-foreground">{p.name}</span>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                    <div className="sticky top-16 z-10 bg-background/95 py-2 backdrop-blur mb-2">
+                      <h2 className="text-lg font-semibold">{group.title}</h2>
                     </div>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {p.type}
-                      {p.region ? ` – ${p.region}` : ''}
-                      {p.remote ? ' • remote-friendly' : ''}
-                      {p.international ? ' • international' : ''}
-                    </div>
-                  </a>
+                    {group.portals.map((p) => (
+                      <a
+                        key={p.id}
+                        href={p.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group block w-full rounded-xl border border-border/40 px-4 py-4 transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-foreground">{p.name}</span>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                        </div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {p.type}
+                          {p.region ? ` – ${p.region}` : ''}
+                          {p.remote ? ' • remote-friendly' : ''}
+                          {p.international ? ' • international' : ''}
+                        </div>
+                      </a>
+                    ))}
+                  </section>
                 ))
               )}
               {hasMorePortals && (

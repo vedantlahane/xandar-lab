@@ -1,35 +1,58 @@
 "use client"
 import { useEffect, useState } from "react";
 
-export function useDocScroll() {
+export function useDocScroll () {
     const [activeSection, setActiveSection] = useState<string | null>(null);
+    const [categories, setCategories] = useState<{ id: string, title: string }[]>([]);
 
     useEffect(() => {
         const container = document.getElementById("docs-scroll-container");
         if (!container) return;
 
-        const sections = Array.from(
-            container.querySelectorAll<HTMLElement>("[data-category]")
-        );
+        let observer: IntersectionObserver | null = null;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActiveSection(entry.target.id);
-                    }
-                });
-            },
-            {
-                root: container,
-                threshold: 0.4,
-            }
-        );
+        const setupObservers = () => {
+            const sections = Array.from(
+                container.querySelectorAll<HTMLElement>("[data-category]")
+            );
+            
+            setCategories(sections.map(s => ({
+                id: s.id,
+                title: s.getAttribute("data-category-title") || s.id
+            })));
 
-        sections.forEach((section) => observer.observe(section));
+            if (observer) observer.disconnect();
+            
+            observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            setActiveSection(entry.target.id);
+                        }
+                    });
+                },
+                {
+                    root: container,
+                    threshold: 0.4,
+                }
+            );
 
-        return () => observer.disconnect();
+            sections.forEach((section) => observer?.observe(section));
+        };
+
+        setupObservers();
+
+        const mutationObserver = new MutationObserver(() => {
+            setupObservers();
+        });
+
+        mutationObserver.observe(container, { childList: true, subtree: true });
+
+        return () => {
+            mutationObserver.disconnect();
+            if (observer) observer.disconnect();
+        };
     }, []);
 
-    return { activeSection };
+    return { activeSection, categories };
 }

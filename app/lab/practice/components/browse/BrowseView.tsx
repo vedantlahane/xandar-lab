@@ -150,7 +150,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
 
             {/* ── Left column: Progress + Filters — sticky, vertically centered ── */}
             <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
-              <div className="space-y-5 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-4rem)]">
+              <div className="space-y-5 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-10rem)]">
                 <ProgressCard stats={stats} />
                 <FilterPanel
                   statusFilter={filters.statusFilter}
