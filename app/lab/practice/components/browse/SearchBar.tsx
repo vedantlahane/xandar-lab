@@ -10,19 +10,27 @@ interface SearchBarProps {
   query: string;
   onQueryChange: (q: string) => void;
   onRandom: (e: React.MouseEvent) => void;
+  placeholder?: string;
+  randomLabel?: string;
 }
 
 /**
  * Search input + "Pick Random" button.
  * Rendered sticky at the top of the Browse right column.
  */
-export function SearchBar({ query, onQueryChange, onRandom }: SearchBarProps) {
+export function SearchBar({
+  query,
+  onQueryChange,
+  onRandom,
+  placeholder = "Search...",
+  randomLabel = "Pick Random",
+}: SearchBarProps) {
   return (
     <div className="flex gap-3">
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search problems, tags, platforms..."
+          placeholder={placeholder}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           className="pl-9 bg-background/50 border-border/50 focus:border-primary/50 text-sm h-10 transition-all hover:bg-background/80"
@@ -32,10 +40,10 @@ export function SearchBar({ query, onQueryChange, onRandom }: SearchBarProps) {
         variant="outline"
         className="gap-2 h-10 hover:bg-primary/10 hover:text-primary transition-colors"
         onClick={onRandom}
-        title="Pick a random unsolved problem"
+        title={randomLabel}
       >
         <Shuffle className="h-4 w-4" />
-        <span className="hidden sm:inline">Pick Random</span>
+        <span className="hidden sm:inline">{randomLabel}</span>
       </Button>
     </div>
   );

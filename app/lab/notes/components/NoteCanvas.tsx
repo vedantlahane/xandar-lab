@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { NOTES, NoteCategory, NoteColor } from "../data/notes";
+import { NOTES, NoteCategory } from "../data/notes";
 import {
     StickyNote, Pin, Calendar, Tag,
     Layers, BookOpen, Lightbulb, ListTodo, BookMarked, User, Briefcase,
@@ -17,7 +17,6 @@ interface NoteCanvasProps {
 }
 
 type FilterCategory = "All" | NoteCategory;
-type FilterColor = "All" | NoteColor;
 type FilterPinned = "All" | "Pinned";
 type SortOption = "Updated" | "Created" | "Title";
 
@@ -32,17 +31,6 @@ const CATEGORY_ITEMS: { value: FilterCategory; label: string; icon: typeof Layer
     { value: "Work", label: "Work", icon: Briefcase, dotColor: "bg-cyan-500" },
 ];
 
-// ── Color config ────────────────────────────────────────────────────────
-const COLOR_MAP: Record<NoteColor, string> = {
-    default: "bg-zinc-400",
-    yellow: "bg-yellow-500",
-    green: "bg-green-500",
-    blue: "bg-blue-500",
-    purple: "bg-purple-500",
-    pink: "bg-pink-500",
-    orange: "bg-orange-500",
-};
-
 // ── Sort config ─────────────────────────────────────────────────────────
 const SORT_ITEMS: { value: SortOption; label: string }[] = [
     { value: "Updated", label: "Updated" },
@@ -55,14 +43,11 @@ const ALL_TAGS = Array.from(
     new Set(NOTES.flatMap(g => g.notes.flatMap(n => n.tags || [])))
 ).sort();
 
-const getColorFilterDot = (color: NoteColor) => COLOR_MAP[color] || "bg-zinc-400";
-
 export default function NoteCanvas({
     activeNoteId,
     onNoteSelect,
 }: NoteCanvasProps) {
     const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("All");
-    const [colorFilter, setColorFilter] = useState<FilterColor>("All");
     const [pinnedFilter, setPinnedFilter] = useState<FilterPinned>("All");
     const [tagFilter, setTagFilter] = useState<string>("All");
     const [sortOption, setSortOption] = useState<SortOption>("Updated");
@@ -81,7 +66,6 @@ export default function NoteCanvas({
                     ) return false;
                 }
                 if (categoryFilter !== "All" && note.category !== categoryFilter) return false;
-                if (colorFilter !== "All" && note.color !== colorFilter) return false;
                 if (pinnedFilter === "Pinned" && !note.isPinned) return false;
                 if (tagFilter !== "All" && !note.tags?.includes(tagFilter)) return false;
                 return true;
@@ -97,7 +81,7 @@ export default function NoteCanvas({
 
             return { ...group, notes: sorted };
         }).filter((group) => group.notes.length > 0);
-    }, [categoryFilter, colorFilter, pinnedFilter, tagFilter, searchQuery, sortOption, sortDesc]);
+    }, [categoryFilter, pinnedFilter, tagFilter, searchQuery, sortOption, sortDesc]);
 
     // Stats
     const allNotes = NOTES.flatMap(g => g.notes);
@@ -105,18 +89,7 @@ export default function NoteCanvas({
     const pinnedCount = allNotes.filter(n => n.isPinned).length;
     const categoryCount = new Set(allNotes.map(n => n.category)).size;
 
-    // Color for note cards
-    const getNoteColorClass = (color: NoteColor) => {
-        switch (color) {
-            case 'yellow': return 'border-l-yellow-500';
-            case 'green': return 'border-l-green-500';
-            case 'blue': return 'border-l-blue-500';
-            case 'purple': return 'border-l-purple-500';
-            case 'pink': return 'border-l-pink-500';
-            case 'orange': return 'border-l-orange-500';
-            default: return 'border-l-zinc-400';
-        }
-    };
+
 
     const getCategoryColor = (cat: string) => {
         switch (cat) {
@@ -210,35 +183,7 @@ export default function NoteCanvas({
                                     })}
                                 </div>
 
-                                {/* ── Color ── */}
-                                <div className="space-y-1">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                                        Color
-                                    </h3>
-                                    <div className="flex gap-2 flex-wrap px-2">
-                                        <button
-                                            onClick={() => setColorFilter("All")}
-                                            className={cn(
-                                                "w-5 h-5 rounded-full transition-all border-2",
-                                                colorFilter === "All" ? "border-primary scale-110" : "border-transparent hover:scale-105",
-                                                "bg-gradient-to-br from-yellow-400 via-pink-400 to-blue-400",
-                                            )}
-                                            title="All colors"
-                                        />
-                                        {(["yellow", "green", "blue", "purple", "pink", "orange"] as NoteColor[]).map((color) => (
-                                            <button
-                                                key={color}
-                                                onClick={() => setColorFilter(colorFilter === color ? "All" : color)}
-                                                className={cn(
-                                                    "w-5 h-5 rounded-full transition-all border-2",
-                                                    colorFilter === color ? "border-primary scale-110" : "border-transparent hover:scale-105",
-                                                    getColorFilterDot(color),
-                                                )}
-                                                title={color}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
+
 
                                 {/* ── Tags ── */}
                                 <div className="space-y-1">
@@ -349,12 +294,12 @@ export default function NoteCanvas({
                                                     <button
                                                         key={note.id}
                                                         onClick={(e) => onNoteSelect(note.id, e)}
-                                                        className={`group relative w-full rounded-xl border border-border/40 border-l-[3px] ${getNoteColorClass(note.color)} px-4 py-4 text-left transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2 ${isActive ? "bg-white/50 dark:bg-zinc-900/30 border-zinc-200/60 dark:border-zinc-800/60 shadow-sm" : ""}`}
+                                                        className={`group relative w-full rounded-xl border border-border/40 px-4 py-4 text-left transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2 ${isActive ? "bg-white/50 dark:bg-zinc-900/30 border-zinc-200/60 dark:border-zinc-800/60 shadow-sm" : ""}`}
                                                     >
                                                         <div className="flex items-start justify-between gap-3">
                                                             <div className="space-y-2">
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className={cn("h-2 w-2 rounded-full shrink-0", COLOR_MAP[note.color])} />
+                                                                    <StickyNote className={cn("h-3.5 w-3.5 shrink-0", getCategoryColor(note.category))} />
                                                                     {note.isPinned && <Pin className="h-3 w-3 text-amber-500" />}
                                                                     <span className={`text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
                                                                         {note.title}
