@@ -310,14 +310,18 @@ export default function HackathonCanvas({
                                             </p>
                                         </div>
 
-                                        <div className="space-y-1">
+                                        <div className="space-y-0">
                                             {monthGroup.hackathons.map((hackathon) => {
                                                 const isActive = activeHackId === hackathon.id;
                                                 return (
                                                     <button
                                                         key={hackathon.id}
                                                         onClick={(e) => onHackSelect(hackathon.id, e)}
-                                                        className={`group relative w-full rounded-xl border border-border/40 px-4 py-4 text-left transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60 mb-2 ${isActive ? "bg-white/50 dark:bg-zinc-900/30 border-zinc-200/60 dark:border-zinc-800/60 shadow-sm" : ""}`}
+                                                        className={cn(
+                                                            "group relative w-full border-b border-border/40 px-4 py-3 text-left backdrop-blur-md",
+                                                            "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10",
+                                                            isActive && "bg-white/10 dark:bg-white/10"
+                                                        )}
                                                     >
                                                         <div className="flex items-start justify-between gap-3">
                                                             <div className="space-y-2">

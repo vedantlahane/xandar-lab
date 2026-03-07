@@ -329,7 +329,7 @@ export default function PortalCanvas() {
                     id={`portal-${group.title}`}
                     data-category
                     data-category-title={group.title}
-                    className="space-y-2 mb-8"
+                    className="space-y-0 mb-8"
                   >
                     <div className="sticky top-16 z-10 bg-background/95 py-2 backdrop-blur mb-2">
                       <h2 className="text-lg font-semibold">{group.title}</h2>
@@ -340,7 +340,10 @@ export default function PortalCanvas() {
                         href={p.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="group block w-full rounded-xl border border-border/40 px-4 py-4 transition-all backdrop-blur-md hover:bg-white/50 dark:hover:bg-zinc-900/30 hover:shadow-sm hover:border-zinc-200/60 dark:hover:border-zinc-800/60"
+                        className={cn(
+                          "group block w-full border-b border-border/40 px-4 py-3 text-left backdrop-blur-md",
+                          "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10"
+                        )}
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-foreground">{p.name}</span>
