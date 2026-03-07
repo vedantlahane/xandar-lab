@@ -3,8 +3,8 @@
 
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { User, Settings, LogOut, ChevronUp, Activity, Shield } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { User, Settings, LogOut, ChevronUp, Activity, Shield, Layers, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthContext";
 import { getAvatarGradientClass, getDefaultAvatarGradient } from "@/components/auth/AvatarCustomizer";
@@ -19,10 +19,11 @@ const smoothSpring = {
 
 // Static â€” defined outside component so the array reference is stable
 const MENU_ITEMS = [
-    { icon: User, label: "Profile", path: "/lab/profile" },
     { icon: Activity, label: "Statistics", path: "/lab/profile?tab=stats" },
-    { icon: Settings, label: "Settings", path: "/lab/profile?tab=profile" },
-    { icon: Shield, label: "Security", path: "/lab/profile?tab=password" },
+    { icon: User, label: "Profile", path: "/lab/profile?tab=profile" },
+    { icon: Layers, label: "Sessions", path: "/lab/profile?tab=sessions" },
+    { icon: Shield, label: "Password", path: "/lab/profile?tab=password" },
+    { icon: AlertTriangle, label: "Danger Zone", path: "/lab/profile?tab=danger" },
 ] as const;
 
 interface ProfileDropdownProps {
@@ -32,6 +33,8 @@ interface ProfileDropdownProps {
 export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
     const { isAuthenticated, user, logout, openLoginModal } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -81,7 +84,7 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                         "flex items-center justify-center rounded-full transition-all duration-300 ring-2 ring-transparent group-hover:ring-primary/20",
                         isExpanded ? "h-9 w-9 shadow-[0_0_15px_-3px_rgba(var(--primary),0.3)]" : "h-8 w-8",
                         isAuthenticated && user
-                            ? `bg-linear-to-br ${avatarGradient}`
+                            ? `bg-gradient-to-br ${avatarGradient}`
                             : "bg-zinc-200 dark:bg-zinc-800"
                     )}
                 >
@@ -157,19 +160,32 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
 
                         {/* Nav items */}
                         <div className="p-1 space-y-0.5">
-                            {MENU_ITEMS.map((item, index) => (
-                                <motion.button
-                                    key={item.label}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    onClick={() => handleNavigate(item.path)}
-                                    className="group/item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/5 dark:hover:bg-white/10 transition-all rounded-xl"
-                                >
-                                    <item.icon className="h-4 w-4 transition-transform group-hover/item:scale-110 group-hover/item:text-primary" />
-                                    {item.label}
-                                </motion.button>
-                            ))}
+                            {MENU_ITEMS.map((item, index) => {
+                                const currentTab = searchParams.get("tab") || "stats";
+                                const isProfilePath = pathname === "/lab/profile";
+                                const itemTabMatch = item.path.match(/tab=([^&]+)/);
+                                const itemTab = itemTabMatch ? itemTabMatch[1] : null;
+                                const isActive = isProfilePath && itemTab === currentTab;
+
+                                return (
+                                    <motion.button
+                                        key={item.label}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        onClick={() => handleNavigate(item.path)}
+                                        className={cn(
+                                            "group/item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all rounded-xl",
+                                            isActive
+                                                ? "text-zinc-900 bg-black/5 dark:bg-white/10 dark:text-zinc-100"
+                                                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/5 dark:hover:bg-white/10"
+                                        )}
+                                    >
+                                        <item.icon className={cn("h-4 w-4 transition-transform", !isActive && "group-hover/item:scale-110 group-hover/item:text-primary", isActive && "text-primary")} />
+                                        {item.label}
+                                    </motion.button>
+                                );
+                            })}
                         </div>
 
                         {/* Logout */}
