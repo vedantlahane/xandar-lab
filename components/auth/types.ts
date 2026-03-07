@@ -10,6 +10,7 @@ export interface User {
   completedProblems?: string[];
   savedJobs?: string[];
   jobApplications?: Record<string, string>;
+  role?: 'user' | 'pro' | 'contributor' | 'moderator' | 'admin';
   isProfilePublic?: boolean;
   followers?: string[];
   following?: string[];

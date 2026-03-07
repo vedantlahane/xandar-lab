@@ -21,6 +21,7 @@ export interface IUser {
   savedJobs: string[];
   jobApplications: Map<string, string>;
   sessions: ISession[];   // Active sessions
+  role: 'user' | 'pro' | 'contributor' | 'moderator' | 'admin'; // User access level
   createdAt: Date;
   lastLoginAt?: Date;
   // Community fields
@@ -100,6 +101,11 @@ const UserSchema = new Schema({
   sessions: {
     type: [SessionSchema],
     default: [],
+  },
+  role: {
+    type: String,
+    enum: ['user', 'pro', 'contributor', 'moderator', 'admin'],
+    default: 'user',
   },
   createdAt: {
     type: Date,

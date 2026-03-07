@@ -89,6 +89,7 @@ interface ProfileData {
     createdAt: string;
     lastLoginAt: string;
     hasPassword: boolean;
+    role: 'user' | 'pro' | 'contributor' | 'moderator' | 'admin';
 }
 
 type TabType = "stats" | "profile" | "sessions" | "password" | "danger";
@@ -355,7 +356,29 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="flex-1 space-y-1">
-                                    <h2 className="text-xl font-semibold">{profile.username}</h2>
+                                    <div className="flex items-center gap-3">
+                                        <h2 className="text-xl font-semibold">{profile.username}</h2>
+                                        {profile.role === 'admin' && (
+                                            <span className="shrink-0 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
+                                                Admin
+                                            </span>
+                                        )}
+                                        {profile.role === 'moderator' && (
+                                            <span className="shrink-0 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
+                                                Mod
+                                            </span>
+                                        )}
+                                        {profile.role === 'pro' && (
+                                            <span className="shrink-0 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
+                                                Pro
+                                            </span>
+                                        )}
+                                        {profile.role === 'contributor' && (
+                                            <span className="shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
+                                                Creator
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
                                         Member since {formatDate(profile.createdAt)}
                                     </p>

@@ -37,90 +37,59 @@ async function authenticate(
   return data.user as User;
 }
 
+import { SessionProvider, useSession, signIn, signOut } from "next-auth/react"
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const refreshSession = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/session", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          setUser(data.user);
-          localStorage.setItem("lab_user", JSON.stringify(data.user));
-        } else {
-          // Server says no session — clear stale localStorage to prevent
-          // the "half-authenticated" state (localStorage present, cookie gone)
-          localStorage.removeItem("lab_user");
-          setUser(null);
-        }
-      }
-    } catch {
-      // Network error only — fall back to localStorage (offline support)
-      const stored = localStorage.getItem("lab_user");
-      if (stored) {
-        try {
-          setUser(JSON.parse(stored));
-        } catch {
-          localStorage.removeItem("lab_user");
-        }
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  return (
+    <SessionProvider>
+      <AuthContextProvider isLoginModalOpen={isLoginModalOpen} setIsLoginModalOpen={setIsLoginModalOpen}>
+        {children}
+      </AuthContextProvider>
+    </SessionProvider>
+  )
+}
 
-  useEffect(() => {
-    refreshSession();
-  }, [refreshSession]);
-
-  // Shared post-auth setter used by both login and signup
-  const setAuthUser = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem("lab_user", JSON.stringify(userData));
-    setIsLoginModalOpen(false);
-  };
+function AuthContextProvider({ children, isLoginModalOpen, setIsLoginModalOpen }: { children: React.ReactNode, isLoginModalOpen: boolean, setIsLoginModalOpen: (v: boolean) => void }) {
+  const { data: session, status, update } = useSession()
 
   const login = async (username: string, inviteCode: string, password?: string) => {
-    const userData = await authenticate(false, username, inviteCode, password);
-    setAuthUser(userData);
+    const res = await signIn("credentials", {
+      username, password, inviteCode,
+      redirect: false
+    })
+    if (res?.error) throw new Error(res.error)
+    setIsLoginModalOpen(false)
   };
 
   const signup = async (username: string, inviteCode: string, password?: string) => {
-    const userData = await authenticate(true, username, inviteCode, password);
-    setAuthUser(userData);
+    const res = await signIn("credentials", {
+      username, password, inviteCode, isSignUp: 'true',
+      redirect: false
+    })
+    if (res?.error) throw new Error(res.error)
+    setIsLoginModalOpen(false)
   };
 
   const logout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    } catch {
-      // Always clear local auth regardless of network failure
-    } finally {
-      setUser(null);
-      localStorage.removeItem("lab_user");
-    }
+    await signOut({ redirect: false })
   };
 
-  const updateUser = (updates: Partial<User>) => {
-    if (!user) return;
-    const updated = { ...user, ...updates };
-    setUser(updated);
-    localStorage.setItem("lab_user", JSON.stringify(updated));
+  const updateUser = async (updates: Partial<User>) => {
+    await update(updates)
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
+        user: session?.user as any,
+        isAuthenticated: !!session?.user,
+        isLoading: status === "loading",
         login,
         signup,
         logout,
-        refreshSession,
+        refreshSession: async () => { await update(); },
         updateUser,
         isLoginModalOpen,
         openLoginModal: () => setIsLoginModalOpen(true),

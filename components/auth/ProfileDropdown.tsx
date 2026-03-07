@@ -147,11 +147,33 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                         {/* User info header */}
                         <div className="px-4 py-3 border-b border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
-                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 relative z-10">
-                                {user?.username}
-                            </p>
+                            <div className="flex items-center gap-2 relative z-10 w-full mb-1">
+                                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate flex-1">
+                                    {user?.username}
+                                </p>
+                                {user?.role === 'admin' && (
+                                    <span className="shrink-0 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                        Admin
+                                    </span>
+                                )}
+                                {user?.role === 'moderator' && (
+                                    <span className="shrink-0 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                        Mod
+                                    </span>
+                                )}
+                                {user?.role === 'pro' && (
+                                    <span className="shrink-0 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                        Pro
+                                    </span>
+                                )}
+                                {user?.role === 'contributor' && (
+                                    <span className="shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                        Creator
+                                    </span>
+                                )}
+                            </div>
                             {user?.email && (
-                                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate relative z-10">
                                     {user.email}
                                 </p>
                             )}
