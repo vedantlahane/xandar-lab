@@ -17,13 +17,13 @@ const smoothSpring = {
 } satisfies Transition;
 
 const NAV = [
-  { href: "/lab", label: "Lab" },
-  { href: "/lab/practice", label: "Practice" },
-  { href: "/lab/hackathons", label: "Hackathons" },
-  { href: "/lab/jobs", label: "Jobs" },
-  { href: "/lab/notes", label: "Notes" },
-  { href: "/lab/docs", label: "Docs" },
-  { href: "/lab/experiments", label: "Experiments" },
+  { href: "/lab", label: "Lab", hoverGradient: "from-blue-500 via-indigo-500 to-purple-500" },
+  { href: "/lab/practice", label: "Practice", hoverGradient: "from-emerald-500 via-teal-500 to-cyan-500" },
+  { href: "/lab/hackathons", label: "Hackathons", hoverGradient: "from-orange-500 via-amber-500 to-yellow-500" },
+  { href: "/lab/jobs", label: "Jobs", hoverGradient: "from-pink-500 via-rose-500 to-red-500" },
+  { href: "/lab/notes", label: "Notes", hoverGradient: "from-violet-500 via-fuchsia-500 to-pink-500" },
+  { href: "/lab/docs", label: "Docs", hoverGradient: "from-cyan-500 via-blue-500 to-indigo-500" },
+  { href: "/lab/experiments", label: "Experiments", hoverGradient: "from-fuchsia-500 via-purple-500 to-rose-500" },
 ];
 
 export default function LabSidebar() {
@@ -81,10 +81,10 @@ export default function LabSidebar() {
                   layout
                   transition={smoothSpring}
                   className={cn(
-                    "h-1 rounded-full transition-colors duration-300",
+                    "h-1 rounded-full transition-all duration-300",
                     isActive
                       ? "bg-primary"
-                      : "bg-muted-foreground/30 group-hover:bg-primary/50"
+                      : cn("bg-muted-foreground/30 group-hover:bg-gradient-to-r group-hover:animate-gradient", item.hoverGradient)
                   )}
                   animate={{
                     width: isHovered ? 6 : isBig ? 24 : 12,
@@ -101,8 +101,10 @@ export default function LabSidebar() {
                       exit={{ opacity: 0, width: 0, x: -10 }}
                       transition={smoothSpring}
                       className={cn(
-                        "whitespace-nowrap text-sm font-medium overflow-hidden transition-colors duration-300",
-                        isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                        "whitespace-nowrap text-sm font-medium overflow-hidden transition-all duration-300",
+                        isActive
+                          ? "text-foreground"
+                          : cn("text-muted-foreground group-hover:bg-gradient-to-r group-hover:animate-gradient group-hover:bg-clip-text group-hover:text-transparent", item.hoverGradient)
                       )}
                     >
                       {item.label}

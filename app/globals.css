@@ -151,6 +151,19 @@
   }
 }
 
+@layer utilities {
+  .animate-gradient {
+    background-size: 200% auto;
+    animation: gradientMove 3s linear infinite;
+  }
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 /* ── Scrollbar utilities ────────────────────────────────── */
 
 .no-scrollbar::-webkit-scrollbar {
