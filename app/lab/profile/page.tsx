@@ -76,6 +76,16 @@ interface ProfileData {
     avatarGradient?: string;
     savedProblems: string[];
     completedProblems: string[];
+    savedJobs: string[];
+    jobApplications: Record<string, string>;
+    isProfilePublic: boolean;
+    followers: string[];
+    following: string[];
+    reputationScore: number;
+    sharingPreferences: {
+        autoShareCompletedProblems: boolean;
+        autoShareHackathonResults: boolean;
+    };
     createdAt: string;
     lastLoginAt: string;
     hasPassword: boolean;
@@ -367,7 +377,7 @@ export default function ProfilePage() {
                             </div>
 
                             {/* Stats */}
-                            <div className="mt-6 grid grid-cols-2 gap-4">
+                            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4 text-center">
                                     <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                                         {profile.savedProblems?.length || 0}
@@ -379,6 +389,18 @@ export default function ProfilePage() {
                                         {profile.completedProblems?.length || 0}
                                     </p>
                                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Completed</p>
+                                </div>
+                                <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4 text-center">
+                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                                        {profile.savedJobs?.length || 0}
+                                    </p>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Saved Jobs</p>
+                                </div>
+                                <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4 text-center">
+                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                                        {profile.reputationScore || 0}
+                                    </p>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Reputation</p>
                                 </div>
                             </div>
                         </motion.div>

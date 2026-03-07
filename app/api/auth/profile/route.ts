@@ -22,17 +22,12 @@ export async function GET() {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        const userObj = user.toObject();
+        const { password: _, sessions: __, ...userWithoutSensitive } = userObj;
+
         return NextResponse.json({
             user: {
-                _id: user._id,
-                username: user.username,
-                email: user.email || '',
-                bio: user.bio || '',
-                avatarGradient: user.avatarGradient || '',
-                savedProblems: user.savedProblems || [],
-                completedProblems: user.completedProblems || [],
-                createdAt: user.createdAt,
-                lastLoginAt: user.lastLoginAt,
+                ...userWithoutSensitive,
                 hasPassword: !!user.password,
             }
         });
@@ -88,18 +83,13 @@ export async function PUT(req: Request) {
 
         await user.save();
 
+        const updatedUserObj = user.toObject();
+        const { password: _, sessions: __, ...updatedUserWithoutSensitive } = updatedUserObj;
+
         return NextResponse.json({
             success: true,
             user: {
-                _id: user._id,
-                username: user.username,
-                email: user.email || '',
-                bio: user.bio || '',
-                avatarGradient: user.avatarGradient || '',
-                savedProblems: user.savedProblems || [],
-                completedProblems: user.completedProblems || [],
-                createdAt: user.createdAt,
-                lastLoginAt: user.lastLoginAt,
+                ...updatedUserWithoutSensitive,
                 hasPassword: !!user.password,
             }
         });

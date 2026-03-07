@@ -113,7 +113,7 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                                 </p>
                                 {isAuthenticated && (
                                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                        {user?.completedProblems?.length ?? 0} completed
+                                        {user?.completedProblems?.length ?? 0} completed • {user?.reputationScore ?? 0} rep
                                     </p>
                                 )}
                             </div>

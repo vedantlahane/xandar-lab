@@ -10,6 +10,14 @@ export interface User {
   completedProblems?: string[];
   savedJobs?: string[];
   jobApplications?: Record<string, string>;
+  isProfilePublic?: boolean;
+  followers?: string[];
+  following?: string[];
+  reputationScore?: number;
+  sharingPreferences?: {
+    autoShareCompletedProblems: boolean;
+    autoShareHackathonResults: boolean;
+  };
   createdAt?: string;
   lastLoginAt?: string;
   hasPassword?: boolean;
