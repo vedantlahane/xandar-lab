@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, type Transition } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { ProfileDropdown } from "@/components/auth/ProfileDropdown";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/AuthContext";
+import { getAvatarGradientClass, getDefaultAvatarGradient } from "@/components/auth/AvatarCustomizer";
 
 const smoothSpring = {
     type: "spring",
@@ -14,6 +17,16 @@ const smoothSpring = {
 
 export default function LabProfile() {
     const [isHovered, setIsHovered] = useState(false);
+    const pathname = usePathname();
+    const { user } = useAuth();
+
+    useEffect(() => {
+        setIsHovered(false);
+    }, [pathname]);
+
+    const avatarGradient = user
+        ? getAvatarGradientClass(user.avatarGradient || getDefaultAvatarGradient(user.username))
+        : "from-indigo-500/10 via-purple-500/10 to-pink-500/10";
 
     return (
         <aside className="fixed left-0 bottom-0 z-40 flex items-end justify-start pl-4 pb-4 pointer-events-none">
@@ -28,8 +41,9 @@ export default function LabProfile() {
                 onHoverEnd={() => setIsHovered(false)}
             >
                 <div className={cn(
-                    "absolute inset-0 rounded-2xl transition-opacity duration-300 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10",
-                    isHovered ? "opacity-100" : "opacity-0"
+                    "absolute inset-0 rounded-2xl transition-opacity duration-300 bg-gradient-to-br",
+                    user ? avatarGradient : "from-indigo-500/10 via-purple-500/10 to-pink-500/10",
+                    isHovered ? (user ? "opacity-20" : "opacity-100") : "opacity-0"
                 )} />
                 <div className="relative z-10">
                     <ProfileDropdown isExpanded={isHovered} />

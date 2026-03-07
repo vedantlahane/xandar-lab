@@ -1,7 +1,7 @@
 ﻿// components/auth/ProfileDropdown.tsx
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { User, Settings, LogOut, ChevronUp, Activity, Shield, Layers, AlertTriangle } from "lucide-react";
@@ -37,6 +37,10 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
     const searchParams = useSearchParams();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setIsOpen(false);
+    }, [pathname, searchParams]);
 
     // Single hook covers both click-outside and Escape â€” only active when open
     useClickOutside(dropdownRef, () => setIsOpen(false), isOpen);
@@ -111,11 +115,6 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                                 <p className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate max-w-32 group-hover:text-primary transition-colors">
                                     {isAuthenticated && user ? user.username : "Sign In"}
                                 </p>
-                                {isAuthenticated && (
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                        {user?.completedProblems?.length ?? 0} completed • {user?.reputationScore ?? 0} rep
-                                    </p>
-                                )}
                             </div>
                             {isAuthenticated && (
                                 <ChevronUp
