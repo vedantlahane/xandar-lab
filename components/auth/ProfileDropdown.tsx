@@ -61,7 +61,6 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
     const handleLogout = async () => {
         setIsOpen(false);
         await logout();
-        router.push("/lab");
     };
 
     const avatarGradient = user
@@ -92,7 +91,7 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                             : "bg-zinc-200 dark:bg-zinc-800"
                     )}
                 >
-                    {isAuthenticated && user ? (
+                    {isAuthenticated && user && user.username ? (
                         <span className="text-sm font-semibold text-white uppercase">
                             {user.username.charAt(0)}
                         </span>

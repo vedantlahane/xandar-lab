@@ -5,15 +5,18 @@ import LabProfile from "./components/LabProfile";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ThemeToggleWrapper } from "@/components/theme/ThemeToggleWrapper";
+import { auth } from "@/auth";
 
-export default function LabLayout({
+export default async function LabLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+
   return (
 
-    <AuthProvider>
+    <AuthProvider session={session}>
       <div className="flex min-h-screen">
         {/* Left Sidebar */}
         <LabSidebar />

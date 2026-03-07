@@ -30,7 +30,8 @@ export function getAvatarGradientClass(gradientId: string | undefined): string {
 }
 
 // Get gradient by username (fallback)
-export function getDefaultAvatarGradient(username: string): string {
+export function getDefaultAvatarGradient(username?: string): string {
+    if (!username) return AVATAR_GRADIENTS[0].id;
     const index = username.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % AVATAR_GRADIENTS.length;
     return AVATAR_GRADIENTS[index].id;
 }

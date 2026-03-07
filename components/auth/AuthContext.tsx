@@ -39,11 +39,11 @@ async function authenticate(
 
 import { SessionProvider, useSession, signIn, signOut } from "next-auth/react"
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, session }: { children: React.ReactNode, session?: any }) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
-    <SessionProvider>
+    <SessionProvider session={session}>
       <AuthContextProvider isLoginModalOpen={isLoginModalOpen} setIsLoginModalOpen={setIsLoginModalOpen}>
         {children}
       </AuthContextProvider>
@@ -73,7 +73,12 @@ function AuthContextProvider({ children, isLoginModalOpen, setIsLoginModalOpen }
   };
 
   const logout = async () => {
-    await signOut({ redirect: false })
+    try {
+      // Clear legacy custom session just in case
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch { }
+    localStorage.removeItem("lab_user");
+    await signOut({ callbackUrl: "/lab" })
   };
 
   const updateUser = async (updates: Partial<User>) => {
