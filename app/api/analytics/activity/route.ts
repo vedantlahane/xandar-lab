@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import ActivityLog from '@/models/ActivityLog';
-import { getValidatedSession } from '@/lib/auth';
+import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/analytics/activity — Weekly completion delta for Browse ProgressCard
 export async function GET() {
     try {
-        const session = await getValidatedSession();
-        if (!session) {
+        const session = await auth();
+        const userId = session?.user?.id;
+
+        if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -27,13 +29,13 @@ export async function GET() {
 
         // Get this week's activity
         const thisWeekLogs = await ActivityLog.find({
-            userId: session.userId,
+            userId,
             date: { $gte: thisWeekStr },
         }).lean();
 
         // Get last week's activity
         const lastWeekLogs = await ActivityLog.find({
-            userId: session.userId,
+            userId,
             date: { $gte: lastWeekStr, $lt: thisWeekStr },
         }).lean();
 

@@ -43,7 +43,7 @@ export function AuthProvider({ children, session }: { children: React.ReactNode,
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
-    <SessionProvider session={session}>
+    <SessionProvider session={session} refetchInterval={0} refetchOnWindowFocus={false}>
       <AuthContextProvider isLoginModalOpen={isLoginModalOpen} setIsLoginModalOpen={setIsLoginModalOpen}>
         {children}
       </AuthContextProvider>

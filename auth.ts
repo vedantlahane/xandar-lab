@@ -129,20 +129,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 } else {
                     token.id = user.id
                     token.role = (user as any).role || 'user'
-                    token.username = (user as any).username || ''
+                    token.username = (user as any).username || user.name || ''
                     token.avatarGradient = (user as any).avatarGradient || 'from-blue-500 to-cyan-500'
                 }
             }
 
-            // Auto-recovery for mangled or legacy cached cookies
-            if (!token.username && token.email) {
-                await connectDB();
-                const dbUser = await User.findOne({ email: token.email });
-                if (dbUser) {
-                    token.id = dbUser._id.toString();
-                    token.role = dbUser.role;
-                    token.username = dbUser.username;
-                    token.avatarGradient = dbUser.avatarGradient;
+            // Use existing token fields first to avoid expensive DB reads on every session check.
+            if (!token.username && token.name) {
+                token.username = token.name;
+            }
+
+            // Auto-recovery for legacy cached cookies. Bound lookup time to keep /api/auth/session responsive.
+            if ((!token.id || !token.username || !token.role) && token.email) {
+                try {
+                    await connectDB();
+                    const dbUser = await Promise.race([
+                        User.findOne({ email: token.email }),
+                        new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+                    ]);
+
+                    if (dbUser) {
+                        token.id = token.id || dbUser._id.toString();
+                        token.role = token.role || dbUser.role;
+                        token.username = token.username || dbUser.username;
+                        token.avatarGradient = token.avatarGradient || dbUser.avatarGradient;
+                    }
+                } catch {
+                    // Keep current token values if recovery lookup fails.
                 }
             }
 

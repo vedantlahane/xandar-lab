@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { X, RotateCcw, Star, Sparkles, ArrowRight, Swords, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePracticeContext } from "../../context/PracticeContext";
+import { useAuth } from "@/components/auth/AuthContext";
 
 interface Suggestion {
   type: "review" | "retry" | "new";
@@ -23,6 +24,7 @@ interface Suggestion {
 export function TodaysFocus() {
   const router = useRouter();
   const { openDrawer } = usePracticeContext();
+  const { isAuthenticated, isLoading } = useAuth();
 
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 3 });
@@ -34,15 +36,36 @@ export function TodaysFocus() {
   });
 
   useEffect(() => {
-    fetch("/api/suggestions", { credentials: "include" })
-      .then(res => res.json())
-      .then(data => {
-        if (data.suggestions) setSuggestions(data.suggestions);
-        if (data.progress) setProgress(data.progress);
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      setLoading(false);
+      setSuggestions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+
+    fetch("/api/suggestions", {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.suggestions) setSuggestions(data.suggestions);
+        if (data?.progress) setProgress(data.progress);
       })
       .catch(() => { })
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [isAuthenticated, isLoading]);
 
   const dismiss = () => {
     setDismissed(true);

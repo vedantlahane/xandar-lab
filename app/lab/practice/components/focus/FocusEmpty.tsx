@@ -22,7 +22,7 @@ interface Suggestion {
  */
 export function FocusEmpty() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   const completedSet = useMemo(
     () => new Set(user?.completedProblems ?? []),
@@ -39,16 +39,37 @@ export function FocusEmpty() {
   const [loadingSuggestion, setLoadingSuggestion] = useState(true);
 
   useEffect(() => {
-    fetch("/api/suggestions", { credentials: "include" })
-      .then(res => res.json())
-      .then(data => {
-        if (data.suggestions?.length > 0) {
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      setLoadingSuggestion(false);
+      setSuggestion(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+
+    fetch("/api/suggestions", {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.suggestions?.length > 0) {
           setSuggestion(data.suggestions[0]);
         }
       })
       .catch(() => { })
-      .finally(() => setLoadingSuggestion(false));
-  }, []);
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoadingSuggestion(false);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [isAuthenticated, isLoading]);
 
   const pickRandom = () => {
     const pool = allProblems.filter((p) => !completedSet.has(p.id));

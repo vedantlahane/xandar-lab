@@ -1,9 +1,8 @@
 // app/lab/docs/page.tsx
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 import SectionSidebar from "./components/SectionSidebar";
 import DocumentCanvas from "./components/DocumentCanvas";
 import { DocumentDrawer } from "./components/DocumentDrawer";
@@ -13,14 +12,7 @@ import { useAuth } from "@/components/auth/AuthContext";
 export default function DocsPage() {
     const [activeDocId, setActiveDocId] = useState<string | null>(null);
     const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
-    const { isAuthenticated, openLoginModal, isLoading } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push("/lab?mode=login");
-        }
-    }, [isLoading, isAuthenticated, router]);
+    const { isAuthenticated, openLoginModal } = useAuth();
 
     const documentIndex = useMemo(() => {
         const map = new Map<string, Document>();

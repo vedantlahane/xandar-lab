@@ -20,7 +20,7 @@ interface BrowseViewProps {
 }
 
 export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps) {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, isAuthenticated, isLoading } = useAuth();
 
   const savedProblems = useMemo(() => user?.savedProblems ?? [], [user?.savedProblems]);
   const completedProblems = useMemo(
@@ -35,10 +35,22 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
   const [extensionMap, setExtensionMap] = useState<Map<string, ExtensionData>>(new Map());
 
   useEffect(() => {
-    fetch("/api/attempts/summary", { credentials: "include" })
-      .then(res => res.json())
-      .then(data => {
-        if (data.summaries) {
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      setExtensionMap(new Map());
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+
+    fetch("/api/attempts/summary", {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.summaries) {
           const map = new Map<string, ExtensionData>();
           data.summaries.forEach((s: ExtensionData & { problemId: string }) =>
             map.set(s.problemId, s)
@@ -46,8 +58,16 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
           setExtensionMap(map);
         }
       })
-      .catch(() => { });
-  }, []);
+      .catch(() => { })
+      .finally(() => {
+        clearTimeout(timeout);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [isAuthenticated, isLoading]);
 
   const filters = useProblemFilters({ savedProblems, completedProblems, extensionMap });
 
@@ -58,11 +78,31 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
   const [weeklyDelta, setWeeklyDelta] = useState<number | undefined>();
 
   useEffect(() => {
-    fetch("/api/analytics/activity", { credentials: "include" })
-      .then(res => res.json())
-      .then(data => setWeeklyDelta(data.weeklyDelta))
-      .catch(() => { });
-  }, []);
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      setWeeklyDelta(undefined);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+
+    fetch("/api/analytics/activity", {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setWeeklyDelta(data?.weeklyDelta))
+      .catch(() => { })
+      .finally(() => {
+        clearTimeout(timeout);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [isAuthenticated, isLoading]);
 
   const stats = useMemo(() => {
     const easy = allProblems.filter((p) => p.tags?.includes("Easy"));

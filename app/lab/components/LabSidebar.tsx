@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/components/auth/AuthContext";
 
 const smoothSpring = {
   type: "spring",
@@ -24,26 +23,15 @@ const NAV = [
   { href: "/lab/notes", label: "Notes", hoverGradient: "from-violet-500 via-fuchsia-500 to-pink-500" },
   { href: "/lab/docs", label: "Docs", hoverGradient: "from-cyan-500 via-blue-500 to-indigo-500" },
   { href: "/lab/experiments", label: "Experiments", hoverGradient: "from-fuchsia-500 via-purple-500 to-rose-500" },
-  { href: "/ideas", label: "Ideas", hoverGradient: "from-teal-500 via-emerald-500 to-cyan-500" },
+  { href: "/lab/ideas", label: "Ideas", hoverGradient: "from-teal-500 via-emerald-500 to-cyan-500" },
 ];
 
 export default function LabSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
-  const { isAuthenticated } = useAuth();
 
   const handleNavigation = (href: string) => {
-    if (href === "/lab") {
-      router.push(href);
-      return;
-    }
-
-    if (!isAuthenticated) {
-      router.push("/lab?mode=login");
-      return;
-    }
-
     router.push(href);
   };
 

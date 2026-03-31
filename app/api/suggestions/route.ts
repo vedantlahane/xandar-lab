@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Attempt from '@/models/Attempt';
 import ActivityLog from '@/models/ActivityLog';
-import { getValidatedSession } from '@/lib/auth';
+import { auth } from '@/auth';
 import { SHEET } from '@/app/lab/practice/data/sheet';
 
 export const dynamic = 'force-dynamic';
@@ -10,8 +10,10 @@ export const dynamic = 'force-dynamic';
 // GET /api/suggestions — Personalized daily focus suggestions
 export async function GET() {
     try {
-        const session = await getValidatedSession();
-        if (!session) {
+        const session = await auth();
+        const userId = session?.user?.id;
+
+        if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -21,7 +23,7 @@ export async function GET() {
             t.problems.map(p => ({ ...p, topic: t.topicName }))
         );
 
-        const attempts = await Attempt.find({ userId: session.userId })
+        const attempts = await Attempt.find({ userId })
             .sort({ timestamp: -1 })
             .lean();
 
@@ -122,7 +124,7 @@ export async function GET() {
         // Progress — how many of today's suggestions have been attempted today
         const today = new Date().toISOString().split('T')[0];
         const todayLog = await ActivityLog.findOne({
-            userId: session.userId,
+            userId,
             date: today,
         }).lean();
 

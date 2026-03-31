@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Attempt from '@/models/Attempt';
-import { getValidatedSession } from '@/lib/auth';
+import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/attempts/summary — Per-problem summary for current user
 export async function GET() {
     try {
-        const session = await getValidatedSession();
-        if (!session) {
+        const session = await auth();
+        const userId = session?.user?.id;
+
+        if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await connectDB();
 
-        const attempts = await Attempt.find({ userId: session.userId })
+        const attempts = await Attempt.find({ userId })
             .sort({ timestamp: -1 })
             .lean();
 

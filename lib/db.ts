@@ -1,4 +1,3 @@
-import { Console } from "console";
 import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -32,6 +31,9 @@ async function connectDB(){
     if(!cached.promise) {
         const opts = {
             bufferCommands: false,
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 5000,
+            socketTimeoutMS: 10000,
         }
 
         cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
@@ -39,6 +41,7 @@ async function connectDB(){
             return mongoose;
         }).catch(err => {
             console.error("MongoDB Connection Error:", err);
+            cached.promise = null;
             throw err;
         });
     }

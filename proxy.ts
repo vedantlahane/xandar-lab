@@ -8,11 +8,6 @@ const JWT_SECRET = new TextEncoder().encode(
 
 // Protected routes that require authentication
 const protectedRoutes = [
-    '/lab/practice',
-    '/lab/notes',
-    '/lab/docs',
-    '/lab/experiments',
-    '/lab/hackathons',
     '/lab/profile',
 ];
 
@@ -55,11 +50,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/lab/practice/:path*',
-        '/lab/notes/:path*',
-        '/lab/docs/:path*',
-        '/lab/experiments/:path*',
-        '/lab/hackathons/:path*',
         '/lab/profile/:path*',
         '/api/problems/:path*',
     ],

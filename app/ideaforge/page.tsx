@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function IdeaForgeAliasPage() {
-  redirect("/ideas");
+  redirect("/lab/ideas");
 }

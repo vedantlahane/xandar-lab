@@ -1,9 +1,8 @@
 // app/lab/notes/page.tsx
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 import GroupSidebar from "./components/GroupSidebar";
 import NoteCanvas from "./components/NoteCanvas";
 import { NoteDrawer } from "./components/NoteDrawer";
@@ -13,14 +12,7 @@ import { useAuth } from "@/components/auth/AuthContext";
 export default function NotesPage() {
     const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
     const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
-    const { isAuthenticated, openLoginModal, isLoading } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push("/lab?mode=login");
-        }
-    }, [isLoading, isAuthenticated, router]);
+    const { isAuthenticated, openLoginModal } = useAuth();
 
     const noteIndex = useMemo(() => {
         const map = new Map<string, Note>();
