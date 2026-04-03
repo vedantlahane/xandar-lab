@@ -7,6 +7,7 @@ import { Maximize2, Minimize2, X, Copy, Check, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "../data/documents";
 import { cn } from "@/lib/utils";
+import MLRoadmap from "./roadmap/MLRoadmap";
 
 export function DocumentDrawer({
     document,
@@ -155,11 +156,17 @@ export function DocumentDrawer({
                             </div>
                         </div>
 
-                        <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
-                            <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed">
-                                {document.content}
-                            </pre>
-                        </div>
+                        {document.customComponent === "MLRoadmap" ? (
+                            <div className="mt-4">
+                                <MLRoadmap />
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+                                <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed">
+                                    {document.content}
+                                </pre>
+                            </div>
+                        )}
 
                         <div className="flex items-center justify-between text-xs text-muted-foreground/60">
                             <span>Created: {document.createdAt}</span>

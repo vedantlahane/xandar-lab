@@ -1,5 +1,5 @@
-export type DocCategory = 'Cheatsheet' | 'Guide' | 'Reference' | 'Tutorial' | 'Notes';
-export type DocTechnology = 'JavaScript' | 'TypeScript' | 'React' | 'Node.js' | 'Python' | 'DSA' | 'System Design' | 'Git' | 'Docker' | 'CSS' | 'Other';
+export type DocCategory = 'Cheatsheet' | 'Guide' | 'Reference' | 'Tutorial' | 'Notes' | 'Roadmap';
+export type DocTechnology = 'JavaScript' | 'TypeScript' | 'React' | 'Node.js' | 'Python' | 'DSA' | 'System Design' | 'Git' | 'Docker' | 'CSS' | 'AI/ML' | 'Other';
 
 export interface Document {
     id: string;
@@ -8,6 +8,7 @@ export interface Document {
     category: DocCategory;
     technology: DocTechnology;
     content: string;
+    customComponent?: string;
     tags?: string[];
     createdAt: string;
     updatedAt: string;
@@ -20,6 +21,23 @@ export interface DocSection {
 }
 
 export const DOCUMENTS: DocSection[] = [
+    {
+        sectionName: "AI & Machine Learning",
+        documents: [
+            {
+                id: "doc-ml-roadmap",
+                title: "ML Learning Roadmap",
+                description: "Comprehensive guide to learning ML, Deep Learning, LLMs, and MLOps",
+                category: "Roadmap",
+                technology: "AI/ML",
+                content: "Interactive ML Roadmap",
+                customComponent: "MLRoadmap",
+                tags: ["Machine Learning", "Deep Learning", "LLMs", "Roadmap", "MLOps"],
+                createdAt: "2024-04-03",
+                updatedAt: "2024-04-03"
+            }
+        ]
+    },
     {
         sectionName: "JavaScript Essentials",
         documents: [
