@@ -1,17 +1,37 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Plus, Sparkles, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronUp, Plus, Sparkles, X, Target, Briefcase, Coins, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
   DOMAIN_OPTIONS,
   SKILL_SUGGESTIONS,
 } from "@/app/ideas/components/ideaForgeConfig";
 import type { UserPreferences } from "@/lib/ideaforge/types";
+
+// ── Shared Config Icons ────────────────────────────────────────────────────────
+const ADVANCED_PREF_OPTIONS = {
+  timeline: [
+    { value: "", label: "Not specified" },
+    { value: "1 week", label: "1 week" },
+    { value: "2-4 weeks", label: "2-4 weeks" },
+    { value: "1-2 months", label: "1-2 months" },
+  ],
+  goal: [
+    { value: "", label: "Not specified" },
+    { value: "learn_portfolio", label: "Learn & Portfolio" },
+    { value: "side_project", label: "Side Project" },
+    { value: "potential_startup", label: "Potential Startup" },
+  ],
+  monetization: [
+    { value: "", label: "Not specified" },
+    { value: "not_important", label: "Not important" },
+    { value: "nice_to_have", label: "Nice to have" },
+    { value: "primary_goal", label: "Primary goal" },
+  ],
+} as const;
 
 type IdeaForgeFormProps = {
   domain: string;
@@ -74,195 +94,205 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
   };
 
   return (
-    <Card className="border-zinc-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-zinc-800/70 dark:bg-zinc-950/40">
-      <CardHeader className="space-y-2">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Sparkles className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-          Idea Forge Input
-        </CardTitle>
-        <CardDescription>
-          Share your domain and skill profile. The agent team will challenge and refine ideas before ranking final bets.
-        </CardDescription>
-      </CardHeader>
+    <div className="space-y-8">
+      {/* Header section is managed by workspace, we focus on the form controls */}
 
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Domain</label>
+      {/* Domain */}
+      <div className="space-y-3">
+        <label className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest">
+          Domain Focus
+        </label>
+        <div className="relative mb-3">
           <select
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
             value={selectedDomain}
             onChange={(event) => {
               const value = event.target.value;
               setSelectedDomain(value);
-
               if (value !== "custom") {
-                onChange({
-                  domain: value,
-                  skills,
-                  preferences,
-                });
+                onChange({ domain: value, skills, preferences });
               }
             }}
             disabled={isGenerating}
+            className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-primary/50 focus:bg-background hover:border-border transition-colors backdrop-blur-sm shadow-sm"
           >
             {DOMAIN_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
+               <option key={option} value={option}>{option}</option>
             ))}
-            <option value="custom">Custom Domain</option>
+            <option value="custom">Custom Domain...</option>
           </select>
-
-          <Input
-            value={selectedDomain === "custom" ? domain : ""}
-            onChange={(event) => {
-              setSelectedDomain("custom");
-              onChange({
-                domain: event.target.value,
-                skills,
-                preferences,
-              });
-            }}
-            placeholder="Or type your own domain"
-            disabled={isGenerating}
-          />
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         </div>
 
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Skills</label>
-          <div className="flex gap-2">
-            <Input
-              value={skillInput}
-              onChange={(event) => setSkillInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addSkill(skillInput);
-                }
-              }}
-              placeholder="Type a skill and press Enter"
-              disabled={isGenerating}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => addSkill(skillInput)}
-              disabled={isGenerating}
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </Button>
-          </div>
+        {selectedDomain === "custom" && (
+          <Input
+            className="w-full bg-background/50 border-border/50 rounded-lg px-4 py-3 text-sm focus:bg-background transition-colors shadow-sm"
+            value={domain}
+            onChange={(event) => {
+              onChange({ domain: event.target.value, skills, preferences });
+            }}
+            placeholder="E.g., DevTools for Remote Teams"
+            disabled={isGenerating}
+          />
+        )}
+      </div>
 
-          <div className="flex flex-wrap gap-2">
-            {skills.length === 0 ? (
-              <span className="text-sm text-muted-foreground">Add at least one skill to personalize output.</span>
-            ) : (
-              skills.map((skill) => (
-                <Badge key={skill} variant="secondary" className="gap-1 px-2 py-1">
-                  {skill}
-                  <button
-                    type="button"
-                    className="rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
-                    onClick={() => removeSkill(skill)}
-                    aria-label={`Remove ${skill}`}
-                    disabled={isGenerating}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))
-            )}
-          </div>
+      {/* Skills */}
+      <div className="space-y-3">
+        <label className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest flex justify-between items-center">
+          <span>Core Capabilities (Skills)</span>
+          <span className="text-[10px] lowercase normal-case text-muted-foreground/50">{skills.length} added</span>
+        </label>
+        <div className="flex gap-2">
+          <Input
+            className="w-full bg-background/50 border-border/50 rounded-lg px-4 py-3 text-sm focus:bg-background transition-colors shadow-sm"
+            value={skillInput}
+            onChange={(event) => setSkillInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addSkill(skillInput);
+              }
+            }}
+            placeholder="Type a skill (e.g. React) and press Enter"
+            disabled={isGenerating}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 border-border/50 hover:bg-muted/30"
+            onClick={() => addSkill(skillInput)}
+            disabled={isGenerating}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            {SKILL_SUGGESTIONS.map((skill) => (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {skills.length === 0 ? (
+            <span className="text-xs text-muted-foreground italic pl-1">Add at least one key skill to personalize ideas.</span>
+          ) : (
+            skills.map((skill) => (
+              <span
+                key={skill}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+              >
+                {skill}
+                <button
+                  type="button"
+                  className="rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                  onClick={() => removeSkill(skill)}
+                  disabled={isGenerating}
+                  aria-label={`Remove ${skill}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))
+          )}
+        </div>
+
+        {/* Suggested Skills */}
+        {skills.length < 5 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {SKILL_SUGGESTIONS.filter(skill => !normalizedSkills.has(skill.toLowerCase())).slice(0, 10).map((skill) => (
               <button
                 key={skill}
                 type="button"
                 onClick={() => addSkill(skill)}
-                disabled={isGenerating || normalizedSkills.has(skill.toLowerCase())}
-                className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                disabled={isGenerating}
+                className="rounded-lg border border-border/40 bg-muted/20 px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-all hover:bg-muted/40 hover:text-foreground disabled:opacity-50"
               >
-                {skill}
+                + {skill}
               </button>
             ))}
           </div>
-        </div>
+        )}
+      </div>
 
-        <Separator />
+      <div className="h-px bg-border/50 w-full my-6" />
 
-        <div className="space-y-3">
-          <button
-            type="button"
-            className="flex items-center gap-2 text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
-            onClick={() => setAdvancedOpen((current) => !current)}
-          >
-            {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            Advanced Preferences
-          </button>
-
-          {advancedOpen ? (
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">MVP Timeline</label>
-                <select
-                  value={preferences.timeline || ""}
-                  onChange={(event) => updatePreference("timeline", event.target.value as UserPreferences["timeline"])}
-                  className="w-full rounded-md border border-input bg-transparent px-2 py-2 text-sm"
-                  disabled={isGenerating}
-                >
-                  <option value="">Not specified</option>
-                  <option value="1 week">1 week</option>
-                  <option value="2-4 weeks">2-4 weeks</option>
-                  <option value="1-2 months">1-2 months</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Goal</label>
-                <select
-                  value={preferences.goal || ""}
-                  onChange={(event) => updatePreference("goal", event.target.value as UserPreferences["goal"])}
-                  className="w-full rounded-md border border-input bg-transparent px-2 py-2 text-sm"
-                  disabled={isGenerating}
-                >
-                  <option value="">Not specified</option>
-                  <option value="learn_portfolio">Learn &amp; Portfolio</option>
-                  <option value="side_project">Side Project</option>
-                  <option value="potential_startup">Potential Startup</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Monetization</label>
-                <select
-                  value={preferences.monetization || ""}
-                  onChange={(event) =>
-                    updatePreference("monetization", event.target.value as UserPreferences["monetization"])
-                  }
-                  className="w-full rounded-md border border-input bg-transparent px-2 py-2 text-sm"
-                  disabled={isGenerating}
-                >
-                  <option value="">Not specified</option>
-                  <option value="not_important">Not important</option>
-                  <option value="nice_to_have">Nice to have</option>
-                  <option value="primary_goal">Primary goal</option>
-                </select>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <Button
+      {/* Advanced Settings */}
+      <div className="space-y-4">
+        <button
           type="button"
-          className="w-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-          disabled={isGenerating || !domain.trim() || skills.length === 0}
-          onClick={onSubmit}
+          className="flex w-full items-center justify-between text-left group"
+          onClick={() => setAdvancedOpen((current) => !current)}
         >
-          {isGenerating ? "Forging Ideas..." : "Forge Ideas"}
-        </Button>
-      </CardContent>
-    </Card>
+          <div className="flex items-center gap-2">
+             <div className="h-6 w-6 rounded-md bg-muted/40 flex items-center justify-center border border-border/50 group-hover:bg-muted/60 transition-colors">
+               <Target className="h-3.5 w-3.5 text-muted-foreground" />
+             </div>
+             <span className="text-sm font-semibold tracking-wide">Advanced Constraints</span>
+          </div>
+          <div className="h-7 w-7 rounded-full bg-muted/20 flex items-center justify-center">
+            {advancedOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          </div>
+        </button>
+
+        {advancedOpen && (
+          <div className="grid gap-4 sm:grid-cols-3 pt-3">
+             <div className="space-y-2">
+                <label className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest pl-1">MVP Timeline</label>
+                <div className="relative">
+                   <select
+                     value={preferences.timeline || ""}
+                     onChange={(e) => updatePreference("timeline", e.target.value as UserPreferences["timeline"])}
+                     className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-primary/50 hover:border-border transition-colors text-foreground/80"
+                     disabled={isGenerating}
+                   >
+                     {ADVANCED_PREF_OPTIONS.timeline.map((opt) => (
+                       <option key={opt.value} value={opt.value}>{opt.label}</option>
+                     ))}
+                   </select>
+                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 pointer-events-none" />
+                </div>
+             </div>
+
+             <div className="space-y-2">
+                <label className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest pl-1">Goal Focus</label>
+                <div className="relative">
+                   <select
+                     value={preferences.goal || ""}
+                     onChange={(e) => updatePreference("goal", e.target.value as UserPreferences["goal"])}
+                     className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-primary/50 hover:border-border transition-colors text-foreground/80"
+                     disabled={isGenerating}
+                   >
+                     {ADVANCED_PREF_OPTIONS.goal.map((opt) => (
+                       <option key={opt.value} value={opt.value}>{opt.label}</option>
+                     ))}
+                   </select>
+                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 pointer-events-none" />
+                </div>
+             </div>
+
+             <div className="space-y-2">
+                <label className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest pl-1">Monetization</label>
+                <div className="relative">
+                   <select
+                     value={preferences.monetization || ""}
+                     onChange={(e) => updatePreference("monetization", e.target.value as UserPreferences["monetization"])}
+                     className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-primary/50 hover:border-border transition-colors text-foreground/80"
+                     disabled={isGenerating}
+                   >
+                     {ADVANCED_PREF_OPTIONS.monetization.map((opt) => (
+                       <option key={opt.value} value={opt.value}>{opt.label}</option>
+                     ))}
+                   </select>
+                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 pointer-events-none" />
+                </div>
+             </div>
+          </div>
+        )}
+      </div>
+
+      <Button
+        className="w-full h-12 text-base gap-2 bg-primary text-primary-foreground shadow-md font-semibold mt-4"
+        disabled={isGenerating || !domain.trim() || skills.length === 0}
+        onClick={onSubmit}
+      >
+        <Flame className="h-5 w-5" />
+        {isGenerating ? "Forging Your Ideas..." : "Forge Ideas"}
+      </Button>
+    </div>
   );
 }

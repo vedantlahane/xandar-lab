@@ -11,9 +11,9 @@ import {
   ShieldAlert,
   TriangleAlert,
   Wrench,
+  Activity,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import type { AgentName } from "@/lib/ideaforge/types";
 import { STAGES, type StageStatus } from "@/app/ideas/components/ideaForgeConfig";
 
@@ -35,12 +35,7 @@ type PipelineVisualizerProps = {
   isGenerating: boolean;
 };
 
-function StageStatusIcon(props: {
-  status: StageStatus;
-  isActive: boolean;
-}) {
-  const { status, isActive } = props;
-
+function StageStatusIcon({ status, isActive }: { status: StageStatus; isActive: boolean }) {
   if (status === "complete") {
     return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
   }
@@ -50,10 +45,10 @@ function StageStatusIcon(props: {
   }
 
   if (status === "active" || isActive) {
-    return <Loader2 className="h-5 w-5 animate-spin text-teal-500" />;
+    return <Loader2 className="h-5 w-5 animate-spin text-primary" />;
   }
 
-  return <Circle className="h-4 w-4 text-zinc-400" />;
+  return <Circle className="h-4 w-4 text-muted-foreground/30" />;
 }
 
 export function PipelineVisualizer(props: PipelineVisualizerProps) {
@@ -70,25 +65,36 @@ export function PipelineVisualizer(props: PipelineVisualizerProps) {
   const progressValue = Math.round((completedCount / STAGES.length) * 100);
 
   return (
-    <Card className="border-zinc-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-zinc-800/70 dark:bg-zinc-950/40">
-      <CardHeader className="space-y-3">
-        <CardTitle>Live Agent Pipeline</CardTitle>
-        <CardDescription>
+    <div className="rounded-xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-6 md:p-8 flex flex-col h-full">
+      <div className="space-y-2 mb-6">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-primary/10">
+            <Activity className="h-4 w-4 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold tracking-tight">Agent Pipeline</h2>
+        </div>
+        <p className="text-sm text-muted-foreground pl-[40px]">
           {isGenerating
-            ? "Agents are collaborating in real time."
-            : "Run Idea Forge to watch each agent stage execute."}
-        </CardDescription>
-        <Progress value={progressValue} className="h-2" />
-      </CardHeader>
+            ? "Agents are currently collaborating."
+            : "Run Forge to watch agents execute."}
+        </p>
+      </div>
 
-      <CardContent className="space-y-3">
-        {iterationMessages.length > 0 ? (
-          <div className="rounded-lg border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-600/30 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden mb-8">
+        <div 
+          className="h-full bg-primary transition-all duration-500 ease-in-out"
+          style={{ width: `${progressValue}%` }}
+        />
+      </div>
+
+      <div className="flex-1 space-y-4">
+        {iterationMessages.length > 0 && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-700 dark:text-amber-400 font-medium mb-6">
             {iterationMessages[iterationMessages.length - 1]}
           </div>
-        ) : null}
+        )}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {STAGES.map((stage, index) => {
             const Icon = iconMap[stage.id];
             const status = stageStatus[stage.id];
@@ -97,25 +103,46 @@ export function PipelineVisualizer(props: PipelineVisualizerProps) {
             const stageError = stageErrors[stage.id];
 
             return (
-              <div key={stage.id} className="relative rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/70 dark:bg-zinc-900/50">
-                {index < STAGES.length - 1 ? (
+              <div 
+                key={stage.id} 
+                className={cn(
+                  "relative rounded-xl border p-4 transition-all duration-300",
+                  isActive ? "border-primary/50 bg-card shadow-sm" : "border-border/50 bg-background/30"
+                )}
+              >
+                {/* Connecting line */}
+                {index < STAGES.length - 1 && (
                   <span
                     aria-hidden="true"
-                    className="absolute left-[17px] top-11 h-[calc(100%+8px)] w-px bg-zinc-200 dark:bg-zinc-700"
+                    className="absolute left-[29px] top-[50px] bottom-[-20px] w-px bg-border/60"
                   />
-                ) : null}
+                )}
 
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-6 w-6 items-center justify-center">
+                <div className="flex items-start gap-4">
+                  <div className={cn(
+                    "mt-0.5 flex h-7 w-7 items-center justify-center rounded-full shrink-0 z-10 bg-background border",
+                    isActive ? "border-primary shadow-sm" : "border-border/50",
+                    status === "complete" ? "border-emerald-500/50" : ""
+                  )}>
                     <StageStatusIcon status={status} isActive={isActive} />
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                      <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{stage.label}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon className={cn(
+                        "h-4 w-4", 
+                        isActive ? "text-primary" : "text-muted-foreground/60"
+                      )} />
+                      <h3 className={cn(
+                        "text-sm font-semibold tracking-tight",
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      )}>
+                        {stage.label}
+                      </h3>
                     </div>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{stage.description}</p>
+                    <p className="text-xs text-muted-foreground/70 leading-relaxed uppercase tracking-wider font-medium">
+                      {stage.description}
+                    </p>
 
                     <AnimatePresence initial={false}>
                       {(isActive || thoughts.length > 0 || stageError) && (
@@ -126,25 +153,26 @@ export function PipelineVisualizer(props: PipelineVisualizerProps) {
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-3 space-y-2 rounded-lg bg-zinc-100/80 p-2.5 text-xs dark:bg-zinc-800/70">
-                            {thoughts.length === 0 && isActive ? (
-                              <div className="animate-pulse text-zinc-500 dark:text-zinc-300">
-                                Working on this stage...
+                          <div className="mt-3 space-y-2 rounded-lg border border-border/40 bg-muted/20 p-3 text-xs">
+                            {thoughts.length === 0 && isActive && (
+                              <div className="animate-pulse text-muted-foreground italic flex items-center gap-2">
+                                <Loader2 className="h-3 w-3 animate-spin" /> Processing...
                               </div>
-                            ) : null}
+                            )}
 
                             {thoughts.slice(-5).map((thought, idx) => (
-                              <div key={`${stage.id}-thought-${idx}`} className="text-zinc-600 dark:text-zinc-300">
-                                {thought}
+                              <div key={`${stage.id}-thought-${idx}`} className="text-foreground/70 flex gap-2">
+                                <span className="text-primary/50 select-none">›</span>
+                                <span>{thought}</span>
                               </div>
                             ))}
 
-                            {stageError ? (
-                              <div className="flex items-start gap-1.5 text-red-600 dark:text-red-400">
-                                <TriangleAlert className="mt-[2px] h-3.5 w-3.5 shrink-0" />
+                            {stageError && (
+                              <div className="flex items-start gap-2 text-red-500 font-medium bg-red-500/10 p-2 rounded border border-red-500/20 mt-2">
+                                <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                 <span>{stageError}</span>
                               </div>
-                            ) : null}
+                            )}
                           </div>
                         </motion.div>
                       )}
@@ -155,7 +183,7 @@ export function PipelineVisualizer(props: PipelineVisualizerProps) {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

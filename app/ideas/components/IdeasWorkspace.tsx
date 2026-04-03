@@ -11,7 +11,7 @@ import { IdeaCard } from "@/app/ideas/components/IdeaCard";
 import { PipelineVisualizer } from "@/app/ideas/components/PipelineVisualizer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type {
   AgentName,
   FinalIdea,
@@ -286,167 +286,174 @@ export function IdeasWorkspace() {
     <div className="relative h-full">
       <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background to-transparent z-10" />
 
-      <div id="ideas-scroll-container" className="h-full overflow-y-auto thin-scrollbar overscroll-contain">
-        <div className="max-w-7xl mx-auto px-8 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10 min-h-full">
-            <div className="space-y-6 pb-48 pt-8">
-              <section className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <h1 className="text-lg font-semibold tracking-tight">Ideas</h1>
-                  <Badge variant="outline" className="gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    LangGraph Pipeline
-                  </Badge>
+      <div id="ideas-scroll-container" className="h-full overflow-y-auto thin-scrollbar overscroll-contain pb-20">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 lg:px-16 pt-16">
+          {/* Header */}
+          <div className="mb-10 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-primary/10">
+                <Lightbulb className="h-5 w-5 text-primary" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">Idea Forge</h1>
+            </div>
+            <p className="text-muted-foreground max-w-2xl text-lg leading-relaxed">
+              Multi-agent ideation workspace. Provide your domain context and skills, and let an explicit team of agents brainstrorm, critique, completely validate, and refine ideas to bring to the Lab.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-10 min-h-full">
+            <div className="space-y-10 pb-16">
+
+              {errorMessage && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 flex items-center gap-3 text-red-700 dark:text-red-400">
+                  <TriangleAlert className="h-5 w-5 shrink-0" />
+                  <p className="text-sm font-medium">{errorMessage}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Multi-agent ideation workspace with Scout, Ideator, Critic, Market, Tech, and Synthesizer stages.
-                </p>
-              </section>
+              )}
 
-              {errorMessage ? (
-                <Card className="border-red-500/30 bg-red-500/10">
-                  <CardContent className="flex items-center gap-2 py-4 text-sm text-red-700 dark:text-red-300">
-                    <TriangleAlert className="h-4 w-4" />
-                    {errorMessage}
-                  </CardContent>
-                </Card>
-              ) : null}
+              {/* Main Form container with Lab UI styling */}
+              <div className="rounded-2xl border border-white/40 dark:border-white/5 bg-linear-to-br from-white/60 to-white/30 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-md shadow-xl shadow-black/5 p-6 md:p-8">
+                <IdeaForgeForm
+                  domain={domain}
+                  skills={skills}
+                  preferences={preferences}
+                  isGenerating={isGenerating}
+                  onChange={(payload) => {
+                    setDomain(payload.domain);
+                    setSkills(payload.skills);
+                    setPreferences(payload.preferences);
+                  }}
+                  onSubmit={handleForge}
+                />
+              </div>
 
-              <IdeaForgeForm
-                domain={domain}
-                skills={skills}
-                preferences={preferences}
-                isGenerating={isGenerating}
-                onChange={(payload) => {
-                  setDomain(payload.domain);
-                  setSkills(payload.skills);
-                  setPreferences(payload.preferences);
-                }}
-                onSubmit={handleForge}
-              />
-
-              {isGenerating && ideas.length === 0 ? (
-                <section className="space-y-3">
-                  <h2 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest">
-                    Synthesizing Results
+              {isGenerating && ideas.length === 0 && (
+                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <h2 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest pl-1">
+                    Synthesizing Pipeline Results...
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2">
                     {[0, 1].map((item) => (
                       <div
                         key={item}
-                        className="h-48 animate-pulse rounded-xl border border-zinc-200/60 bg-zinc-100/70 dark:border-zinc-800/60 dark:bg-zinc-800/40"
+                        className="h-64 animate-pulse rounded-xl border border-border/40 bg-muted/20"
                       />
                     ))}
                   </div>
                 </section>
-              ) : null}
+              )}
 
-              {sortedIdeas.length > 0 ? (
-                <section className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-base font-semibold">Final Ranked Ideas</h2>
-                    <Badge variant="outline" className="gap-1">
-                      <Lightbulb className="h-3.5 w-3.5" />
-                      {sortedIdeas.length} generated
+              {/* Final Ranked Ideas Output */}
+              {sortedIdeas.length > 0 && (
+                <section className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                  <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-4">
+                    <h2 className="text-xl font-bold tracking-tight text-foreground">Final Ranked Sparks</h2>
+                    <Badge variant="outline" className="gap-1.5 px-3 py-1 bg-background text-sm">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      {sortedIdeas.length} Generated
                     </Badge>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {sortedIdeas.map((idea, index) => (
                       <IdeaCard key={idea.id || `${idea.title}-${index}`} idea={idea} rank={index + 1} />
                     ))}
                   </div>
                 </section>
-              ) : null}
+              )}
 
-              {previousRun && sortedIdeas.length === 0 ? (
-                <section>
-                  <Card className="border-zinc-200/70 bg-white/70 dark:border-zinc-800/70 dark:bg-zinc-950/40">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Clock3 className="h-4 w-4" />
-                        Previous Results
-                      </CardTitle>
-                      <CardDescription>
-                        Last run for {previousRun.domain} on {new Date(previousRun.generatedAt).toLocaleString()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        {previousRun.skills.map((skill) => (
-                          <Badge key={`previous-${skill}`} variant="secondary">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setIdeas(previousRun.ideas);
-                            setDeliberationLog(previousRun.deliberationLog);
-                          }}
-                        >
-                          <RefreshCcw className="h-3.5 w-3.5" />
-                          Load Previous Results
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </section>
-              ) : null}
-
-              {(deliberationLog.length > 0 || isGenerating) ? (
-                <section>
-                  <details className="rounded-xl border border-zinc-200/70 bg-white/70 p-4 shadow-sm dark:border-zinc-800/70 dark:bg-zinc-950/40">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-medium text-zinc-800 dark:text-zinc-100">
-                      <span className="inline-flex items-center gap-2">
-                        <ListTree className="h-4 w-4" />
-                        Behind the Scenes
+              {previousRun && sortedIdeas.length === 0 && !isGenerating && (
+                <section className="animate-in fade-in duration-500">
+                  <div className="rounded-xl border border-border/50 bg-card/60 p-6 backdrop-blur-sm shadow-sm transition-all hover:bg-card/80">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="flex items-center gap-2 text-base font-semibold">
+                        <Clock3 className="h-4 w-4 text-primary" />
+                        Restore Previous Session
+                      </h3>
+                      <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+                        {new Date(previousRun.generatedAt).toLocaleString()}
                       </span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    </div>
+                    
+                    <p className="text-sm text-foreground/80 mb-4">
+                      Last generated ideas for <strong className="text-foreground">{previousRun.domain}</strong> targeting {previousRun.skills.join(", ")}.
+                    </p>
+
+                    <Button
+                      variant="outline"
+                      className="border-primary/30 text-primary hover:bg-primary/10 hover:text-primary transition-colors text-sm h-9"
+                      onClick={() => {
+                        setIdeas(previousRun.ideas);
+                        setDeliberationLog(previousRun.deliberationLog);
+                      }}
+                    >
+                      <RefreshCcw className="h-3.5 w-3.5 mr-2" />
+                      Load Previous Results
+                    </Button>
+                  </div>
+                </section>
+              )}
+
+              {/* Dev Logs */}
+              {(deliberationLog.length > 0 || isGenerating) && (
+                <section>
+                  <details className="rounded-xl border border-border/40 bg-card/40 p-5 shadow-sm group">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-medium text-foreground outline-none">
+                      <span className="inline-flex items-center gap-2.5">
+                        <ListTree className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="text-sm font-semibold tracking-wide">Under the Hood / Execution Logs</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground bg-background px-2 py-1 rounded-md border border-border/50">
                         {deliberationLog.length} log entries
                       </span>
                     </summary>
 
-                    <div className="mt-4 max-h-96 space-y-2 overflow-y-auto pr-1 text-sm thin-scrollbar">
+                    <div className="mt-5 max-h-96 space-y-3 overflow-y-auto pr-2 text-sm thin-scrollbar">
                       {deliberationLog.length === 0 ? (
-                        <p className="text-zinc-500 dark:text-zinc-400">Logs will appear as agents reason through the pipeline.</p>
+                        <p className="text-muted-foreground italic text-xs">Waiting for agent execution logs...</p>
                       ) : (
                         deliberationLog.map((entry, index) => (
                           <div
                             key={`${entry.timestamp}-${entry.agent}-${index}`}
-                            className="rounded-md border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800/80 dark:bg-zinc-900/60"
+                            className="rounded-lg border border-border/40 bg-background/50 px-4 py-3"
                           >
-                            <div className="flex items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                              <span className="font-medium uppercase tracking-wide">{entry.agent}</span>
-                              <span>{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className={cn(
+                                "text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-md",
+                                "bg-muted text-muted-foreground"
+                              )}>
+                                {entry.agent}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground/60 font-mono">
+                                {new Date(entry.timestamp).toLocaleTimeString()}
+                              </span>
                             </div>
-                            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-200">{entry.message}</p>
+                            <p className="text-xs text-foreground/80 leading-relaxed font-mono whitespace-pre-wrap">{entry.message}</p>
                           </div>
                         ))
                       )}
                     </div>
                   </details>
                 </section>
-              ) : null}
+              )}
             </div>
 
-            <aside className="relative sticky top-0 h-screen hidden lg:flex flex-col justify-center">
-              <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-10rem)]">
-                <PipelineVisualizer
-                  activeAgent={activeAgent}
-                  stageStatus={stageStatus}
-                  stageThoughts={stageThoughts}
-                  stageErrors={stageErrors}
-                  iterationMessages={iterationMessages}
-                  isGenerating={isGenerating}
-                />
-              </div>
+            {/* Right Panel / Desktop */}
+            <aside className="relative hidden xl:block">
+               <div className="sticky top-24 h-[calc(100vh-8rem)]">
+                 <PipelineVisualizer
+                   activeAgent={activeAgent}
+                   stageStatus={stageStatus}
+                   stageThoughts={stageThoughts}
+                   stageErrors={stageErrors}
+                   iterationMessages={iterationMessages}
+                   isGenerating={isGenerating}
+                 />
+               </div>
             </aside>
 
-            <div className="lg:hidden pb-10">
+            {/* Right Panel / Mobile */}
+            <div className="xl:hidden pb-10">
               <PipelineVisualizer
                 activeAgent={activeAgent}
                 stageStatus={stageStatus}
