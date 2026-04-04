@@ -1,0 +1,127 @@
+export const DOMAIN_SEARCH_STRATEGIES: Record<string, string[]> = {
+  "developer-tools": [
+    "developer tools biggest frustrations 2024 site:reddit.com/r/programming",
+    "I wish someone would build a tool that site:news.ycombinator.com",
+    "developer experience pain points nobody solving",
+    "why do developer tools still suck 2024",
+    "github issues most upvoted feature requests developer tools",
+    "switched away from {popular_tool} because site:reddit.com",
+  ],
+  "fintech": [
+    "fintech startup pain points compliance KYC 2024",
+    "payment processing problems small business owners reddit",
+    "why is banking API integration still so hard developers",
+    "fintech tools missing features founders complaining",
+    "neobank limitations what users actually want 2024",
+    "accounting software frustrations small business site:reddit.com",
+  ],
+  "healthtech": [
+    "EHR integration problems developers healthcare",
+    "telemedicine UX complaints patients doctors 2024",
+    "HIPAA compliant tools that are actually easy to use",
+    "healthcare software doctors hate using why",
+    "mental health app gaps what's missing 2024",
+    "health data interoperability unsolved problems",
+  ],
+  "edtech": [
+    "online learning platform frustrations students 2024",
+    "LMS limitations teachers complaining reddit",
+    "edtech tools nobody built yet gaps in market",
+    "coding bootcamp problems students face unsolved",
+    "education technology accessibility gaps 2024",
+    "why do educational tools have terrible UX",
+  ],
+  "ai-ml-tools": [
+    "AI developer tools missing features 2024",
+    "LLM application development pain points",
+    "ML pipeline tools frustrations data scientists reddit",
+    "AI product ideas nobody building yet",
+    "prompt engineering tools gaps what's needed",
+    "model deployment monitoring problems unsolved 2024",
+  ],
+  "devops": [
+    "DevOps tooling pain points infrastructure engineers 2024",
+    "Kubernetes problems nobody solved yet",
+    "CI/CD pipeline frustrations developers reddit",
+    "monitoring observability gaps what's missing 2024",
+    "infrastructure as code limitations terraform pulumi",
+    "DevOps automation ideas that should exist",
+  ],
+  "e-commerce": [
+    "e-commerce store owner biggest frustrations 2024",
+    "Shopify limitations merchants complaining reddit",
+    "e-commerce tools missing for small sellers",
+    "dropshipping pain points nobody solving",
+    "online store conversion problems unsolved 2024",
+    "e-commerce analytics tools gaps in market",
+  ],
+  "productivity": [
+    "productivity app frustrations what's missing 2024",
+    "project management tool limitations teams complaining",
+    "note-taking app problems nobody solved",
+    "personal productivity tools gaps in market",
+    "remote work tools missing features 2024 reddit",
+    "why do productivity apps make me less productive",
+  ],
+  "open-source": [
+    "open source projects ideas most wanted 2024",
+    "open source tool gaps what's missing",
+    "github discussions most requested tools",
+    "open source alternatives needed for commercial tools",
+    "maintainer pain points open source sustainability",
+    "open source developer tools ideas nobody built yet",
+  ],
+  "saas": [
+    "SaaS ideas micro-saas opportunities 2024",
+    "SaaS tools for niche markets underserved",
+    "B2B SaaS pain points small business reddit",
+    "SaaS products missing that should exist",
+    "boring SaaS ideas that make money site:reddit.com/r/SaaS",
+    "vertical SaaS opportunities untapped 2024",
+  ],
+  "mobile-apps": [
+    "mobile app ideas nobody built yet 2024",
+    "smartphone app frustrations missing features reddit",
+    "iOS Android app gaps in market",
+    "mobile utility apps people wish existed",
+    "phone app UX problems nobody fixing",
+    "niche mobile app opportunities underserved 2024",
+  ],
+  "cybersecurity": [
+    "cybersecurity tools gaps small business 2024",
+    "security engineer pain points tooling reddit",
+    "application security tools missing for developers",
+    "cybersecurity automation ideas nobody building",
+    "small company security problems unsolved affordable",
+    "DevSecOps tools frustrations limitations 2024",
+  ],
+  "data-engineering": [
+    "data engineering pain points 2024 reddit",
+    "data pipeline tools frustrations missing features",
+    "ETL ELT tools limitations data engineers complaining",
+    "data quality monitoring gaps in tooling",
+    "data catalog discovery tools problems unsolved",
+    "real-time data processing challenges nobody solving 2024",
+  ],
+  "automation": [
+    "workflow automation pain points 2024",
+    "Zapier limitations what it can't do reddit",
+    "business process automation gaps small companies",
+    "no-code automation tools missing features",
+    "repetitive tasks nobody automated yet ideas",
+    "RPA problems unsolved for small business 2024",
+  ],
+};
+
+export const FALLBACK_QUERIES: string[] = [
+  "{domain} biggest pain points frustrations 2024",
+  "{domain} problems nobody solved yet reddit",
+  "I wish someone would build {domain} site:news.ycombinator.com",
+  "{domain} tools gaps in market 2024",
+  "{domain} user complaints what's missing",
+];
+
+export function getQueriesForDomain(domain: string): string[] {
+  return DOMAIN_SEARCH_STRATEGIES[domain] || 
+         FALLBACK_QUERIES.map(q => q.replace(/\{domain\}/g, domain));
+}

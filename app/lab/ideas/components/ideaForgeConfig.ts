@@ -1,4 +1,4 @@
-import type { AgentName } from "@/lib/ideaforge/types";
+import type { AgentName } from "@/lib/ideas/types";
 
 export const DOMAIN_OPTIONS = [
   "Developer Tools",

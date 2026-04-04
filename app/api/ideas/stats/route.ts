@@ -7,23 +7,67 @@ export async function GET() {
   try {
     await connectDB();
 
-    const [totalIdeas, distinctDomains, avgResult, lastRun] = await Promise.all([
-      Idea.countDocuments(),
-      Idea.distinct("domain"),
-      Idea.aggregate([
-        { $group: { _id: null, avgConfidence: { $avg: "$confidence" } } }
-      ]),
-      PipelineRun.findOne({ status: "completed" }).sort({ createdAt: -1 }).select("createdAt").lean()
+    const [result] = await Idea.aggregate([
+      { $match: { status: "published" } },
+      {
+        $facet: {
+          total: [
+            { $count: "count" }
+          ],
+          avgConfidence: [
+            {
+              $group: {
+                _id: null,
+                avg: { $avg: "$confidence" },
+              },
+            },
+          ],
+          byDomain: [
+            {
+              $group: {
+                _id: "$domain",
+                count: { $sum: 1 },
+                avgConfidence: { $avg: "$confidence" },
+              },
+            },
+            { $sort: { count: -1 } },
+          ],
+          byComplexity: [
+            {
+              $group: {
+                _id: "$complexity",
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          lastRefreshed: [
+            { $sort: { createdAt: -1 } },
+            { $limit: 1 },
+            { $project: { createdAt: 1 } },
+          ],
+        },
+      },
     ]);
 
-    const avgConfidence = avgResult.length > 0 ? Math.round(avgResult[0].avgConfidence) : 0;
-    
-    return NextResponse.json({
-      totalIdeas,
-      totalDomains: distinctDomains.length,
-      avgConfidence,
-      lastRefreshed: lastRun?.createdAt || null
-    });
+    const stats = {
+      totalIdeas: result?.total[0]?.count || 0,
+      avgConfidence: Math.round(result?.avgConfidence[0]?.avg || 0),
+      totalDomains: result?.byDomain.length || 0,
+      lastRefreshed: result?.lastRefreshed[0]?.createdAt || null,
+      domains: result?.byDomain.map((d: any) => ({
+        domain: d._id,
+        count: d.count,
+        avgConfidence: Math.round(d.avgConfidence),
+      })),
+      complexity: result?.byComplexity.map((c: any) => ({
+        level: c._id,
+        count: c.count,
+      })),
+    };
+
+    const response = NextResponse.json(stats);
+    response.headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
+    return response;
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch stats" },

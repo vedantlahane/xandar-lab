@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import {
   DOMAIN_OPTIONS,
   SKILL_SUGGESTIONS,
-} from "@/app/ideas/components/ideaForgeConfig";
-import type { UserPreferences } from "@/lib/ideaforge/types";
+} from "@/app/lab/ideas/components/ideaForgeConfig";
+import type { UserPreferences } from "@/lib/ideas/types";
 
 // ── Shared Config Icons ────────────────────────────────────────────────────────
 const ADVANCED_PREF_OPTIONS = {
@@ -94,8 +94,7 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header section is managed by workspace, we focus on the form controls */}
+    <div className="space-y-6">
 
       {/* Domain */}
       <div className="space-y-3">
@@ -113,7 +112,7 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
               }
             }}
             disabled={isGenerating}
-            className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-primary/50 focus:bg-background hover:border-border transition-colors backdrop-blur-sm shadow-sm"
+            className="w-full appearance-none bg-muted/20 border border-border/50 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 hover:bg-muted/40 transition-all font-medium"
           >
             {DOMAIN_OPTIONS.map((option) => (
                <option key={option} value={option}>{option}</option>
@@ -125,7 +124,7 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
 
         {selectedDomain === "custom" && (
           <Input
-            className="w-full bg-background/50 border-border/50 rounded-lg px-4 py-3 text-sm focus:bg-background transition-colors shadow-sm"
+            className="w-full mt-3 bg-muted/20 border-border/50 rounded-lg px-4 py-3 text-sm focus:bg-muted/40 transition-all font-medium"
             value={domain}
             onChange={(event) => {
               onChange({ domain: event.target.value, skills, preferences });
@@ -144,7 +143,7 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
         </label>
         <div className="flex gap-2">
           <Input
-            className="w-full bg-background/50 border-border/50 rounded-lg px-4 py-3 text-sm focus:bg-background transition-colors shadow-sm"
+            className="flex-1 bg-muted/20 border-border/50 rounded-lg px-4 py-3 text-sm focus:bg-muted/40 transition-all font-medium"
             value={skillInput}
             onChange={(event) => setSkillInput(event.target.value)}
             onKeyDown={(event) => {
@@ -209,10 +208,8 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
         )}
       </div>
 
-      <div className="h-px bg-border/50 w-full my-6" />
-
       {/* Advanced Settings */}
-      <div className="space-y-4">
+      <div className="space-y-4 pt-4 border-t border-border/40">
         <button
           type="button"
           className="flex w-full items-center justify-between text-left group"
@@ -237,7 +234,7 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
                    <select
                      value={preferences.timeline || ""}
                      onChange={(e) => updatePreference("timeline", e.target.value as UserPreferences["timeline"])}
-                     className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-primary/50 hover:border-border transition-colors text-foreground/80"
+                     className="w-full appearance-none bg-muted/20 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 hover:bg-muted/40 transition-colors text-foreground"
                      disabled={isGenerating}
                    >
                      {ADVANCED_PREF_OPTIONS.timeline.map((opt) => (
@@ -254,7 +251,7 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
                    <select
                      value={preferences.goal || ""}
                      onChange={(e) => updatePreference("goal", e.target.value as UserPreferences["goal"])}
-                     className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-primary/50 hover:border-border transition-colors text-foreground/80"
+                     className="w-full appearance-none bg-muted/20 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 hover:bg-muted/40 transition-colors text-foreground"
                      disabled={isGenerating}
                    >
                      {ADVANCED_PREF_OPTIONS.goal.map((opt) => (
@@ -271,7 +268,7 @@ export function IdeaForgeForm(props: IdeaForgeFormProps) {
                    <select
                      value={preferences.monetization || ""}
                      onChange={(e) => updatePreference("monetization", e.target.value as UserPreferences["monetization"])}
-                     className="w-full appearance-none bg-background/50 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-primary/50 hover:border-border transition-colors text-foreground/80"
+                     className="w-full appearance-none bg-muted/20 border border-border/50 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 hover:bg-muted/40 transition-colors text-foreground"
                      disabled={isGenerating}
                    >
                      {ADVANCED_PREF_OPTIONS.monetization.map((opt) => (

@@ -5,7 +5,7 @@ import type {
   MarketValidation,
   Signal,
   TechAssessment,
-} from "@/lib/ideaforge/types";
+} from "@/lib/ideas/types";
 
 const JSON_RULES = `Return only valid JSON. Do not include markdown fences, prose, or extra keys.`;
 

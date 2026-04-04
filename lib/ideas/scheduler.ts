@@ -1,8 +1,9 @@
 import connectDB from "@/lib/db";
 import Idea from "@/models/Idea";
 import PipelineRun from "@/models/PipelineRun";
-import { runIdeaForgePipeline } from "@/lib/ideaforge/pipeline";
-import type { FinalIdea, ForgeState, ForgeStreamEvent } from "@/lib/ideaforge/types";
+import { runIdeaForgePipeline } from "@/lib/ideas/pipeline";
+import { isDuplicateIdea } from "@/lib/ideas/dedup";
+import type { FinalIdea, ForgeState, ForgeStreamEvent } from "@/lib/ideas/types";
 
 export const SCHEDULED_DOMAINS = [
   "developer-tools",
@@ -170,20 +171,24 @@ async function processDomain(domain: string) {
       },
     });
 
-    const existingTitles = await Idea.find({ domain }).select({ title: 1 }).lean();
     const finalIdeas = state.finalIdeas || [];
 
     let saved = 0;
-    let skipped = 0;
+    let skippedTitle = 0;
+    let skippedSemantic = 0;
 
     for (const finalIdea of finalIdeas) {
-      const duplicate = existingTitles.some((entry) => {
-        const similarity = tokenSimilarity(entry.title, finalIdea.title);
-        return similarity >= 0.85;
-      });
+      const dupCheck = await isDuplicateIdea(
+        { title: finalIdea.title, problem: finalIdea.problem, solution: finalIdea.solution },
+        domain
+      );
 
-      if (duplicate) {
-        skipped += 1;
+      if (dupCheck.duplicate) {
+        if (dupCheck.reason && dupCheck.reason !== "Fallback") {
+          skippedSemantic += 1;
+        } else {
+          skippedTitle += 1;
+        }
         continue;
       }
 
@@ -217,13 +222,30 @@ async function processDomain(domain: string) {
         techReview: techForIdea || {},
         batchId: run._id.toString(),
         iteration: state.iterationCount || 1,
+        status: "published",
+        signalDate: Date.now(),
       });
 
-      existingTitles.push({ title: finalIdea.title } as { title: string });
       saved += 1;
     }
 
     const durationMs = Date.now() - startedAt;
+
+    const critiques = state.critiques || [];
+    const killed = critiques.filter(c => c.verdict === "KILL").length;
+    const revised = critiques.filter(c => c.verdict === "REVISE").length;
+    const proceeded = critiques.filter(c => c.verdict === "PROCEED").length;
+    const total = critiques.length || 1; 
+
+    const criticStats = {
+      totalIdeasCritiqued: total,
+      killed,
+      revised,
+      proceeded,
+      killRate: Math.round((killed / total) * 100) / 100,
+      iterationsUsed: state.iterationCount || 1,
+      maxIterationsHit: (state.iterationCount || 0) >= (state.maxIterations || 3),
+    };
 
     await PipelineRun.findByIdAndUpdate(run._id, {
       status: "completed",
@@ -231,18 +253,22 @@ async function processDomain(domain: string) {
       ideasSurvived: finalIdeas.length,
       iterationsUsed: state.iterationCount || 1,
       durationMs,
+      criticStats,
       deliberation: {
         events,
         logs: state.deliberationLog,
         domainLabel: toDomainTitle(domain),
-        duplicatesSkipped: skipped,
+        duplicatesSkipped: {
+          titleMatch: skippedTitle,
+          semanticMatch: skippedSemantic,
+        },
       },
     });
 
     return {
       generated: finalIdeas.length,
       saved,
-      skipped,
+      skipped: skippedTitle + skippedSemantic,
       state,
     };
   } catch (error) {

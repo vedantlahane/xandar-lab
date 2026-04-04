@@ -1,4 +1,4 @@
-import { IdeasWorkspace } from "@/app/ideas/components/IdeasWorkspace";
+import { IdeasWorkspace } from "@/app/lab/ideas/components/IdeasWorkspace";
 
 export const metadata = {
   title: "Idea Forge | Xandar Lab"

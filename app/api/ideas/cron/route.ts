@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runScheduledGeneration } from "@/lib/ideaforge/scheduler";
+import { runScheduledGeneration } from "@/lib/ideas/scheduler";
 import connectDB from "@/lib/db";
 import PipelineRun from "@/models/PipelineRun";
 

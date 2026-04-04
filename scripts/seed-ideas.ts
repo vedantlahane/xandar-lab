@@ -40,7 +40,7 @@ function normalizeDomain(raw: string) {
 async function main() {
   loadEnvLocal();
 
-  const { runScheduledGeneration, SCHEDULED_DOMAINS } = await import("../lib/ideaforge/scheduler");
+  const { runScheduledGeneration, SCHEDULED_DOMAINS } = await import("../lib/ideas/scheduler");
 
   const args = process.argv.slice(2);
   const all = args.includes("--all");

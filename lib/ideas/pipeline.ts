@@ -14,9 +14,11 @@ import {
   scoutSystemPrompt,
   synthSystemPrompt,
   techSystemPrompt,
-} from "@/lib/ideaforge/prompts";
-import { invokeJsonModel } from "@/lib/ideaforge/llm";
-import { searchTavily } from "@/lib/ideaforge/tavily";
+} from "@/lib/ideas/prompts";
+import { invokeJsonModel } from "@/lib/ideas/llm";
+import { searchTavily } from "@/lib/ideas/tavily";
+import { getQueriesForDomain } from "@/lib/ideas/domainQueries";
+import { getCachedSignals, setCachedSignals } from "@/lib/ideas/signalCache";
 import type {
   AgentName,
   Critique,
@@ -29,7 +31,7 @@ import type {
   MarketValidation,
   Signal,
   TechAssessment,
-} from "@/lib/ideaforge/types";
+} from "@/lib/ideas/types";
 
 const ForgeStateSchema = z.object({
   domain: z.string(),
@@ -405,13 +407,32 @@ export async function runIdeaForgePipeline(params: {
       });
 
       const log = [...state.deliberationLog];
-      const queries = [
-        `${state.domain} pain points users complain about`,
-        `${state.domain} unmet needs and frustrations`,
-        `${state.domain} workflows people hate`,
-        `${state.domain} alternatives people are searching for`,
-        `${state.domain} rising demand trends 2026`,
-      ];
+
+      const cached = await getCachedSignals(state.domain);
+      if (cached && cached.length > 0) {
+        emit({
+          event: "agent_thinking",
+          data: {
+            agent: "scout",
+            thought: `Using cached signals (${cached.length} signals from recent scan)`,
+          },
+        });
+        emit({
+          event: "agent_complete",
+          data: {
+            agent: "scout",
+            result: { signalCount: cached.length },
+          },
+        });
+        log.push(makeLog("scout", "info", "Scout completed using cache"));
+        return {
+          currentAgent: "scout",
+          signals: cached,
+          deliberationLog: log,
+        };
+      }
+
+      const queries = getQueriesForDomain(state.domain);
 
       const rawFindings: Array<{
         query: string;
@@ -509,6 +530,8 @@ export async function runIdeaForgePipeline(params: {
           llmError: filtered.error,
         })
       );
+
+      await setCachedSignals(state.domain, signals);
 
       return {
         currentAgent: "scout",
@@ -1037,9 +1060,9 @@ export async function runIdeaForgePipeline(params: {
     .addEdge("scout", "ideator")
     .addEdge("ideator", "critic")
     .addConditionalEdges("critic", (state: ForgeGraphState) =>
-      state.shouldIterate ? "ideator" : "market_check"
+      state.shouldIterate ? ["ideator"] : ["market_check", "tech_review"]
     )
-    .addEdge("market_check", "tech_review")
+    .addEdge("market_check", "synthesizer")
     .addEdge("tech_review", "synthesizer")
     .addEdge("synthesizer", END)
     .compile();

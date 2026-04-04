@@ -9,6 +9,15 @@ export interface IPipelineRun {
   iterationsUsed: number;
   durationMs?: number;
   deliberation: Record<string, unknown>;
+  criticStats?: {
+    totalIdeasCritiqued: number;
+    killed: number;
+    revised: number;
+    proceeded: number;
+    killRate: number;
+    iterationsUsed: number;
+    maxIterationsHit: boolean;
+  };
   error?: string;
   createdAt: Date;
 }
@@ -50,6 +59,15 @@ const PipelineRunSchema = new Schema<IPipelineRun>(
     deliberation: {
       type: Schema.Types.Mixed,
       default: {},
+    },
+    criticStats: {
+      totalIdeasCritiqued: { type: Number, default: 0 },
+      killed: { type: Number, default: 0 },
+      revised: { type: Number, default: 0 },
+      proceeded: { type: Number, default: 0 },
+      killRate: { type: Number, default: 0 },
+      iterationsUsed: { type: Number, default: 0 },
+      maxIterationsHit: { type: Boolean, default: false },
     },
     error: {
       type: String,

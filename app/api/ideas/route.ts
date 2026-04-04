@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Idea from "@/models/Idea";
-import type { FilterQuery } from "mongoose";
+import mongoose from "mongoose";
 import type { IIdea } from "@/models/Idea";
 
 export async function GET(request: Request) {
@@ -11,13 +11,14 @@ export async function GET(request: Request) {
     const q = searchParams.get("q");
     const sort = searchParams.get("sort") || "confidence";
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const limit = parseInt(searchParams.get("limit") || "12", 10);
 
     const skip = (page - 1) * limit;
 
     await connectDB();
 
-    const query: FilterQuery<IIdea> = {};
+    const query: Record<string, any> = { status: "published" };
+    const projection: Record<string, any> = { evidence: 0, marketData: 0, techReview: 0 };
 
     if (domain && domain !== "all") {
       query.domain = domain;
@@ -32,24 +33,24 @@ export async function GET(request: Request) {
       sortObj = { upvotes: -1, confidence: -1 };
     } else if (sort === "newest") {
       sortObj = { createdAt: -1 };
-    } else if (q) {
-      // If there's a search text, we might want to sort by text score, but confidence is default usually.
-      // If sort is explicitly meant to be text score:
-      // sortObj = { score: { $meta: "textScore" } } as any;
+    } else if (q && !searchParams.has("sort")) {
+      // If there's a search text without explicit sort, sort by text score
+      sortObj = { score: { $meta: "textScore" } } as any;
+      projection.score = { $meta: "textScore" };
     }
 
     const [ideas, totalCount] = await Promise.all([
-      Idea.find(query)
+      Idea.find(query, projection)
         .sort(sortObj)
         .skip(skip)
         .limit(limit)
-        .select("-evidence -marketData -techReview") // Omit heavy fields for the list view
         .lean(),
       Idea.countDocuments(query),
     ]);
 
     // Fast domain counts
     const domainCounts = await Idea.aggregate([
+      { $match: { status: "published" } },
       { $group: { _id: "$domain", count: { $sum: 1 } } }
     ]);
 
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
       count: d.count
     }));
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ideas,
       pagination: {
         page,
@@ -70,6 +71,8 @@ export async function GET(request: Request) {
         domains: mappedDomains,
       }
     });
+    response.headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+    return response;
 
   } catch (error) {
     return NextResponse.json(

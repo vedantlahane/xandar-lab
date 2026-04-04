@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { FinalIdea } from "@/lib/ideaforge/types";
+import type { FinalIdea } from "@/lib/ideas/types";
 
 type IdeaCardProps = {
   idea: FinalIdea;

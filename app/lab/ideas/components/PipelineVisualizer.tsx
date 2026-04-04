@@ -14,8 +14,8 @@ import {
   Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { AgentName } from "@/lib/ideaforge/types";
-import { STAGES, type StageStatus } from "@/app/ideas/components/ideaForgeConfig";
+import type { AgentName } from "@/lib/ideas/types";
+import { STAGES, type StageStatus } from "@/app/lab/ideas/components/ideaForgeConfig";
 
 const iconMap: Record<AgentName, React.ComponentType<{ className?: string }>> = {
   scout: Search,

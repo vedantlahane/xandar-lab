@@ -29,6 +29,8 @@ export interface IIdea {
   iteration: number;
   upvotes: number;
   bookmarks: number;
+  status: "published" | "draft" | "archived" | "flagged";
+  signalDate: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -131,6 +133,16 @@ const IdeaSchema = new Schema<IIdea>(
       default: 1,
       min: 1,
     },
+    status: {
+      type: String,
+      enum: ["published", "draft", "archived", "flagged"],
+      default: "published",
+      index: true,
+    },
+    signalDate: {
+      type: Date,
+      default: Date.now,
+    },
     upvotes: {
       type: Number,
       default: 0,
@@ -152,7 +164,25 @@ IdeaSchema.index({ domain: 1 });
 IdeaSchema.index({ confidence: -1 });
 IdeaSchema.index({ complexity: 1 });
 IdeaSchema.index({ createdAt: -1 });
-IdeaSchema.index({ title: "text", problem: "text", solution: "text", tags: "text" });
+IdeaSchema.index(
+  {
+    title: "text",
+    problem: "text",
+    solution: "text",
+    targetUser: "text",
+    tags: "text",
+  },
+  {
+    weights: {
+      title: 10,
+      tags: 8,
+      problem: 5,
+      solution: 3,
+      targetUser: 2,
+    },
+    name: "idea_text_search",
+  }
+);
 
 const Idea = models.Idea || model<IIdea>("Idea", IdeaSchema);
 export default Idea;

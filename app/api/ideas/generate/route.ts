@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getValidatedSession } from "@/lib/auth";
-import { runIdeaForgePipeline } from "@/lib/ideaforge/pipeline";
-import { getRateLimitStatus } from "@/lib/ideaforge/rateLimit";
-import type { ForgeInput } from "@/lib/ideaforge/types";
+import { runIdeaForgePipeline } from "@/lib/ideas/pipeline";
+import { getRateLimitStatus } from "@/lib/ideas/rateLimit";
+import type { ForgeInput } from "@/lib/ideas/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
