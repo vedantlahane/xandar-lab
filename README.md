@@ -97,13 +97,14 @@ xandar-lab/
 
 | Layer | Technology |
 |-------|------------|
-| **Framework** | Next.js 16 (App Router) |
-| **Language** | TypeScript |
+| **Framework** | Next.js 16.1.6 (App Router) |
+| **Language** | TypeScript 5 |
 | **Styling** | Tailwind CSS 4 |
-| **Animations** | Framer Motion |
-| **Database** | MongoDB with Mongoose |
-| **Auth** | JWT with jose + bcryptjs |
+| **Animations** | Framer Motion 12+ |
+| **Database** | MongoDB with Mongoose 9 |
+| **Auth** | NextAuth v5 with JWT & bcryptjs |
 | **Icons** | Lucide React |
+| **AI** | LangChain + OpenAI integration |
 
 ---
 
@@ -112,6 +113,7 @@ xandar-lab/
 ### Prerequisites
 - Node.js 18+
 - MongoDB instance (local or Atlas)
+- OpenAI API key (for AI features)
 
 ### Installation
 
@@ -120,12 +122,16 @@ xandar-lab/
 git clone https://github.com/vedantlahane/xandar-lab.git
 cd xandar-lab
 
-# Install dependencies
+# Install dependencies (includes workspaces)
 npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Edit .env.local with your MongoDB URI
+# Edit .env.local with:
+# - MONGODB_URI: Your MongoDB connection string
+# - OPENAI_API_KEY: Your OpenAI API key
+# - NEXTAUTH_SECRET: A secure secret for NextAuth
+# - Other auth provider keys (GitHub, Google, etc.)
 
 # Run development server
 npm run dev
@@ -133,21 +139,28 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
 
----
-
-## 🧭 Roadmap
-
-### ✅ Phase 1 (Complete)
-- [x] Practice module with DSA problems
-- [x] Authentication system
+**Note:** The project uses monorepo workspaces. Extensions (clipper, harvester) are included as separate packages.
+ (NextAuth + JWT)
 - [x] User profiles and sessions
 - [x] Jobs/internship tracking
 - [x] Dark/light theme
+- [x] Chrome extensions (Clipper, Harvester)
 
 ### 🔄 Phase 2 (In Progress)
 - [ ] Attempt lineage & version history
-- [ ] Notes module implementation
+- [ ] Notes module (framework setup)
 - [ ] Docs module with interactive content
+- [ ] Experiments sandbox
+- [ ] Ideas module with AI signal processing
+- [ ] Community feed and discussions
+
+### 📋 Phase 3 (Planned)
+- [ ] Real-time collaboration on shared labs
+- [ ] Cross-module linking (notes ↔ practice ↔ docs ↔ ideas)
+- [ ] Advanced analytics (engagement, learning velocity)
+- [ ] Export/import learning data
+- [ ] Mobile app companion
+- [ ] Interview preparation with lineage trackinge content
 - [ ] Experiments sandbox
 
 ### 📋 Phase 3 (Planned)

@@ -2,12 +2,12 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Maximize2, Minimize2, X, Copy, Check, Star } from "lucide-react";
+import { Copy, Check, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Document } from "../data/documents";
 import { cn } from "@/lib/utils";
 import MLRoadmap from "./roadmap/MLRoadmap";
+import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 
 export function DocumentDrawer({
     document,
@@ -18,14 +18,7 @@ export function DocumentDrawer({
     onClose: () => void;
     position: { x: number; y: number };
 }) {
-    const [isMaximized, setIsMaximized] = useState(false);
     const [copied, setCopied] = useState(false);
-
-    const initialX = position.x > window.innerWidth / 2 ? position.x - 700 : position.x;
-    const initialY = position.y > window.innerHeight / 2 ? position.y - 500 : position.y;
-
-    const safeX = Math.max(20, Math.min(initialX, window.innerWidth - 720));
-    const safeY = Math.max(20, Math.min(initialY, window.innerHeight - 520));
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(document.content);
@@ -44,102 +37,46 @@ export function DocumentDrawer({
         }
     };
 
+    const headerLeft = (
+        <>
+            <span className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+                getCategoryColor(document.category)
+            )}>
+                {document.category}
+            </span>
+            <span className="text-xs text-muted-foreground/70">
+                {document.technology}
+            </span>
+        </>
+    );
+
+    const headerIconTools = (
+        <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleCopy}
+        >
+            {copied ? (
+                <Check className="h-3.5 w-3.5 text-green-500" />
+            ) : (
+                <Copy className="h-3.5 w-3.5" />
+            )}
+        </Button>
+    );
+
     return (
-        <div className="fixed inset-0 z-50">
-            {/* Backdrop */}
-            <div
-                onClick={onClose}
-                className="absolute inset-0 bg-black/20 backdrop-blur-sm pointer-events-auto"
-            />
-
-            {/* Window */}
-            <motion.div
-                layout
-                initial={{
-                    opacity: 0,
-                    scale: 0.5,
-                    x: position.x,
-                    y: position.y
-                }}
-                animate={{
-                    opacity: 1,
-                    scale: 1,
-                    x: isMaximized ? 0 : safeX,
-                    y: isMaximized ? 0 : safeY,
-                    width: isMaximized ? "100%" : "700px",
-                    height: isMaximized ? "100%" : "500px",
-                }}
-                exit={{
-                    opacity: 0,
-                    scale: 0.5,
-                    x: position.x,
-                    y: position.y
-                }}
-                transition={{
-                    type: "spring",
-                    damping: 25,
-                    stiffness: 300,
-                    mass: 0.8
-                }}
-                className={cn(
-                    "pointer-events-auto absolute flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
-                    isMaximized ? "rounded-none" : "rounded-xl"
-                )}
-            >
-                {/* Header */}
-                <div
-                    className="flex items-center justify-between border-b border-border/40 px-4 py-3 bg-muted/30 select-none"
-                    onDoubleClick={() => setIsMaximized(!isMaximized)}
-                >
-                    <div className="flex items-center gap-3">
-                        <span className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-semibold border",
-                            getCategoryColor(document.category)
-                        )}>
-                            {document.category}
-                        </span>
-                        <span className="text-xs text-muted-foreground/70">
-                            {document.technology}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={handleCopy}
-                        >
-                            {copied ? (
-                                <Check className="h-3.5 w-3.5 text-green-500" />
-                            ) : (
-                                <Copy className="h-3.5 w-3.5" />
-                            )}
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => setIsMaximized(!isMaximized)}
-                        >
-                            {isMaximized ? (
-                                <Minimize2 className="h-3.5 w-3.5" />
-                            ) : (
-                                <Maximize2 className="h-3.5 w-3.5" />
-                            )}
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
-                            onClick={onClose}
-                        >
-                            <X className="h-3.5 w-3.5" />
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
+        <BaseDrawer
+            onClose={onClose}
+            position={position}
+            defaultWidth="700px"
+            defaultHeight="500px"
+            headerLeft={headerLeft}
+            headerIconTools={headerIconTools}
+            backdropClass="bg-black/20 backdrop-blur-sm"
+        >
+            <div className="p-6">
                     <div className="space-y-6">
                         <div className="space-y-3">
                             <h2 className="text-2xl font-bold tracking-tight">{document.title}</h2>
@@ -173,8 +110,7 @@ export function DocumentDrawer({
                             <span>Updated: {document.updatedAt}</span>
                         </div>
                     </div>
-                </div>
-            </motion.div>
-        </div>
+            </div>
+        </BaseDrawer>
     );
 }

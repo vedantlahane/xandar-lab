@@ -59,93 +59,110 @@ We call it a "lab" intentionally:
 
 | Module | Status | Description |
 |--------|--------|-------------|
-| **Authentication** | ✅ Complete | Full auth flow with sessions |
-| **Practice** | ✅ Complete | DSA problem tracking |
-| **Jobs** | ✅ Complete | Job/internship tracking |
-| **Profile** | ✅ Complete | User settings & stats |
-| **Docs** | 📐 Scaffolded | UI ready, content pending |
-| **Notes** | 📐 Scaffolded | UI ready, features pending |
-| **Experiments** | 📐 Scaffolded | UI ready, sandbox pending |
-| **Hackathons** | 📐 Scaffolded | UI ready, features pending |
+| **Authentication** | ✅ Complete | JWT + NextAuth v5, multi-device sessions |
+| **Practice** | ✅ Complete | DSA problem tracking with attempts |
+| **Jobs** | ✅ Complete | Job/internship tracking & notes |
+| **Profile** | ✅ Complete | User settings, stats, avatar customization |
+| **Ideas** | 🔄 Active | LLM-powered idea generator with signals |
+| **Community** | 🔄 Active | Feed, posts, sharing, engagement |
+| **Docs** | 🔄 Active | Explanations with feedback system |
+| **Interviews** | 🔄 Active | AI-powered interview practice |
+| **Notes** | 📐 In Dev | Markdown notes with tagging |
+| **Experiments** | 📐 In Dev | Code sandbox structure |
+| **Hackathons** | 📐 In Dev | Hackathon tracking |
+| **Extensions** | ✅ Complete | Chrome: Clipper, Harvester |
+
+### Full Feature Set
+
+Xandar-Lab is more comprehensive than a typical learning platform:
+
+**Established Systems (>80% complete):**
+- Authentication with NextAuth v5 + JWT + multi-device sessions
+- Practice module with attempt history and tracking
+- Job application tracking & notes
+- User profiles with stats & avatar customization
+- Community feed with posts & content sharing
+- Chrome extensions for content capture (Clipper, Harvester)
+
+**In Active Development (50-80% complete):**
+- **Ideas Module**: LLM-powered idea generation with domain-specific signals
+  - Web search integration (Tavily)
+  - Market research analysis
+  - Tech stack evaluation
+  - Confidence scoring & batch processing
+- **Interview Practice**: AI-powered interview simulation
+  - Multiple interview styles (guided, realistic, pressure)
+  - Real-time feedback with detailed scoring
+  - Problem recommendations based on performance
+- **Docs/Explanations**: Problem explanation system
+  - Feedback collection (clarity, completeness, conciseness)
+  - Linked to practice problems
+  - Editable explanations with versioning
+- **Community Features**: Sharing & collaboration
+  - Posts with polymorphic content (interviews, problems, notes, hackathons)
+  - Comments & discussion threads
+  - Vote/engagement tracking
+
+**In Development (UI scaffolded, features pending):**
+- Notes module (markdown-based with tagging)
+- Experiments (code sandbox & playgrounds)
+- Hackathons (event tracking & project portfolio)
+
+**Infrastructure:**
+- LangChain + OpenAI LLM pipelines for idea synthesis
+- Adaptive difficulty tracking & recommendations
+- Activity logging system for analytics
+- Monorepo setup (main app + Chrome extensions)
 
 ### Authentication System
 
 **Implementation Details:**
-- JWT-based authentication using `jose` library
+- NextAuth v5 with JWT using `jose` library
 - Password hashing with `bcryptjs`
 - Session management with device tracking
-- Cookies for token storage (`cookies-next`)
+- Cookie-based token persistence
 
 **Features:**
 - User registration with username/password
-- Secure login with JWT tokens (7-day expiry)
-- Multi-device session tracking
-- Session termination (logout individual or all)
-- Password change functionality
-- Account deletion
-
-**Components:**
-- `AuthContext.tsx` — Global auth state provider
-- `AuthForm.tsx` — Login/signup form
-- `LoginModal.tsx` — Modal wrapper for auth
-- `ProfileDropdown.tsx` — User menu in header
-- `SessionsManager.tsx` — Device session management
-- `AvatarCustomizer.tsx` — Avatar color picker
+- Secure login w/ JWT tokens (7-day expiry)
+- Multi-device session tracking & management
+- Individual or bulk session termination
+- Password change with validation
+- Account deletion with data cleanup
 
 ### Practice Module
 
-**Purpose:** Master DSA concepts through curated problem sets while tracking learning evolution.
+**Purpose:** Curated DSA problem tracking with learning evolution preserved through attempt history.
 
-**Current Features:**
-- Curated DSA problem sheet organized by topics
-- Interactive problem canvas
-- Problem drawer with details and links
-- Saved problems tracking
-- Completed problems tracking
+**Features:**
+- Topic-organized problem sheets
+- Problem canvas with grid view
+- Detailed drawer with problem info & links
+- Attempt-based learning model (Attempting → Resolved)
+- Saved vs completed problem tracking
+- Attempt history & lineage
 
 **Components:**
 - `TopicSidebar` — Topic navigation
-- `ProblemCanvas` — Main problem grid
-- `ProblemDrawer` — Problem details panel
-
-**Data Structure:**
-```typescript
-interface DSAProblem {
-  id: string;
-  title: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  link: string;
-  topic: string;
-}
-```
+- `ProblemCanvas` — Problem grid
+- `ProblemDrawer` — Details & attempt history
+- `AttemptHistory` — Version lineage
 
 ### Jobs Module
 
-**Purpose:** Track job and internship applications in one place.
+**Purpose:** Centralized job & internship application tracking.
 
-**Current Features:**
+**Features:**
 - Curated job listings by category
-- Job details drawer
+- Application status tracking
 - Save jobs for later
-- Track application status
 - Personal notes per job
+- Job details drawer with links
 
 **Components:**
-- `JobCanvas` — Job listings grid
-- `JobDrawer` — Job details panel
-
-**Data Structure:**
-```typescript
-interface Job {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  type: 'Full-time' | 'Internship' | 'Contract';
-  link: string;
-  description: string;
-}
-```
+- `JobsCanvas` — Jobs grid
+- `JobDrawer` — Details & notes panel
+- `StatusTracker` — Application progress
 
 ### Profile System
 
@@ -154,13 +171,13 @@ interface Job {
 **Features:**
 - Profile information editing (username, email, bio)
 - Avatar customization with gradient colors
-- Password management
-- Session management
-- Account deletion
-- Stats display (saved/completed problems)
+- Password management with validation
+- Session management across devices
+- Account deletion with data cleanup
+- Stats display (saved/completed problems, interview scores)
 
 **Tabs:**
-- Profile — Basic info and avatar
+- Profile — Basic info and avatar customization
 - Security — Password change
 - Sessions — Device management
 - Danger Zone — Account deletion
@@ -175,8 +192,8 @@ interface Job {
 ┌─────────────────────────────────────────────────────────┐
 │                      Frontend                           │
 ├─────────────────────────────────────────────────────────┤
-│  Next.js 16 (App Router) + React 19 + TypeScript       │
-│  Tailwind CSS 4 + Framer Motion                        │
+│  Next.js 16.1.6 (App Router) + React 19.2 + TS 5      │
+│  Tailwind CSS 4 + Framer Motion 12 + Radix UI         │
 └─────────────────────────────────────────────────────────┘
                            │
                            ▼
@@ -184,14 +201,14 @@ interface Job {
 │                    API Layer                            │
 ├─────────────────────────────────────────────────────────┤
 │  Next.js API Routes (app/api/*)                        │
-│  JWT Auth with jose + bcryptjs                         │
+│  NextAuth v5 + JWT with jose + bcryptjs               │
 └─────────────────────────────────────────────────────────┘
                            │
                            ▼
 ┌─────────────────────────────────────────────────────────┐
 │                     Database                            │
 ├─────────────────────────────────────────────────────────┤
-│  MongoDB with Mongoose ODM                              │
+│  MongoDB with Mongoose 9 + LLM/Signal Processing       │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -201,61 +218,65 @@ interface Job {
 xandar-lab/
 ├── app/                          # Next.js App Router
 │   ├── api/                      # Backend API routes
-│   │   ├── auth/                 # Authentication
-│   │   │   ├── login/           # POST - Login
-│   │   │   ├── logout/          # POST - Logout
-│   │   │   ├── profile/         # GET/PUT - Profile
-│   │   │   ├── password/        # PUT - Change password
-│   │   │   ├── account/         # DELETE - Delete account
-│   │   │   ├── session/         # PUT - Update session
-│   │   │   └── sessions/        # GET/DELETE - Sessions
-│   │   ├── jobs/                # Job status tracking
-│   │   ├── attempts/            # Practice attempts
-│   │   ├── problems/            # Problem operations
-│   │   ├── stats/               # User statistics
-│   │   └── seed/                # Database seeding
+│   │   ├── auth/                 # Authentication endpoints
+│   │   ├── attempts/             # Practice attempts & history
+│   │   ├── jobs/                 # Job status & tracking
+│   │   ├── problems/             # Problem operations
+│   │   ├── stats/                # User statistics
+│   │   ├── ideas/                # Ideas module
+│   │   ├── community/            # Community feed
+│   │   ├── explanations/         # Explanation API
+│   │   ├── interviews/           # Interview practice
+│   │   ├── analytics/            # Activity analytics
+│   │   ├── seed/                 # Database seeding
+│   │   └── [other-modules]/      # Portals, suggestions, ingest
 │   │
 │   ├── lab/                      # Main lab workspace
-│   │   ├── layout.tsx           # Lab layout wrapper
-│   │   ├── page.tsx             # Lab dashboard
-│   │   ├── practice/            # DSA Practice
-│   │   │   ├── page.tsx
-│   │   │   ├── components/
-│   │   │   ├── data/
-│   │   │   └── hooks/
-│   │   ├── jobs/                # Job tracking
-│   │   │   ├── page.tsx
-│   │   │   ├── components/
-│   │   │   └── data/
-│   │   ├── profile/             # User profile
-│   │   ├── docs/                # Documentation
-│   │   ├── notes/               # Notes
-│   │   ├── experiments/         # Experiments
-│   │   └── hackathons/          # Hackathons
+│   │   ├── practice/             # 📊 DSA practice
+│   │   ├── jobs/                 # 💼 Job tracking
+│   │   ├── profile/              # 👤 User profile
+│   │   ├── ideas/                # 💡 Ideas with forge
+│   │   ├── community/            # 👥 Feed & sharing
+│   │   ├── docs/                 # 📘 Explanations
+│   │   ├── interviews/           # 🎙️ Interview prep
+│   │   ├── notes/                # 📝 Personal notes
+│   │   ├── experiments/          # 🧪 Code sandbox
+│   │   └── hackathons/           # 🏆 Hackathons
 │   │
-│   ├── page.tsx                  # Landing page
-│   ├── layout.tsx                # Root layout
-│   └── globals.css               # Global styles
+│   ├── community/                # Public community page
+│   └── page.tsx                  # Landing page
 │
 ├── components/                   # Shared components
-│   ├── auth/                    # Auth components
-│   └── ui/                      # UI primitives
+│   ├── auth/                    # Authentication UI
+│   ├── theme/                   # Theme switching
+│   └── ui/                      # Radix-based primitives
 │
 ├── models/                       # MongoDB schemas
-│   ├── User.ts                  # User model
-│   ├── Attempt.ts               # Attempt model
-│   ├── Problem.ts               # Problem model
-│   └── JobNote.ts               # Job notes model
+│   ├── User.ts                  # User profile
+│   ├── Attempt.ts               # Problem attempts
+│   ├── Idea.ts                  # Ideas with signals
+│   ├── Explanation.ts           # Explanation feedback
+│   ├── Post.ts                  # Community posts
+│   ├── InterviewSession.ts      # Interview metrics
+│   ├── Comment.ts               # Discussions
+│   ├── ActivityLog.ts           # User activity
+│   └── [other models]/          # PipelineRun, SignalCache, etc.
 │
 ├── lib/                          # Utilities
 │   ├── db.ts                    # MongoDB connection
+│   ├── auth.ts                  # Auth helpers
+│   ├── ideas/                   # Idea processing
+│   │   ├── llm.ts              # LLM integration
+│   │   ├── pipeline.ts         # Signal pipeline
+│   │   ├── tavily.ts           # Web search
+│   │   └── [signal modules]/   # dedup, domainQueries, etc.
 │   └── utils.ts                 # Helper functions
 │
-├── data/                         # Static data
-│   ├── Nodes.ts                 # City map nodes
-│   └── Edges.ts                 # City map edges
+├── extensions/                   # Chrome extensions (monorepo)
+│   ├── clipper/                 # Web clipper
+│   └── harvester/               # Content harvester
 │
-└── middleware.ts                 # Auth middleware
+└── types/                        # TypeScript definitions
 ```
 
 ---
@@ -346,39 +367,44 @@ interface IAttempt {
 
 ## 🔮 Future Vision
 
-### Near-Term Goals (Phase 2)
+### Near-Term Goals (Phase 2 — In Progress)
 
-1. **Attempt Versioning**
-   - Multiple attempts per problem
-   - Version history with diffs
-   - Lineage visualization
+1. **Ideas Module Maturation**
+   - Refine signal scoring algorithm
+   - Multi-source validation
+   - User feedback loop for idea ranking
+   - Idea versioning & iteration tracking
 
-2. **Notes Module**
-   - Markdown-based notes
-   - Link notes to problems
-   - Tag-based organization
+2. **Interview Module Enhancement**
+   - Expand interview question bank
+   - Improve scoring algorithm
+   - Add behavioral interview prep
+   - Track interview performance trends
 
-3. **Docs Module**
-   - Interactive documentation
-   - Code examples with execution
-   - Concept explanations
+3. **Notes & Knowledge Graph**
+   - Markdown-based note-taking
+   - Bi-directional linking
+   - Cross-module note references
+   - Full-text search across notes
 
 ### Medium-Term Goals (Phase 3)
 
-1. **Shared Labs**
-   - Create shared workspaces
-   - Invite collaborators
-   - Permission management
+1. **Advanced Analytics**
+   - Learning velocity tracking
+   - Problem mastery scoring
+   - Time-to-competency predictions
+   - Personalized recommendation engine
 
-2. **Cross-Module Linking**
-   - Link notes ↔ practice ↔ docs
-   - Unified search across modules
-   - Knowledge graph visualization
+2. **Collaborative Features**
+   - Shared study groups
+   - Group problem-solving sessions
+   - Peer code review
+   - Discussion threads
 
-3. **Export/Import**
-   - Export learning data
-   - Import from other platforms
-   - Backup and restore
+3. **Data Portability**
+   - Export learning history
+   - Import problems from external sources
+   - Backup/restore functionality
 
 ### Long-Term Vision
 

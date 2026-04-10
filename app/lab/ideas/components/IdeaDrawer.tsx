@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Maximize2, Minimize2, X, ThumbsUp, Copy, ShieldAlert, Sparkles, Target, ChevronDown, ChevronUp, ExternalLink, Rocket } from "lucide-react";
+import { Copy, ShieldAlert, Sparkles, Target, ChevronDown, ChevronUp, ExternalLink, Rocket, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 import type { IIdea } from "@/models/Idea";
 
 export function IdeaDrawer({
@@ -14,13 +14,9 @@ export function IdeaDrawer({
     idea: IIdea;
     onClose: () => void;
 }) {
-    const [isMaximized, setIsMaximized] = useState(false);
     const [hasVoted, setHasVoted] = useState(false);
     const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
     const [openSections, setOpenSections] = useState({ evidence: false });
-
-    // Initial explicit math just centers it natively to mimic other Drawers.
-    const initialPos = { x: typeof window !== "undefined" ? window.innerWidth / 2 - 350 : 100, y: typeof window !== "undefined" ? window.innerHeight / 2 - 275 : 100 };
 
     const getTone = (conf: number) => {
         if (conf >= 80) return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
@@ -53,59 +49,25 @@ export function IdeaDrawer({
         }
     };
 
+    const headerLeft = (
+        <>
+            <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold border", getTone(idea.confidence))}>
+                {idea.confidence}% Confidence
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
+                {idea.domain.replace(/-/g, " ")}
+            </span>
+        </>
+    );
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                onClick={onClose}
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto"
-            />
-
-            {/* Window */}
-            <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{
-                    opacity: 1,
-                    scale: 1,
-                    y: 0,
-                    width: isMaximized ? "100%" : "800px",
-                    height: isMaximized ? "100%" : "80vh",
-                    maxWidth: "100vw",
-                    maxHeight: "100vh"
-                }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className={cn(
-                    "pointer-events-auto relative flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
-                    isMaximized ? "rounded-none" : "rounded-2xl"
-                )}
-            >
-                {/* Header */}
-                <div
-                    className="flex items-center justify-between border-b border-border/40 px-4 py-3 bg-muted/30 select-none"
-                    onDoubleClick={() => setIsMaximized(!isMaximized)}
-                >
-                    <div className="flex items-center gap-3">
-                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold border", getTone(idea.confidence))}>
-                            {idea.confidence}% Confidence
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-                            {idea.domain.replace(/-/g, " ")}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMaximized(!isMaximized)}>
-                            {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive" onClick={onClose}>
-                            <X className="h-3.5 w-3.5" />
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 lg:p-8 thin-scrollbar">
+        <BaseDrawer
+            onClose={onClose}
+            defaultWidth="800px"
+            defaultHeight="80vh"
+            headerLeft={headerLeft}
+        >
+            <div className="p-6 lg:p-8">
                     <div className="space-y-8 max-w-4xl mx-auto">
                         
                         <div className="space-y-4">
@@ -195,8 +157,7 @@ export function IdeaDrawer({
                         </div>
 
                     </div>
-                </div>
-            </motion.div>
-        </div>
+            </div>
+        </BaseDrawer>
     );
 }

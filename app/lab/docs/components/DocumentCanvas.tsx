@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
+import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
 
 interface DocumentCanvasProps {
     activeDocId: string | null;
@@ -115,18 +116,8 @@ export default function DocumentCanvas({
         return item ? item.dotColor.replace("bg-", "text-") : "text-muted-foreground";
     };
 
-    return (
-        <div className="relative h-full">
-            {/* Top Fade */}
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-background to-transparent z-10" />
-
-            <div id="docs-scroll-container" className="h-full overflow-y-auto thin-scrollbar overscroll-contain">
-                <div className="max-w-7xl mx-auto px-8 md:px-12">
-                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-10 min-h-full">
-
-                        {/* ── Left column: Filters — sticky, vertically centered ── */}
-                        <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
-                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-10rem)]">
+    const sidebarContent = (
+        <>
 
                                 {/* Stats card */}
                                 <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
@@ -256,11 +247,11 @@ export default function DocumentCanvas({
                                         })}
                                     </div>
                                 </div>
-                            </div>
-                        </aside>
+        </>
+    );
 
-                        {/* ── Right column: Search + Documents ── */}
-                        <div className="space-y-4 pb-48 pt-8">
+    return (
+        <BaseCanvas scrollId="docs-scroll-container" sidebarContent={sidebarContent}>
                             {/* Sticky search bar */}
                             <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
                                 <SearchBar
@@ -349,14 +340,6 @@ export default function DocumentCanvas({
                                     </section>
                                 ))
                             )}
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            {/* Bottom Fade */}
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent z-10" />
-        </div>
+        </BaseCanvas>
     );
 }

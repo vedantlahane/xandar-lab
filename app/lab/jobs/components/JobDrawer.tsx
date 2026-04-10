@@ -4,9 +4,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Maximize2,
-    Minimize2,
-    X,
     ExternalLink,
     Building2,
     MapPin,
@@ -25,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Job, STATUS_CONFIG, ApplicationStatus } from "../data/jobs";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthContext";
+import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 
 interface ApplicationNote {
     _id: string;
@@ -42,7 +40,6 @@ export function JobDrawer({
     onClose: () => void;
     position: { x: number; y: number };
 }) {
-    const [isMaximized, setIsMaximized] = useState(false);
     const [activeTab, setActiveTab] = useState<"details" | "tracking">("details");
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const { user, updateUser } = useAuth();
@@ -55,14 +52,6 @@ export function JobDrawer({
 
     // Current status
     const currentStatus = (user?.jobApplications?.[job.id] || 'bookmarked') as ApplicationStatus;
-
-    // Calculate initial position
-    const initialX =
-        position.x > window.innerWidth / 2 ? position.x - 700 : position.x;
-    const initialY =
-        position.y > window.innerHeight / 2 ? position.y - 600 : position.y;
-    const safeX = Math.max(20, Math.min(initialX, window.innerWidth - 720));
-    const safeY = Math.max(20, Math.min(initialY, window.innerHeight - 620));
 
     // Fetch notes
     useEffect(() => {
@@ -165,86 +154,40 @@ export function JobDrawer({
 
     const statusConfig = STATUS_CONFIG[currentStatus];
 
+    const headerLeft = (
+        <>
+            <span className="text-xs font-medium text-muted-foreground/70">
+                {job.platform}
+            </span>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex gap-1">
+                {["details", "tracking"].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab as "details" | "tracking")}
+                        className={cn(
+                            "px-2.5 py-1 text-xs font-medium rounded-md transition-colors",
+                            activeTab === tab
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                        )}
+                    >
+                        {tab === "details" ? "Details" : "Tracking"}
+                    </button>
+                ))}
+            </div>
+        </>
+    );
+
     return (
-        <div className="fixed inset-0 z-50">
-            {/* Backdrop */}
-            <div
-                onClick={onClose}
-                className="absolute inset-0 bg-transparent pointer-events-auto"
-            />
-
-            {/* Window */}
-            <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.5, x: position.x, y: position.y }}
-                animate={{
-                    opacity: 1,
-                    scale: 1,
-                    x: isMaximized ? 0 : safeX,
-                    y: isMaximized ? 0 : safeY,
-                    width: isMaximized ? "100%" : "700px",
-                    height: isMaximized ? "100%" : "600px",
-                }}
-                exit={{ opacity: 0, scale: 0.5, x: position.x, y: position.y }}
-                transition={{ type: "spring", damping: 25, stiffness: 300, mass: 0.8 }}
-                className={cn(
-                    "pointer-events-auto absolute flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
-                    isMaximized ? "rounded-none" : "rounded-xl",
-                )}
-            >
-                {/* Header */}
-                <div
-                    className="flex items-center justify-between border-b border-border/40 px-4 py-3 bg-muted/30 select-none"
-                    onDoubleClick={() => setIsMaximized(!isMaximized)}
-                >
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-muted-foreground/70">
-                            {job.platform}
-                        </span>
-                        <div className="h-4 w-px bg-border" />
-                        <div className="flex gap-1">
-                            {["details", "tracking"].map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab as "details" | "tracking")}
-                                    className={cn(
-                                        "px-2.5 py-1 text-xs font-medium rounded-md transition-colors",
-                                        activeTab === tab
-                                            ? "bg-primary text-primary-foreground"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                                    )}
-                                >
-                                    {tab === "details" ? "Details" : "Tracking"}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => setIsMaximized(!isMaximized)}
-                        >
-                            {isMaximized ? (
-                                <Minimize2 className="h-3.5 w-3.5" />
-                            ) : (
-                                <Maximize2 className="h-3.5 w-3.5" />
-                            )}
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
-                            onClick={onClose}
-                        >
-                            <X className="h-3.5 w-3.5" />
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto">
+        <BaseDrawer
+            onClose={onClose}
+            position={position}
+            defaultWidth="700px"
+            defaultHeight="600px"
+            headerLeft={headerLeft}
+            backdropClass="bg-transparent"
+        >
                     <AnimatePresence mode="wait">
                         {activeTab === "details" ? (
                             <motion.div
@@ -510,10 +453,8 @@ export function JobDrawer({
                                 </div>
                             </motion.div>
                         )}
-                    </AnimatePresence>
-                </div>
-            </motion.div>
-        </div>
+            </AnimatePresence>
+        </BaseDrawer>
     );
 }
 
