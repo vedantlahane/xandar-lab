@@ -161,16 +161,57 @@ xandar-lab/
 
 ---
 
+## 🧩 Module Breakdown
+
+Xandar-Lab is composed of several independent but interconnected modules:
+
+### 1. Practice & Interviews (`/lab/practice`)
+- **Attempts Tracking:** Instead of treating problems as binary "solved/unsolved", users record incremental attempts, tracking code versions, time taken, and complexity reflections.
+- **AI Interview Simulator:** An LLM-powered chatbot interface that references the user's specific attempt to conduct a mock interview, asking edge-case questions and demanding complexity analysis.
+- **Adaptive Difficulty:** System logic that suggests optimal subsequent problems based on historical performance gaps.
+
+### 2. Jobs & Portals (`/lab/jobs`)
+- **Application Pipeline:** Tracking job application lifecycles from 'Scouted' to 'Interviewing' and 'Resolved'.
+- **Company Portals:** Managing standard application portals (e.g., Workday, Greenhouse) alongside localized credentials.
+- **Contextual Notes:** Note-taking strictly tied to specific roles and companies to keep interview prep highly organized.
+
+### 3. Ideas Forge (`/lab/ideas`)
+- **LLM Pipelines:** Scheduled content generation and brainstorming using multi-step pipelines (LLM prompts, Tavily search aggregation, market signals).
+- **De-duplication & Signal Cache:** Automatically identifies similar concepts and caches domain signals to prevent redundant generation.
+- **Confidence Rating:** Evaluates the viability of an idea based on competitive analysis and market research.
+
+### 4. Community & Feed (`/lab/community`)
+- **Activity Sharing:** Polymorphic posts acting as a feed for sharing an 'Attempt', an 'Idea', or generic 'Notes'.
+- **Contextual Discussions:** Threaded comment models allowing targeted feedback on specific problem attempts rather than general chatter.
+
+### 5. Notes, Docs & Sandbox (`/lab/notes`, `/lab/docs`, `/lab/experiments`)
+- **Notes:** Flexible Markdown knowledge base structured via tags and groups.
+- **Experiments:** Isolated code sandboxes designed to test small learning hypotheses (e.g., prototype a specific hook or algorithm).
+- **Hackathons:** Timeline tracking and project management for weekend builds.
+
+### 6. Browser Integration (`/extensions`)
+- **Clipper:** Chrome extension to instantly save problems, documentation fragments, or inspirations into the lab.
+- **Harvester:** Specialized job scraping extension for importing external listings directly into the workspace's job pipeline.
+
+---
+
 ## 📊 Data Models
 
-Xandar-Lab utilizes rich relationships in MongoDB. Key collections:
+Xandar-Lab utilizes rich relationships in MongoDB. Key collections and their primary responsibilities include:
 
-- **User**: Profile info, avatars, tracked items.
-- **Attempt**: History states (ttempting, esolved) per problem.
-- **Idea**: Stores content, pipeline signals, ratings, and dedup info.
-- **InterviewSession**: Stores active state, transcripts, and AI feedback.
-- **Post & Comment**: Enables polymorphic content feeds.
-- **ActivityLog**: Logs diverse user progression milestones.
+- **User**: Core identity management, tracking authentication state, avatar customization details, and references to bookmarked modules.
+- **Problem & Attempt**: 
+  - `Problem`: Master list of DSA problems.
+  - `Attempt`: Iterative states (e.g., `attempting`, `resolved`, `optimal`) of a user trying to solve a problem. Contains code snippets, time spent, and space/time complexity reflections.
+- **Idea & PipelineRun**:
+  - `Idea`: Content payload containing descriptions, AI-generated structured analysis, upvote/downvote logs (`VoteLog`), and deduplication links.
+  - `PipelineRun`: Audit trails of LLM executions, caching Tavily search signals and prompt metadata.
+- **InterviewSession**: Stores active states of AI-driven technical interviews, holding chronological transcripts and parsed AI evaluations/scorecards.
+- **Jobs & Portals**:
+  - `ClippedJob`: Jobs harvested directly from browser extensions with deep-linked metadata.
+  - `JobNote`: Linked notes specifically scoped to job applications.
+- **Community (Post, Comment, ActivityLog)**: 
+  - Enables polymorphic feeds. Operations emit structured `ActivityLog` documents which roll up into timeline `Post`s.
 
 ---
 
