@@ -4,10 +4,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Maximize2,
-  Minimize2,
-  X,
   Plus,
   Check,
   Clock,
@@ -25,10 +24,12 @@ import {
   AlertTriangle,
   HelpCircle,
   XCircle,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DSAProblem } from "../data/sheet";
 import { cn } from "@/lib/utils";
+import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -81,7 +82,6 @@ export function ProblemDrawer({
   onClose: () => void;
   position: { x: number; y: number };
 }) {
-  const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "details" | "attempts" | "explain"
   >("details");
@@ -198,14 +198,6 @@ export function ProblemDrawer({
   const [submittingComment, setSubmittingComment] = useState<
     Record<string, boolean>
   >({});
-
-  // Calculate initial position
-  const initialX =
-    position.x > window.innerWidth / 2 ? position.x - 700 : position.x;
-  const initialY =
-    position.y > window.innerHeight / 2 ? position.y - 600 : position.y;
-  const safeX = Math.max(20, Math.min(initialX, window.innerWidth - 720));
-  const safeY = Math.max(20, Math.min(initialY, window.innerHeight - 620));
 
   // Fetch attempts
   useEffect(() => {
@@ -469,136 +461,85 @@ ${prob.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className="absolute inset-0 bg-transparent pointer-events-auto"
-      />
-
-      {/* Window */}
-      <motion.div
-        layout
-        initial={{ opacity: 0, scale: 0.5, x: position.x, y: position.y }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          x: isMaximized ? 0 : safeX,
-          y: isMaximized ? 0 : safeY,
-          width: isMaximized ? "100%" : "700px",
-          height: isMaximized ? "100%" : "600px",
-        }}
-        exit={{ opacity: 0, scale: 0.5, x: position.x, y: position.y }}
-        transition={{
-          type: "spring",
-          damping: 25,
-          stiffness: 300,
-          mass: 0.8,
-        }}
-        className={cn(
-          "pointer-events-auto absolute flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
-          isMaximized ? "rounded-none" : "rounded-xl",
-        )}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between border-b border-border/40 px-4 py-3 bg-muted/30 select-none"
-          onDoubleClick={() => setIsMaximized(!isMaximized)}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-muted-foreground/70">
-              {problem.platform}
-            </span>
-            <div className="h-4 w-px bg-border" />
-            <div className="flex gap-1">
-              {["details", "attempts", "explain"].map((tab) => {
-                if (
-                  tab === "explain" &&
-                  !attempts.some(
-                    (a) =>
-                      a.status === "resolved" ||
-                      a.status === "solved_with_help",
-                  )
-                ) {
-                  return null;
-                }
-                return (
-                  <button
-                    key={tab}
-                    onClick={() =>
-                      setActiveTab(
-                        tab as "details" | "attempts" | "explain",
-                      )
-                    }
-                    className={cn(
-                      "px-2.5 py-1 text-xs font-medium rounded-md transition-colors capitalize",
-                      activeTab === tab
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                    )}
-                  >
-                    {tab === "details"
-                      ? "Details"
-                      : tab === "attempts"
-                        ? `Attempts (${attempts.length})`
-                        : "Explain"}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setIsMaximized(!isMaximized)}
-            >
-              {isMaximized ? (
-                <Minimize2 className="h-3.5 w-3.5" />
-              ) : (
-                <Maximize2 className="h-3.5 w-3.5" />
+  const headerLeft = (
+    <div className="flex items-center gap-3">
+      <span className="text-xs font-medium text-muted-foreground/70">
+        {problem.platform}
+      </span>
+      <div className="h-4 w-px bg-border" />
+      <div className="flex gap-1">
+        {["details", "attempts", "explain"].map((tab) => {
+          if (
+            tab === "explain" &&
+            !attempts.some(
+              (a) =>
+                a.status === "resolved" ||
+                a.status === "solved_with_help",
+            )
+          ) {
+            return null;
+          }
+          return (
+            <button
+              key={tab}
+              onClick={() =>
+                setActiveTab(
+                  tab as "details" | "attempts" | "explain",
+                )
+              }
+              className={cn(
+                "px-2.5 py-1 text-xs font-medium rounded-md transition-colors capitalize",
+                activeTab === tab
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
-              onClick={onClose}
             >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
+              {tab === "details"
+                ? "Details"
+                : tab === "attempts"
+                  ? `Attempts (${attempts.length})`
+                  : "Explain"}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            {activeTab === "details" ? (
-              <motion.div
-                key="details"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.15 }}
-                className="p-6 space-y-6"
-              >
-                <div className="space-y-3">
-                  <h2 className="text-2xl font-bold tracking-tight">
-                    {problem.title}
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    <DrawerBadge>{problem.platform}</DrawerBadge>
-                    {problem.tags?.map((tag) => (
-                      <DrawerBadge key={tag} subtle>
-                        {tag}
-                      </DrawerBadge>
-                    ))}
-                  </div>
+  return (
+    <BaseDrawer
+      onClose={onClose}
+      position={position}
+      defaultWidth="700px"
+      defaultHeight="600px"
+      headerLeft={headerLeft}
+    >
+      <div className="flex-1 overflow-y-auto">
+        <AnimatePresence mode="wait">
+          {activeTab === "details" ? (
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+              className="p-6 space-y-6"
+            >
+              <div className="space-y-3">
+                <h2 className="text-2xl font-bold tracking-tight">
+                  {problem.title}
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  <DrawerBadge>{problem.platform}</DrawerBadge>
+                  {problem.tags?.map((tag) => (
+                    <DrawerBadge key={tag} subtle>
+                      {tag}
+                    </DrawerBadge>
+                  ))}
                 </div>
+              </div>
 
-                <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+              <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
                   <h3 className="text-sm font-medium mb-2">Description</h3>
                   <p className="text-sm text-muted-foreground">
                     {problem.description}
@@ -1506,7 +1447,7 @@ ${prob.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </BaseDrawer>
   );
 }
 

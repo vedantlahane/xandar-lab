@@ -16,6 +16,7 @@ import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { useAuth } from "@/components/auth/AuthContext";
 import JobSidebar from "./JobSidebar";
 import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
+import { LabItemRow } from "@/app/lab/components/shared/LabItemRow";
 
 interface JobCanvasProps {
     activeJobId: string | null;
@@ -363,8 +364,7 @@ export default function JobCanvas({
                                         data-category
                                         data-category-title={category.categoryName}
                                         className="space-y-5"
-                                    >
-                                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
+                                    <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{category.categoryName}</h2>
                                             <p className="text-sm text-muted-foreground">
                                                 {category.jobs.length} {category.jobs.length === 1 ? 'opportunity' : 'opportunities'}
@@ -376,66 +376,53 @@ export default function JobCanvas({
                                                 const isActive = activeJobId === job.id;
                                                 const isSaved = savedJobs.includes(job.id);
                                                 return (
-                                                    <button
+                                                    <LabItemRow
                                                         key={job.id}
-                                                        onClick={(e) => onJobSelect(job.id, e)}
-                                                        className={cn(
-                                                            "group relative w-full border-b border-border/40 px-4 py-3 text-left backdrop-blur-md",
-                                                            "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10",
-                                                            isActive && "bg-white/10 dark:bg-white/10"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="space-y-2 flex-1">
-                                                                <div className="flex items-center gap-2 flex-wrap">
-                                                                    <span className={`text-sm font-medium transition-colors ${isActive
-                                                                        ? "text-primary"
-                                                                        : "text-foreground group-hover:text-primary"
-                                                                        }`}>
-                                                                        {job.title}
-                                                                    </span>
-                                                                    {getStatusBadge(job.id)}
-                                                                </div>
-
-                                                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                                                    <span className="flex items-center gap-1">
-                                                                        <Building2 className="h-3 w-3" />
-                                                                        {job.company}
-                                                                    </span>
-                                                                    <span className="flex items-center gap-1">
-                                                                        <MapPin className="h-3 w-3" />
-                                                                        {job.location}
-                                                                    </span>
-                                                                    {job.remote && (
-                                                                        <span className="text-emerald-500 font-medium">Remote</span>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="flex flex-wrap gap-2 text-[11px] font-medium text-muted-foreground">
-                                                                    <span className="px-1.5 py-0.5 rounded bg-muted">
-                                                                        {job.type}
-                                                                    </span>
-                                                                    <span className="text-muted-foreground/70">
-                                                                        via {job.platform}
-                                                                    </span>
-                                                                    {job.tags?.slice(0, 2).map((tag) => (
-                                                                        <span
-                                                                            key={tag}
-                                                                            className="text-muted-foreground/50"
-                                                                        >
-                                                                            • {tag}
-                                                                        </span>
-                                                                    ))}
-                                                                    {job.salary && (
-                                                                        <span className="text-emerald-500/70 flex items-center gap-0.5">
-                                                                            • <DollarSign className="h-3 w-3" /> {job.salary}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
+                                                        id={job.id}
+                                                        isActive={isActive}
+                                                        onClick={onJobSelect}
+                                                        title={job.title}
+                                                        titleBadge={getStatusBadge(job.id)}
+                                                        subtitle={
+                                                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                                                <span className="flex items-center gap-1">
+                                                                    <Building2 className="h-3 w-3" />
+                                                                    {job.company}
+                                                                </span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <MapPin className="h-3 w-3" />
+                                                                    {job.location}
+                                                                </span>
+                                                                {job.remote && (
+                                                                    <span className="text-emerald-500 font-medium">Remote</span>
+                                                                )}
                                                             </div>
-
-                                                            {/* Hover Actions */}
-                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                                        }
+                                                        tags={
+                                                            <>
+                                                                <span className="px-1.5 py-0.5 rounded bg-muted">
+                                                                    {job.type}
+                                                                </span>
+                                                                <span className="text-muted-foreground/70">
+                                                                    via {job.platform}
+                                                                </span>
+                                                                {job.tags?.slice(0, 2).map((tag) => (
+                                                                    <span
+                                                                        key={tag}
+                                                                        className="text-muted-foreground/50"
+                                                                    >
+                                                                        • {tag}
+                                                                    </span>
+                                                                ))}
+                                                                {job.salary && (
+                                                                    <span className="text-emerald-500/70 flex items-center gap-0.5">
+                                                                        • <DollarSign className="h-3 w-3" /> {job.salary}
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        }
+                                                        hoverContent={
+                                                            <>
                                                                 <div
                                                                     role="button"
                                                                     onClick={(e) => handleSaveJob(job.id, e)}
@@ -457,9 +444,9 @@ export default function JobCanvas({
                                                                 >
                                                                     <ExternalLink className="h-4 w-4" />
                                                                 </a>
-                                                            </div>
-                                                        </div>
-                                                    </button>
+                                                            </>
+                                                        }
+                                                    />
                                                 );
                                             })}
                                         </div>

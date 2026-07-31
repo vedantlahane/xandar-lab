@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
+import { auth } from '@/auth';
 
 const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'xandar-lab-secret-key-change-in-production'
@@ -15,7 +16,8 @@ const SESSION_DURATION_DAYS = 7;
 export interface TokenPayload {
     userId: string;
     username: string;
-    sessionId: string;  // Unique session identifier
+    sessionId: string;
+    role?: string;
     exp?: number;
 }
 
@@ -75,43 +77,28 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
 }
 
 export async function getSession(): Promise<TokenPayload | null> {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
+    const session = await auth();
+    if (!session?.user) return null;
 
-    if (!token) return null;
-
-    return verifyToken(token);
+    return {
+        userId: session.user.id as string,
+        username: (session.user as any).username || '',
+        sessionId: 'nextauth-session',
+        role: session.user.role,
+    } as any;
 }
 
-/**
- * Validates the JWT session AND confirms the session still exists (is not revoked)
- * in the database. Use this in all protected API routes.
- * The only exception is logout, which can use getSession() to attempt cleanup.
- */
 export async function getValidatedSession(): Promise<TokenPayload | null> {
     const session = await getSession();
     if (!session) return null;
 
     try {
         await connectDB();
-        const now = new Date();
-        const user = await User.findOne(
-            {
-                _id: session.userId,
-                sessions: {
-                    $elemMatch: {
-                        tokenId: session.sessionId,
-                        expiresAt: { $gt: now },
-                    },
-                },
-            },
-            { _id: 1 }
-        ).lean();
-
+        const user = await User.findById(session.userId).lean();
         if (!user) return null;
+
         return session;
     } catch {
-        // If DB lookup fails, fail closed for security
         return null;
     }
 }

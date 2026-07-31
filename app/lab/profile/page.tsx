@@ -154,6 +154,8 @@ export default function ProfilePage() {
                     setProfile(data.user);
                     setEmail(data.user.email || "");
                     setBio(data.user.bio || "");
+                } else {
+                    console.error("Profile API returned not ok:", res.status);
                 }
             } catch (error) {
                 console.error("Failed to fetch profile:", error);
@@ -164,8 +166,34 @@ export default function ProfilePage() {
 
         if (isAuthenticated) {
             fetchProfile();
+        } else {
+            setFetchingProfile(false);
         }
     }, [isAuthenticated]);
+
+    if (isLoading || fetchingProfile) {
+        return <LoadingDots />;
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
+                <h1 className="text-2xl font-bold text-red-500">Not Authenticated</h1>
+                <p>AuthContext returned isAuthenticated: false</p>
+                <button onClick={() => router.push("/lab")} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Go Home</button>
+            </div>
+        );
+    }
+
+    if (!profile) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
+                <h1 className="text-2xl font-bold text-red-500">Profile Data Missing</h1>
+                <p>Failed to load profile from /api/auth/profile</p>
+                <button onClick={() => router.push("/lab")} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Go Home</button>
+            </div>
+        );
+    }
 
     // Handle profile update
     const handleProfileUpdate = async (e: React.FormEvent) => {

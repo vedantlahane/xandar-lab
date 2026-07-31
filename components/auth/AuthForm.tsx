@@ -1,4 +1,4 @@
-﻿// components/auth/AuthForm.tsx
+// components/auth/AuthForm.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -140,21 +140,32 @@ export function AuthForm({
           </AnimatePresence>
         </FormField>
 
-        {/* Invite Code */}
-        <FormField icon={Key} label="Invite Code" error={inviteCodeError}>
-          <Input
-            type="password"
-            placeholder="â€¢â€¢â€¢â€¢"
-            value={inviteCode}
-            onChange={(e) => setInviteCode(e.target.value)}
-            required
-            autoComplete="one-time-code"
-            className={cn(
-              "bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-zinc-500 transition-colors h-11",
-              inviteCodeError && "border-destructive focus-visible:border-destructive"
-            )}
-          />
-        </FormField>
+        {/* Invite Code - Only show for Sign Up */}
+        <AnimatePresence>
+          {isSignUp && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <FormField icon={Key} label="Invite Code" error={inviteCodeError}>
+                <Input
+                  type="password"
+                  placeholder="••••"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  required
+                  autoComplete="one-time-code"
+                  className={cn(
+                    "bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-zinc-500 transition-colors h-11",
+                    inviteCodeError && "border-destructive focus-visible:border-destructive"
+                  )}
+                />
+              </FormField>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Form-level error */}
         <AnimatePresence>

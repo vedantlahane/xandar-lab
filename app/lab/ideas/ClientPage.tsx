@@ -108,10 +108,21 @@ export default function IdeasCatalogPage() {
     });
 
     fetch(`/api/ideas?${params.toString()}`)
-      .then((res) => res.json())
+      .then(async (res) => {
+        const resp = await res.json();
+
+        if (!res.ok) {
+          throw new Error(resp?.error || "Failed to fetch ideas");
+        }
+
+        return resp;
+      })
       .then((resp) => {
-        setIdeas((prev) => page === 1 ? resp.ideas : [...prev, ...resp.ideas]);
-        setHasMore(page < resp.pagination.totalPages);
+        const nextIdeas = Array.isArray(resp?.ideas) ? resp.ideas : [];
+        const totalPages = resp?.pagination?.totalPages ?? 1;
+
+        setIdeas((prev) => (page === 1 ? nextIdeas : [...prev, ...nextIdeas]));
+        setHasMore(page < totalPages);
         if (page === 1) setData(resp); // Keeping data for meta/domains
       })
       .catch((err) => console.error(err))

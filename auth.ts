@@ -1,4 +1,4 @@
-import NextAuth from "next-auth"
+import NextAuth, { CredentialsSignin } from "next-auth"
 import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import Nodemailer from "next-auth/providers/nodemailer"
@@ -26,44 +26,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 isSignUp: { label: "Sign Up", type: "text" }
             },
             async authorize(credentials) {
-                if (!credentials?.username) return null
+                try {
+                    if (!credentials?.username) return null
 
-                await connectDB()
+                    await connectDB()
 
-                if (credentials.isSignUp === 'true') {
-                    if (credentials.inviteCode !== process.env.NEXT_PUBLIC_INVITE_CODE) {
-                        throw new Error("Invalid invite code")
+                    if (credentials.isSignUp === 'true') {
+                        const expectedCode = process.env.NEXT_PUBLIC_INVITE_CODE || process.env.INVITE_CODE || '7447';
+                        if (credentials.inviteCode !== expectedCode) {
+                            throw new CredentialsSignin("Invalid invite code")
+                        }
+                        const existing = await User.findOne({ username: credentials.username })
+                        if (existing) throw new CredentialsSignin("Username already taken")
+
+                        const { hashPassword } = await import('@/lib/auth')
+                        const hashedPassword = credentials.password ? await hashPassword(credentials.password as string) : undefined
+
+                        const user = await User.create({
+                            username: credentials.username,
+                            password: hashedPassword,
+                            lastLoginAt: new Date(),
+                            role: 'user',
+                            sessions: [],
+                        })
+                        return { id: user._id.toString(), name: user.username, role: user.role }
                     }
-                    const existing = await User.findOne({ username: credentials.username })
-                    if (existing) throw new Error("Username already taken")
 
-                    const { hashPassword } = await import('@/lib/auth')
-                    const hashedPassword = credentials.password ? await hashPassword(credentials.password as string) : undefined
+                    // Login
+                    const user = await User.findOne({ username: credentials.username })
+                    if (!user || !user.password) throw new CredentialsSignin("Invalid credentials")
 
-                    const user = await User.create({
-                        username: credentials.username,
-                        password: hashedPassword,
-                        lastLoginAt: new Date(),
-                        role: 'user',
-                        sessions: [],
-                    })
-                    return { id: user._id.toString(), name: user.username, role: user.role }
-                }
+                    const { verifyPassword } = await import('@/lib/auth')
+                    const isValid = await verifyPassword(credentials.password as string, user.password)
+                    if (!isValid) throw new CredentialsSignin("Invalid credentials")
 
-                // Login
-                const user = await User.findOne({ username: credentials.username })
-                if (!user || !user.password) throw new Error("Invalid credentials")
-
-                const { verifyPassword } = await import('@/lib/auth')
-                const isValid = await verifyPassword(credentials.password as string, user.password)
-                if (!isValid) throw new Error("Invalid credentials")
-
-                return {
-                    id: user._id.toString(),
-                    name: user.username,
-                    email: user.email,
-                    image: user.avatarGradient,
-                    role: user.role,
+                    return {
+                        id: user._id.toString(),
+                        name: user.username,
+                        email: user.email,
+                        image: user.avatarGradient,
+                        role: user.role,
+                    }
+                } catch (e: any) {
+                    console.error("AUTHORIZE ERROR:", e)
+                    const fs = require('fs')
+                    fs.writeFileSync('error_log.txt', e.stack || e.toString())
+                    throw e
                 }
             }
         }),

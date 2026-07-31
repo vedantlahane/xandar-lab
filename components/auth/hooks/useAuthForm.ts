@@ -118,7 +118,7 @@ export function useAuthForm(): UseAuthFormReturn {
       return;
     }
 
-    if (!inviteCode.trim()) {
+    if (mode === "signup" && !inviteCode.trim()) {
       setInviteCodeError("Invite code is required");
       return;
     }

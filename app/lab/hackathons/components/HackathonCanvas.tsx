@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
+import { LabItemRow } from "@/app/lab/components/shared/LabItemRow";
 
 interface HackathonCanvasProps {
     activeHackId: string | null;
@@ -305,55 +306,43 @@ export default function HackathonCanvas({
                                             {monthGroup.hackathons.map((hackathon) => {
                                                 const isActive = activeHackId === hackathon.id;
                                                 return (
-                                                    <button
+                                                    <LabItemRow
                                                         key={hackathon.id}
-                                                        onClick={(e) => onHackSelect(hackathon.id, e)}
-                                                        className={cn(
-                                                            "group relative w-full border-b border-border/40 px-4 py-3 text-left backdrop-blur-md",
-                                                            "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10",
-                                                            isActive && "bg-white/10 dark:bg-white/10"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="space-y-2">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Trophy className={`h-4 w-4 ${getStatusColor(hackathon.status)}`} />
-                                                                    <span className={`text-sm font-medium transition-colors ${activeHackId === hackathon.id ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
-                                                                        {hackathon.name}
+                                                        id={hackathon.id}
+                                                        isActive={isActive}
+                                                        onClick={onHackSelect}
+                                                        title={hackathon.name}
+                                                        titleIcon={<Trophy className={`h-4 w-4 ${getStatusColor(hackathon.status)}`} />}
+                                                        subtitle={`${hackathon.organizer} • ${hackathon.description}`}
+                                                        tags={
+                                                            <>
+                                                                <span className={getStatusColor(hackathon.status)}>
+                                                                    {hackathon.status}
+                                                                </span>
+                                                                <span className="text-muted-foreground/50">
+                                                                    • {getTypeIcon(hackathon.type)} {hackathon.type}
+                                                                </span>
+                                                                {hackathon.teamSize && (
+                                                                    <span className="flex items-center gap-0.5 text-muted-foreground/50">
+                                                                        • <Users className="h-3 w-3" /> {hackathon.teamSize}
                                                                     </span>
-                                                                </div>
-                                                                <p className="text-xs text-muted-foreground/70 line-clamp-1 pl-6">
-                                                                    {hackathon.organizer} • {hackathon.description}
-                                                                </p>
-                                                                <div className="flex flex-wrap gap-2 text-[11px] font-medium text-muted-foreground pl-6">
-                                                                    <span className={getStatusColor(hackathon.status)}>
-                                                                        {hackathon.status}
+                                                                )}
+                                                                {hackathon.themes?.slice(0, 2).map((theme) => (
+                                                                    <span key={theme} className="text-muted-foreground/50">
+                                                                        • {theme}
                                                                     </span>
-                                                                    <span className="text-muted-foreground/50">
-                                                                        • {getTypeIcon(hackathon.type)} {hackathon.type}
-                                                                    </span>
-                                                                    {hackathon.teamSize && (
-                                                                        <span className="flex items-center gap-0.5 text-muted-foreground/50">
-                                                                            • <Users className="h-3 w-3" /> {hackathon.teamSize}
-                                                                        </span>
-                                                                    )}
-                                                                    {hackathon.themes?.slice(0, 2).map((theme) => (
-                                                                        <span key={theme} className="text-muted-foreground/50">
-                                                                            • {theme}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Hover info */}
-                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3 opacity-0 transition-opacity group-hover:opacity-100">
+                                                                ))}
+                                                            </>
+                                                        }
+                                                        hoverContent={
+                                                            <>
                                                                 <div className="flex items-center gap-1 text-xs text-muted-foreground/50">
                                                                     <Calendar className="h-3 w-3" />
                                                                     {hackathon.startDate}
                                                                 </div>
-                                                            </div>
-                                                        </div>
-                                                    </button>
+                                                            </>
+                                                        }
+                                                    />
                                                 );
                                             })}
                                         </div>

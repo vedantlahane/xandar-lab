@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import PipelineRun from "@/models/PipelineRun";
+import { AuthService } from "@/lib/services/AuthService";
 
 export async function GET() {
   try {
+    const { error } = await AuthService.requireAdmin();
+    if (error) return error;
+
     await connectDB();
 
     const stats = await PipelineRun.aggregate([

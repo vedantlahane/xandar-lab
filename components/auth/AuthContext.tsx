@@ -60,6 +60,7 @@ function AuthContextProvider({ children, isLoginModalOpen, setIsLoginModalOpen }
       redirect: false
     })
     if (res?.error) throw new Error(res.error)
+    await update()
     setIsLoginModalOpen(false)
   };
 
@@ -69,6 +70,7 @@ function AuthContextProvider({ children, isLoginModalOpen, setIsLoginModalOpen }
       redirect: false
     })
     if (res?.error) throw new Error(res.error)
+    await update()
     setIsLoginModalOpen(false)
   };
 

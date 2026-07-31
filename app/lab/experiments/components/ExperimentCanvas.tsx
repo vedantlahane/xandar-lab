@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
+import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
+import { LabItemRow } from "@/app/lab/components/shared/LabItemRow";
 
 interface ExperimentCanvasProps {
     activeExpId: string | null;
@@ -126,259 +128,229 @@ export default function ExperimentCanvas({
     const completedCount = allExperiments.filter(e => e.status === 'Completed').length;
 
     return (
-        <div className="relative h-full">
-            {/* Top Fade */}
-            <div className="pointer-events-none absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-card to-transparent z-10" />
-
-            <div id="experiments-scroll-container" className="h-full overflow-y-auto thin-scrollbar overscroll-contain">
-                <div className="max-w-7xl mx-auto px-8 md:px-12">
-                    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-10 min-h-full">
-
-                        {/* ── Left column: Filters — sticky, vertically centered ── */}
-                        <aside className="relative sticky top-0 h-screen hidden md:flex flex-col justify-center">
-                            <div className="space-y-4 py-6 overflow-y-auto no-scrollbar max-h-[calc(100vh-10rem)]">
-
-                                {/* Stats card */}
-                                <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                        <Beaker className="h-4 w-4 text-rose-500" />
-                                        Overview
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-2 text-center">
-                                        <div>
-                                            <div className="text-lg font-bold text-foreground">{totalCount}</div>
-                                            <div className="text-[10px] text-muted-foreground">Total</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-lg font-bold text-green-500">{activeCount}</div>
-                                            <div className="text-[10px] text-muted-foreground">Active</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-lg font-bold text-blue-500">{completedCount}</div>
-                                            <div className="text-[10px] text-muted-foreground">Done</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* ── Status ── */}
-                                <div className="space-y-0.5">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                                        Status
-                                    </h3>
-                                    {STATUS_ITEMS.map((item) => {
-                                        const Icon = item.icon;
-                                        const isActive = statusFilter === item.value;
-                                        return (
-                                            <button
-                                                key={item.value}
-                                                onClick={() => setStatusFilter(item.value)}
-                                                className={cn(
-                                                    "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                                                    isActive
-                                                        ? "bg-primary/10 text-primary font-medium"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
-                                                )}
-                                            >
-                                                <Icon
-                                                    className={cn(
-                                                        "h-3.5 w-3.5 shrink-0",
-                                                        isActive ? "text-primary" : "text-muted-foreground/50",
-                                                    )}
-                                                />
-                                                <span className="truncate">{item.label}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* ── Type ── */}
-                                <div className="space-y-1">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                                        Type
-                                    </h3>
-                                    <div className="flex gap-1.5 flex-wrap">
-                                        {TYPE_ITEMS.map((item) => {
-                                            const isActive = typeFilter === item.value;
-                                            return (
-                                                <button
-                                                    key={item.value}
-                                                    onClick={() => setTypeFilter(isActive ? "All" : item.value)}
-                                                    className={cn(
-                                                        "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
-                                                        isActive
-                                                            ? item.activeColor
-                                                            : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground",
-                                                    )}
-                                                >
-                                                    <div className={cn("h-1.5 w-1.5 rounded-full", item.dotColor)} />
-                                                    {item.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* ── Technologies ── */}
-                                <div className="space-y-1">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
-                                        <Tag className="h-3 w-3" />
-                                        Tech Stack
-                                    </h3>
-                                    <div className="flex gap-1 flex-wrap">
-                                        {ALL_TECHNOLOGIES.slice(0, 12).map((tech) => {
-                                            const isActive = techFilter === tech;
-                                            return (
-                                                <button
-                                                    key={tech}
-                                                    onClick={() => setTechFilter(isActive ? "All" : tech)}
-                                                    className={cn(
-                                                        "px-2 py-0.5 rounded-md text-[11px] font-medium border transition-all",
-                                                        isActive
-                                                            ? "bg-primary/10 text-primary border-primary/30"
-                                                            : "border-transparent text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground",
-                                                    )}
-                                                >
-                                                    {tech}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* ── Sort ── */}
-                                <div className="space-y-1">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
-                                        <ArrowUpDown className="h-3 w-3" />
-                                        Sort by
-                                    </h3>
-                                    <div className="space-y-0.5">
-                                        {SORT_ITEMS.map((item) => {
-                                            const isActive = sortOption === item.value;
-                                            return (
-                                                <button
-                                                    key={item.value}
-                                                    onClick={() => {
-                                                        if (isActive) setSortDesc(!sortDesc);
-                                                        else { setSortOption(item.value); setSortDesc(true); }
-                                                    }}
-                                                    className={cn(
-                                                        "flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                                                        isActive
-                                                            ? "bg-primary/10 text-primary font-medium"
-                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
-                                                    )}
-                                                >
-                                                    <span>{item.label}</span>
-                                                    {isActive ? (
-                                                        sortDesc ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />
-                                                    ) : (
-                                                        <ArrowUpDown className="h-3 w-3 opacity-30" />
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        </aside>
-
-                        {/* ── Right column: Search + Experiments ── */}
-                        <div className="space-y-4 pb-48 pt-8">
-                            {/* Sticky search bar */}
-                            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
-                                <SearchBar
-                                    query={searchQuery}
-                                    onQueryChange={setSearchQuery}
-                                    placeholder="Search experiments, tech..."
-                                />
-                            </div>
-
-                            {filteredExperiments.length === 0 ? (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <Beaker className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                                    <p className="text-lg font-medium">No experiments match your filters</p>
-                                    <p className="text-sm mt-1">Try adjusting your filters to see more experiments</p>
-                                </div>
-                            ) : (
-                                filteredExperiments.map((category) => (
-                                    <section
-                                        key={category.categoryName}
-                                        id={category.categoryName}
-                                        data-category
-                                        data-category-title={category.categoryName}
-                                        className="space-y-5"
-                                    >
-                                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
-                                            <h2 className="text-lg font-semibold">{category.categoryName}</h2>
-                                            <p className="text-sm text-muted-foreground">
-                                                {category.experiments.length} experiments
-                                            </p>
-                                        </div>
-
-                                        <div className="space-y-0">
-                                            {category.experiments.map((exp) => {
-                                                const isActive = activeExpId === exp.id;
-                                                return (
-                                                    <button
-                                                        key={exp.id}
-                                                        onClick={(e) => onExpSelect(exp.id, e)}
-                                                        className={cn(
-                                                            "group relative w-full border-b border-border/40 px-4 py-3 text-left backdrop-blur-md",
-                                                            "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10",
-                                                            isActive && "bg-white/10 dark:bg-white/10"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="space-y-2">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Beaker className={`h-4 w-4 ${getStatusColor(exp.status)}`} />
-                                                                    <div className={`text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
-                                                                        {exp.title}
-                                                                    </div>
-                                                                </div>
-                                                                <p className="text-xs text-muted-foreground/70 line-clamp-1 pl-6">
-                                                                    {exp.description}
-                                                                </p>
-                                                                <div className="flex flex-wrap gap-2 text-[11px] font-medium text-muted-foreground pl-6">
-                                                                    <span className={getStatusColor(exp.status)}>
-                                                                        {exp.status}
-                                                                    </span>
-                                                                    <span className={getTypeColor(exp.type)}>
-                                                                        • {exp.type}
-                                                                    </span>
-                                                                    {exp.technologies.slice(0, 3).map((tech) => (
-                                                                        <span key={tech} className="text-xs text-muted-foreground/50">
-                                                                            • {tech}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Hover Info */}
-                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3 opacity-0 transition-opacity group-hover:opacity-100">
-                                                                {exp.githubUrl && <GitBranch className="h-4 w-4 text-muted-foreground" />}
-                                                                {exp.demoUrl && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
-                                                                <div className="flex items-center gap-1 text-xs text-muted-foreground/50">
-                                                                    <Calendar className="h-3 w-3" />
-                                                                    {exp.startDate}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </section>
-                                ))
-                            )}
+        <BaseCanvas
+            scrollId="experiments-scroll-container"
+            sidebarContent={
+                <>
+                    {/* Stats card */}
+                    <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <Beaker className="h-4 w-4 text-rose-500" />
+                            Overview
                         </div>
-
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            <div>
+                                <div className="text-lg font-bold text-foreground">{totalCount}</div>
+                                <div className="text-[10px] text-muted-foreground">Total</div>
+                            </div>
+                            <div>
+                                <div className="text-lg font-bold text-green-500">{activeCount}</div>
+                                <div className="text-[10px] text-muted-foreground">Active</div>
+                            </div>
+                            <div>
+                                <div className="text-lg font-bold text-blue-500">{completedCount}</div>
+                                <div className="text-[10px] text-muted-foreground">Done</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+
+                    {/* ── Status ── */}
+                    <div className="space-y-0.5">
+                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                            Status
+                        </h3>
+                        {STATUS_ITEMS.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = statusFilter === item.value;
+                            return (
+                                <button
+                                    key={item.value}
+                                    onClick={() => setStatusFilter(item.value)}
+                                    className={cn(
+                                        "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                        isActive
+                                            ? "bg-primary/10 text-primary font-medium"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
+                                    )}
+                                >
+                                    <Icon
+                                        className={cn(
+                                            "h-3.5 w-3.5 shrink-0",
+                                            isActive ? "text-primary" : "text-muted-foreground/50",
+                                        )}
+                                    />
+                                    <span className="truncate">{item.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* ── Type ── */}
+                    <div className="space-y-1">
+                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
+                            Type
+                        </h3>
+                        <div className="flex gap-1.5 flex-wrap">
+                            {TYPE_ITEMS.map((item) => {
+                                const isActive = typeFilter === item.value;
+                                return (
+                                    <button
+                                        key={item.value}
+                                        onClick={() => setTypeFilter(isActive ? "All" : item.value)}
+                                        className={cn(
+                                            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
+                                            isActive
+                                                ? item.activeColor
+                                                : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                                        )}
+                                    >
+                                        <div className={cn("h-1.5 w-1.5 rounded-full", item.dotColor)} />
+                                        {item.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* ── Technologies ── */}
+                    <div className="space-y-1">
+                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
+                            <Tag className="h-3 w-3" />
+                            Tech Stack
+                        </h3>
+                        <div className="flex gap-1 flex-wrap">
+                            {ALL_TECHNOLOGIES.slice(0, 12).map((tech) => {
+                                const isActive = techFilter === tech;
+                                return (
+                                    <button
+                                        key={tech}
+                                        onClick={() => setTechFilter(isActive ? "All" : tech)}
+                                        className={cn(
+                                            "px-2 py-0.5 rounded-md text-[11px] font-medium border transition-all",
+                                            isActive
+                                                ? "bg-primary/10 text-primary border-primary/30"
+                                                : "border-transparent text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground",
+                                        )}
+                                    >
+                                        {tech}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* ── Sort ── */}
+                    <div className="space-y-1">
+                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
+                            <ArrowUpDown className="h-3 w-3" />
+                            Sort by
+                        </h3>
+                        <div className="space-y-0.5">
+                            {SORT_ITEMS.map((item) => {
+                                const isActive = sortOption === item.value;
+                                return (
+                                    <button
+                                        key={item.value}
+                                        onClick={() => {
+                                            if (isActive) setSortDesc(!sortDesc);
+                                            else { setSortOption(item.value); setSortDesc(true); }
+                                        }}
+                                        className={cn(
+                                            "flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                            isActive
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
+                                        )}
+                                    >
+                                        <span>{item.label}</span>
+                                        {isActive ? (
+                                            sortDesc ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />
+                                        ) : (
+                                            <ArrowUpDown className="h-3 w-3 opacity-30" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </>
+            }
+        >
+            {/* Sticky search bar */}
+            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
+                <SearchBar
+                    query={searchQuery}
+                    onQueryChange={setSearchQuery}
+                    placeholder="Search experiments, tech..."
+                />
             </div>
 
-            {/* Bottom Fade */}
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-card to-transparent z-10" />
-        </div>
+            {filteredExperiments.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                    <Beaker className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                    <p className="text-lg font-medium">No experiments match your filters</p>
+                    <p className="text-sm mt-1">Try adjusting your filters to see more experiments</p>
+                </div>
+            ) : (
+                filteredExperiments.map((category) => (
+                    <section
+                        key={category.categoryName}
+                        id={category.categoryName}
+                        data-category
+                        data-category-title={category.categoryName}
+                        className="space-y-5"
+                    >
+                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
+                            <h2 className="text-lg font-semibold">{category.categoryName}</h2>
+                            <p className="text-sm text-muted-foreground">
+                                {category.experiments.length} experiments
+                            </p>
+                        </div>
+
+                        <div className="space-y-0">
+                            {category.experiments.map((exp) => {
+                                const isActive = activeExpId === exp.id;
+                                return (
+                                    <LabItemRow
+                                        key={exp.id}
+                                        id={exp.id}
+                                        isActive={isActive}
+                                        onClick={onExpSelect}
+                                        title={exp.title}
+                                        titleIcon={<Beaker className={`h-4 w-4 ${getStatusColor(exp.status)}`} />}
+                                        subtitle={exp.description}
+                                        tags={
+                                            <>
+                                                <span className={getStatusColor(exp.status)}>
+                                                    {exp.status}
+                                                </span>
+                                                <span className={getTypeColor(exp.type)}>
+                                                    • {exp.type}
+                                                </span>
+                                                {exp.technologies.slice(0, 3).map((tech) => (
+                                                    <span key={tech} className="text-xs text-muted-foreground/50">
+                                                        • {tech}
+                                                    </span>
+                                                ))}
+                                            </>
+                                        }
+                                        hoverContent={
+                                            <>
+                                                {exp.githubUrl && <GitBranch className="h-4 w-4 text-muted-foreground" />}
+                                                {exp.demoUrl && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
+                                                <div className="flex items-center gap-1 text-xs text-muted-foreground/50">
+                                                    <Calendar className="h-3 w-3" />
+                                                    {exp.startDate}
+                                                </div>
+                                            </>
+                                        }
+                                    />
+                                );
+                            })}
+                        </div>
+                    </section>
+                ))
+            )}
+        </BaseCanvas>
     );
 }

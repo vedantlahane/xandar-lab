@@ -6,7 +6,7 @@ export interface IPost {
     content: string;
 
     // Polymorphic association to shared content
-    sharedItemType?: 'InterviewSession' | 'Problem' | 'Note' | 'HackathonResult';
+    sharedItemType?: 'InterviewSession' | 'Problem' | 'Note' | 'HackathonResult' | 'Idea';
     sharedItemId?: mongoose.Types.ObjectId;
 
     likes: mongoose.Types.ObjectId[];
@@ -30,7 +30,7 @@ const PostSchema = new Schema<IPost>({
     // Allows sharing specific items on the feed
     sharedItemType: {
         type: String,
-        enum: ['InterviewSession', 'Problem', 'Note', 'HackathonResult'],
+        enum: ['InterviewSession', 'Problem', 'Note', 'HackathonResult', 'Idea'],
     },
     sharedItemId: {
         type: Schema.Types.ObjectId,

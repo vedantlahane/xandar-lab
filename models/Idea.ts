@@ -8,6 +8,7 @@ export interface IEvidenceItem {
 
 export interface IIdea {
   _id: string;
+  authorId: mongoose.Types.ObjectId;
   title: string;
   slug: string;
   problem: string;
@@ -37,6 +38,12 @@ export interface IIdea {
 
 const IdeaSchema = new Schema<IIdea>(
   {
+    authorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     title: {
       type: String,
       required: true,
