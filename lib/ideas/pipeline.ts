@@ -33,6 +33,11 @@ import type {
   TechAssessment,
 } from "@/lib/ideas/types";
 
+/**
+ * Creates a new instance of the ForgeStateSchema using Zod for validation.
+ * @returns A new instance of the ForgeStateSchema.
+ * 
+ */
 const ForgeStateSchema = z.object({
   domain: z.string(),
   skills: z.array(z.string()),

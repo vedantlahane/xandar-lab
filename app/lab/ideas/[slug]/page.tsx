@@ -3,6 +3,11 @@ import connectDB from "@/lib/db";
 import Idea from "@/models/Idea";
 import ClientPage from "./ClientPage";
 
+/**
+ * Generates metadata for the idea detail page.
+ * @param params - The parameters for the page.
+ * @returns A promise resolving to the generated metadata.
+ */
 export async function generateMetadata(
     { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {

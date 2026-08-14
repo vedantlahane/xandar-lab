@@ -2,6 +2,13 @@ import Idea from "@/models/Idea";
 import { invokeJsonModel } from "@/lib/ideas/llm";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 
+
+/**
+ * Determines if a new idea is a duplicate of any existing ideas in the same domain.
+ * @param newIdea - The new idea to check.
+ * @param domain - The domain to check for duplicates.
+ * @returns A promise resolving to the duplicate check result.
+ */
 export async function isDuplicateIdea(
   newIdea: { title: string; problem: string; solution: string },
   domain: string
@@ -22,7 +29,7 @@ export async function isDuplicateIdea(
   if (recentIdeas.length === 0) return { duplicate: false };
 
   const stopWords = new Set(["a", "the", "for", "with", "and", "tool", "app", "platform", "of", "in", "to", "is", "on", "that", "this"]);
-  
+
   function getSignificantWords(text: string) {
     return text.toLowerCase().split(/\W+/).filter(w => !stopWords.has(w) && w.length > 2);
   }
@@ -32,14 +39,14 @@ export async function isDuplicateIdea(
 
   for (const existing of recentIdeas) {
     const existingWords = getSignificantWords(existing.title);
-    
+
     let matchCount = 0;
     for (const w of newWords) {
       if (existingWords.includes(w)) matchCount++;
     }
 
     const overlapRatio = matchCount / Math.max(newWords.length, 1);
-    
+
     // Flag if 60% of words overlap or more than 3 significant words are shared
     if (overlapRatio >= 0.6 || matchCount > 3) {
       potentialMatches.push(existing);

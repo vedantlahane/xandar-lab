@@ -1,6 +1,12 @@
 import { ChatOpenAI } from "@langchain/openai";
 import type { AIMessageChunk, BaseMessageLike } from "@langchain/core/messages";
 
+
+/**
+ * Extracts text content from a message part.
+ * @param content - The content to extract text from.
+ * @returns The extracted text.
+ */
 function extractText(content: unknown): string {
   if (typeof content === "string") return content;
 
@@ -20,6 +26,12 @@ function extractText(content: unknown): string {
   return "";
 }
 
+
+/**
+ * Extracts JSON text from a raw string, handling fenced code blocks and nested structures.
+ * @param raw - The raw string to extract JSON text from.
+ * @returns The extracted JSON text.
+ */
 function extractJsonText(raw: string): string {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenced?.[1]) {
@@ -71,6 +83,12 @@ function extractJsonText(raw: string): string {
   return raw.slice(start).trim();
 }
 
+
+/**
+ * Creates and configures a ChatOpenAI model for idea duplication detection.
+ * @returns // The configured ChatOpenAI model instance.
+ * @throws Will throw an error if the OPENAI_API_KEY environment variable is missing.
+ */
 export function createIdeaForgeModel() {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -84,6 +102,15 @@ export function createIdeaForgeModel() {
   });
 }
 
+/**
+ * Invokes the LLM model with the provided messages and attempts to parse the response as JSON.
+ * If parsing fails, it returns the provided fallback value.
+ * @template T - The expected type of the parsed JSON data.
+ * @param params - An object containing the messages to send to the model and a fallback value.
+ * @param params  messages - The messages to send to the LLM model.
+ * @param params  fallback - The fallback value to return if JSON parsing fails.
+ * @returns A promise resolving to the parsed JSON data, raw text, and fallback status.
+ */
 export async function invokeJsonModel<T>(params: {
   messages: BaseMessageLike[];
   fallback: T;
