@@ -5,7 +5,7 @@ import { motion, easeOut, useReducedMotion } from "framer-motion";
 import { ArrowRight, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/* ── Animation variants (static — never re-created) ───── */
+/* ── Animation variants (static — never re-created) ─────*/
 
 const container = {
   hidden: { opacity: 0 },

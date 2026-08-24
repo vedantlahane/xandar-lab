@@ -1,6 +1,11 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
+
+/**
+ * AuthService provides methods for handling user authentication and authorization.
+ * It includes methods to get the current session, require authentication, and enforce role-based access control.
+ */
 export class AuthService {
   static async getSession() {
     return await auth();
