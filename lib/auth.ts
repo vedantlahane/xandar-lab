@@ -21,30 +21,59 @@ export interface TokenPayload {
     exp?: number;
 }
 
+
+/**
+ * Hashes a password using bcrypt with a salt round of 12.
+ * @param password - The plain text password to hash.
+ * @returns A promise that resolves to the hashed password.
+ */
 export async function hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 12);
 }
 
+/**
+ * Verifies a plain text password against a hashed password using bcrypt.
+ * @param password - The plain text password to verify.
+ * @param hashedPassword - The hashed password to compare against.
+ * @returns A promise that resolves to true if the password matches, false otherwise.
+ */
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
     return bcrypt.compare(password, hashedPassword);
 }
 
+/**
+ * Verifies if the provided invite code matches the expected invite code.
+ * @param code - The invite code to verify.
+ * @returns True if the invite code is valid, false otherwise.
+ */
 export function verifyInviteCode(code: string): boolean {
     return code === INVITE_CODE;
 }
 
-// Generate a unique session ID
+/**
+ * Generates a unique session ID using UUID v4.
+ * @returns A string representing the generated session ID.
+ */
 export function generateSessionId(): string {
     return uuidv4();
 }
 
-// Calculate session expiry date
+
+/**
+ * Calculates the session expiry date based on the defined session duration.
+ * @returns A Date object representing the session expiry date.
+ */
 export function getSessionExpiry(): Date {
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + SESSION_DURATION_DAYS);
     return expiry;
 }
 
+/**
+ * Signs a JWT token with the provided payload.
+ * @param payload - The payload to include in the token.
+ * @returns A promise that resolves to the signed token.
+ */
 export async function signToken(payload: { userId: string; username: string; sessionId: string }): Promise<string> {
     return new SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })
@@ -53,6 +82,11 @@ export async function signToken(payload: { userId: string; username: string; ses
         .sign(JWT_SECRET);
 }
 
+/**
+ * Verifies a JWT token.
+ * @param token - The token to verify.
+ * @returns A promise that resolves to the verified token payload, or null if the token is invalid.
+ */
 export async function verifyToken(token: string): Promise<TokenPayload | null> {
     try {
         const { payload } = await jwtVerify(token, JWT_SECRET);
@@ -76,6 +110,10 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
     }
 }
 
+/**
+ * Gets the current user's session.
+ * @returns A promise that resolves to the session data, or null if no session is found.
+ */
 export async function getSession(): Promise<TokenPayload | null> {
     const session = await auth();
     if (!session?.user) return null;
@@ -87,7 +125,11 @@ export async function getSession(): Promise<TokenPayload | null> {
         role: session.user.role,
     } as any;
 }
-
+    
+/**
+ * Validates the current user's session.
+ * @returns A promise that resolves to the validated session data, or null if the session is invalid.
+ */
 export async function getValidatedSession(): Promise<TokenPayload | null> {
     const session = await getSession();
     if (!session) return null;
@@ -103,6 +145,11 @@ export async function getValidatedSession(): Promise<TokenPayload | null> {
     }
 }
 
+/**
+ * Sets the authentication cookie in the user's browser.
+ * @param token - The JWT token to store in the cookie.
+ * @returns A promise that resolves when the cookie has been set.
+ */
 export async function setAuthCookie(token: string): Promise<void> {
     const cookieStore = await cookies();
     cookieStore.set('auth_token', token, {
@@ -114,12 +161,22 @@ export async function setAuthCookie(token: string): Promise<void> {
     });
 }
 
+/**
+ * Clears the authentication cookie from the user's browser.
+ * This function is typically called during logout to remove the session token.
+ * @returns A promise that resolves when the cookie has been deleted.
+ */
 export async function clearAuthCookie(): Promise<void> {
     const cookieStore = await cookies();
     cookieStore.delete('auth_token');
 }
 
-// Parse user agent to get a readable device name
+
+/**
+ * Parses the user agent string to determine the device type.
+ * @param userAgent The user agent string to parse.
+ * @returns A string representing the device type.
+ */
 export function parseUserAgent(userAgent: string | null): string {
     if (!userAgent) return 'Unknown Device';
 

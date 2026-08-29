@@ -23,6 +23,11 @@ if(!cached) {
 }
 
 
+/**
+ * Connects to the MongoDB database using Mongoose. If a connection is already established, it returns the existing connection. If not, it creates a new connection and caches it for future use.
+ * @returns {Promise<typeof mongoose>} A promise that resolves to the Mongoose connection.
+ * @throws {Error} If there is an error connecting to the database.
+ */
 async function connectDB(){
     if(cached.conn){
         return cached.conn;
