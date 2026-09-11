@@ -41,24 +41,22 @@ export default function LabProfile() {
 
     return (
         <>
-            {/* Outside Tap Backdrop to dismiss open profile on touch */}
+            {/* Invisible Outside Tap Backdrop to dismiss open profile on touch */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-30 bg-black/20 backdrop-blur-[2px]"
+                    className="fixed inset-0 z-30"
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
             <aside className="fixed left-0 bottom-0 z-40 flex items-end justify-start pl-2 sm:pl-4 pb-2 sm:pb-4 pointer-events-none">
-                <motion.div
-                    layout
-                    transition={{ layout: smoothSpring }}
+                <div
                     className={cn(
-                        "pointer-events-auto relative rounded-2xl transition-all duration-300 select-none cursor-pointer",
-                        isExpanded ? "bg-card/95 dark:bg-zinc-900/95 shadow-xl shadow-black/5 ring-1 ring-black/5 dark:ring-white/10 backdrop-blur-xl" : ""
+                        "pointer-events-auto relative rounded-2xl transition-all duration-200 select-none cursor-pointer",
+                        isExpanded ? "bg-card shadow-lg ring-1 ring-border/50" : ""
                     )}
-                    onHoverStart={() => !isTouch && setIsHovered(true)}
-                    onHoverEnd={() => !isTouch && setIsHovered(false)}
+                    onMouseEnter={() => !isTouch && setIsHovered(true)}
+                    onMouseLeave={() => !isTouch && setIsHovered(false)}
                     onClick={() => {
                         if (isTouch) {
                             setIsOpen((prev) => !prev);
@@ -73,7 +71,7 @@ export default function LabProfile() {
                     <div className="relative z-10">
                         <ProfileDropdown isExpanded={isExpanded} />
                     </div>
-                </motion.div>
+                </div>
             </aside>
         </>
     );
