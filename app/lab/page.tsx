@@ -6,19 +6,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import {
-    FlaskConical,
-    BookOpen,
-    FileText,
-    StickyNote,
-    Lightbulb,
-    Trophy,
-    ArrowRight,
-    Sparkles,
-    Briefcase,
-} from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
-
 
 // Smooth spring animation config
 const smoothSpring = {
@@ -53,168 +42,6 @@ const itemVariants = {
     },
 };
 
-const cardVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: {
-            duration: 0.5,
-            ease: "easeOut" as const,
-        },
-    },
-};
-
-// Loading dots animation
-function LoadingDots() {
-    return (
-        <div className="flex min-h-screen items-center justify-center">
-            <div className="flex items-center gap-1.5">
-                {[0, 1, 2].map((i) => (
-                    <motion.div
-                        key={i}
-                        className="h-1.5 w-1.5 rounded-full bg-zinc-400"
-                        animate={{
-                            opacity: [0.2, 0.8, 0.2],
-                        }}
-                        transition={{
-                            duration: 1.4,
-                            repeat: Infinity,
-                            delay: i * 0.15,
-                            ease: "easeInOut",
-                        }}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-}
-
-// Lab sections data
-const labSections = [
-    {
-        href: "/lab/practice",
-        icon: FlaskConical,
-        title: "Practice",
-        description: "Master DSA with curated problem sets",
-        status: "active" as const,
-        gradient: "from-emerald-500/10 to-teal-500/10",
-        iconColor: "text-emerald-600 dark:text-emerald-400",
-        borderColor: "hover:border-emerald-500/30",
-    },
-    {
-        href: "/lab/hackathons",
-        icon: Trophy,
-        title: "Hackathons",
-        description: "Track and prepare for competitions",
-        status: "active" as const,
-        gradient: "from-amber-500/10 to-orange-500/10",
-        iconColor: "text-amber-600 dark:text-amber-400",
-        borderColor: "hover:border-amber-500/30",
-    },
-    {
-        href: "/lab/jobs",
-        icon: Briefcase,
-        title: "Jobs",
-        description: "Track job listings and applications",
-        status: "active" as const,
-        gradient: "from-cyan-500/10 to-sky-500/10",
-        iconColor: "text-cyan-600 dark:text-cyan-400",
-        borderColor: "hover:border-cyan-500/30",
-    },
-    {
-        href: "/lab/notes",
-        icon: StickyNote,
-        title: "Notes",
-        description: "Organize your learning journey",
-        status: "active" as const,
-        gradient: "from-violet-500/10 to-purple-500/10",
-        iconColor: "text-violet-600 dark:text-violet-400",
-        borderColor: "hover:border-violet-500/30",
-    },
-    {
-        href: "/lab/docs",
-        icon: BookOpen,
-        title: "Docs",
-        description: "Documentation and references",
-        status: "active" as const,
-        gradient: "from-blue-500/10 to-cyan-500/10",
-        iconColor: "text-blue-600 dark:text-blue-400",
-        borderColor: "hover:border-blue-500/30",
-    },
-    {
-        href: "/lab/experiments",
-        icon: Lightbulb,
-        title: "Experiments",
-        description: "Try new ideas and prototypes",
-        status: "active" as const,
-        gradient: "from-rose-500/10 to-pink-500/10",
-        iconColor: "text-rose-600 dark:text-rose-400",
-        borderColor: "hover:border-rose-500/30",
-    },
-];
-
-
-// Section Card Component
-function SectionCard({
-    section,
-    index,
-    onNavigate,
-}: {
-    section: (typeof labSections)[0];
-    index: number;
-    onNavigate: (href: string) => void;
-}) {
-    const [isHovered, setIsHovered] = useState(false);
-
-    return (
-        <motion.div
-            variants={cardVariants}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-            <motion.button
-                onClick={() => onNavigate(section.href)}
-                className={`group relative w-full text-left rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/50 dark:bg-zinc-900/30 backdrop-blur-sm p-6 transition-all duration-300 ${section.borderColor} hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50`}
-                whileHover={{ y: -4 }}
-                transition={smoothSpring}
-            >
-                {/* Gradient Background */}
-                <motion.div
-                    className={`absolute inset-0 rounded-2xl bg-linear-to-br ${section.gradient} opacity-0 transition-opacity duration-300`}
-                    animate={{ opacity: isHovered ? 1 : 0 }}
-                />
-
-                {/* Content */}
-                <div className="relative z-10">
-                    <div className="flex items-start justify-between">
-                        <div className={`p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 ${section.iconColor} transition-colors duration-300`}>
-                            <section.icon className="h-5 w-5" />
-                        </div>
-                        <motion.div
-                            className="text-zinc-400 dark:text-zinc-500"
-                            animate={{ x: isHovered ? 4 : 0, opacity: isHovered ? 1 : 0.5 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <ArrowRight className="h-4 w-4" />
-                        </motion.div>
-                    </div>
-
-                    <div className="mt-4 space-y-1.5">
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-lg tracking-tight">
-                            {section.title}
-                        </h3>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                            {section.description}
-                        </p>
-                    </div>
-                </div>
-            </motion.button>
-        </motion.div>
-    );
-}
-
 // Letter by letter animation component
 function AnimatedTitle({ text, className }: { text: string; className?: string }) {
     return (
@@ -241,8 +68,6 @@ export default function LabPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { isAuthenticated, isLoading, openLoginModal, user } = useAuth();
-    const [mounted, setMounted] = useState(false);
-
     // Check for login mode from URL
     useEffect(() => {
         if (searchParams.get("mode") === "login" && !isAuthenticated && !isLoading) {
@@ -251,22 +76,6 @@ export default function LabPage() {
             router.replace("/lab");
         }
     }, [searchParams, isAuthenticated, isLoading, openLoginModal, router]);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    const handleNavigate = (href: string) => {
-        if (!isAuthenticated) {
-            openLoginModal();
-            return;
-        }
-        router.push(href);
-    };
-
-    if (!mounted || isLoading) {
-        return <LoadingDots />;
-    }
 
     // Get current time-based greeting
     const getGreeting = () => {
@@ -351,7 +160,7 @@ export default function LabPage() {
                     <motion.header variants={itemVariants} className="space-y-4">
                         <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                             <Sparkles className="h-3.5 w-3.5" />
-                            <span>
+                            <span suppressHydrationWarning>
                                 {isAuthenticated && user
                                     ? `${getGreeting()}, ${user.username}`
                                     : "Welcome to the Lab"}

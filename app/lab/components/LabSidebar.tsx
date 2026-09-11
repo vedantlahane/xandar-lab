@@ -3,7 +3,8 @@
 "use client";
 
 import type { Transition } from "framer-motion";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -28,12 +29,7 @@ const NAV = [
 
 export default function LabSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
-
-  const handleNavigation = (href: string) => {
-    router.push(href);
-  };
 
   return (
     <>
@@ -54,14 +50,9 @@ export default function LabSidebar() {
             const isBig = index % 4 === 0;
 
             return (
-              <motion.button
-                layout="position"
-                transition={{ layout: smoothSpring }}
+              <Link
                 key={item.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleNavigation(item.href);
-                }}
+                href={item.href}
                 className="group flex items-center gap-3"
               >
                 <motion.div
@@ -98,7 +89,7 @@ export default function LabSidebar() {
                     </motion.span>
                   )}
                 </AnimatePresence>
-              </motion.button>
+              </Link>
             );
           })}
         </motion.div>

@@ -13,7 +13,9 @@ export interface BaseDrawerProps {
     defaultHeight?: number | string;
     headerLeft?: React.ReactNode;
     headerIconTools?: React.ReactNode;
+    headerRight?: React.ReactNode;
     backdropClass?: string;
+    windowClass?: string;
     children: React.ReactNode;
 }
 
@@ -24,7 +26,9 @@ export function BaseDrawer({
     defaultHeight = "80vh",
     headerLeft,
     headerIconTools,
+    headerRight,
     backdropClass = "bg-black/40 backdrop-blur-sm",
+    windowClass,
     children,
 }: BaseDrawerProps) {
     const [isMaximized, setIsMaximized] = useState(false);
@@ -94,7 +98,8 @@ export function BaseDrawer({
                 className={cn(
                     "pointer-events-auto absolute flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
                     !position && "relative", // relative when centered natively without position
-                    isMaximized ? "rounded-none" : "rounded-xl"
+                    isMaximized ? "rounded-none" : "rounded-xl",
+                    windowClass
                 )}
             >
                 {/* Header */}
@@ -106,7 +111,7 @@ export function BaseDrawer({
                         {headerLeft}
                     </div>
                     <div className="flex items-center gap-1">
-                        {headerIconTools}
+                        {headerIconTools || headerRight}
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMaximized(!isMaximized)}>
                             {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
                         </Button>

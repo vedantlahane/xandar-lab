@@ -1,5 +1,3 @@
-// app/lab/layout.tsx
-
 import LabSidebar from "./components/LabSidebar";
 import LabProfile from "./components/LabProfile";
 import { AuthProvider } from "@/components/auth/AuthContext";
@@ -12,7 +10,6 @@ export default function LabLayout({
   children: React.ReactNode;
 }) {
   return (
-
     <AuthProvider>
       <div className="flex min-h-screen">
         {/* Left Sidebar */}

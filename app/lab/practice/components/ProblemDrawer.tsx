@@ -4,8 +4,6 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Check,
@@ -1261,7 +1259,6 @@ ${prob.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
             )}
           </AnimatePresence>
         </div>
-      </motion.div>
 
       {/* Post-Solve Reflection Modal */}
       <AnimatePresence>

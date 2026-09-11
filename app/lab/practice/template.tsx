@@ -14,7 +14,6 @@
 
 "use client";
 
-import { useAuth } from "@/components/auth/AuthContext";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
@@ -23,18 +22,6 @@ export default function PracticeTemplate({
 }: {
   children: ReactNode;
 }) {
-  const { isLoading } = useAuth();
-
-  // Reserve header space during auth check so the mode switcher
-  // area doesn't flash empty → content
-  if (isLoading) {
-    return (
-      <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-        <div className="h-12 shrink-0 border-b border-border/40" />
-      </div>
-    );
-  }
-
   return (
     <motion.div
       className="flex flex-col flex-1 overflow-hidden min-h-0"

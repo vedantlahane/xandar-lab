@@ -7,6 +7,7 @@ export interface LabItemRowProps {
     onClick: (id: string, e: React.MouseEvent) => void;
     title: ReactNode;
     titleIcon?: ReactNode;
+    titleBadge?: ReactNode;
     subtitle?: ReactNode;
     tags?: ReactNode;
     hoverContent?: ReactNode;
@@ -18,6 +19,7 @@ export function LabItemRow({
     onClick,
     title,
     titleIcon,
+    titleBadge,
     subtitle,
     tags,
     hoverContent
@@ -41,6 +43,7 @@ export function LabItemRow({
                         )}>
                             {title}
                         </span>
+                        {titleBadge && titleBadge}
                     </div>
                     {subtitle && (
                         <div className="text-xs text-muted-foreground/70 line-clamp-1 pl-6">

@@ -364,6 +364,7 @@ export default function JobCanvas({
                                         data-category
                                         data-category-title={category.categoryName}
                                         className="space-y-5"
+                                    >
                                     <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
                                             <h2 className="text-lg font-semibold">{category.categoryName}</h2>
                                             <p className="text-sm text-muted-foreground">
