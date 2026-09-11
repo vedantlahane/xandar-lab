@@ -544,7 +544,7 @@ ${prob.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
                   </p>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                   <Button className="flex-1" asChild>
                     <a
                       href={problem.url}

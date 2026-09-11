@@ -112,7 +112,9 @@ export function ProblemRow({
             <div
               className={cn(
                 "flex items-center gap-1 transition-opacity",
-                showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                showActions
+                  ? "opacity-100"
+                  : "max-md:opacity-60 opacity-0 group-hover:opacity-100",
               )}
             >
               {/* Focus */}

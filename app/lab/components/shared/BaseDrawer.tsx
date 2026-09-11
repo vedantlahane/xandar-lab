@@ -69,18 +69,28 @@ export function BaseDrawer({
     children,
 }: BaseDrawerProps) {
     const [isMaximized, setIsMaximized] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const dragControls = useDragControls();
+
+    useEffect(() => {
+        const updateIsMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        updateIsMobile();
+        window.addEventListener("resize", updateIsMobile);
+        return () => window.removeEventListener("resize", updateIsMobile);
+    }, []);
 
     const [initialPos] = useState(() => calculateSafePos(position, defaultWidth, defaultHeight));
     const x = useMotionValue(initialPos.x);
     const y = useMotionValue(initialPos.y);
     const [prevPos, setPrevPos] = useState(initialPos);
 
-    // Keep window in bounds on viewport resize
+    // Keep window in bounds on viewport resize (desktop only)
     useEffect(() => {
         const handleResize = () => {
-            if (isMaximized) return;
+            if (isMaximized || isMobile) return;
             const widthNum = typeof defaultWidth === "number" ? defaultWidth : parseInt(defaultWidth as string, 10) || 700;
             const heightNum = typeof defaultHeight === "number" ? defaultHeight : parseInt(defaultHeight as string, 10) || 600;
             const maxX = Math.max(16, window.innerWidth - widthNum - 16);
@@ -90,7 +100,7 @@ export function BaseDrawer({
         };
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
-    }, [isMaximized, defaultWidth, defaultHeight, x, y]);
+    }, [isMaximized, isMobile, defaultWidth, defaultHeight, x, y]);
 
     // Close on Escape key
     useEffect(() => {
@@ -117,7 +127,7 @@ export function BaseDrawer({
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
-        if (isMaximized) return;
+        if (isMaximized || isMobile) return;
         const target = e.target as HTMLElement;
         if (target.closest("button, a, input, select, textarea, [role='button'], [data-no-drag]")) {
             return;
@@ -133,29 +143,39 @@ export function BaseDrawer({
                 className={cn("absolute inset-0 pointer-events-auto", backdropClass)}
             />
 
-            {/* Draggable Window */}
+            {/* Window / Bottom Sheet */}
             <motion.div
-                drag={!isMaximized}
-                dragControls={dragControls}
-                dragListener={false}
-                dragConstraints={containerRef}
+                drag={isMobile ? "y" : !isMaximized}
+                dragControls={isMobile ? undefined : dragControls}
+                dragListener={isMobile ? false : false}
+                dragConstraints={isMobile ? { top: 0, bottom: 0 } : containerRef}
+                dragElastic={isMobile ? { top: 0, bottom: 0.5 } : 0}
                 dragMomentum={false}
-                dragElastic={0}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{
+                onDragEnd={isMobile ? (e, info) => {
+                    if (info.offset.y > 100 || info.velocity.y > 300) {
+                        onClose();
+                    }
+                } : undefined}
+                initial={isMobile ? { opacity: 0, y: "100%" } : { opacity: 0, scale: 0.95 }}
+                animate={isMobile ? { opacity: 1, y: 0 } : {
                     opacity: 1,
                     scale: 1,
                     width: isMaximized ? "100vw" : defaultWidth,
                     height: isMaximized ? "100vh" : defaultHeight,
                 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={isMobile ? { opacity: 0, y: "100%" } : { opacity: 0, scale: 0.95 }}
                 transition={{
                     type: "spring",
                     damping: 30,
                     stiffness: 400,
                     mass: 0.8,
                 }}
-                style={{
+                style={isMobile ? {
+                    width: "100vw",
+                    maxWidth: "100vw",
+                    height: isMaximized ? "100vh" : "88vh",
+                    maxHeight: "92vh",
+                } : {
                     x,
                     y,
                     width: isMaximized ? "100vw" : defaultWidth,
@@ -164,43 +184,57 @@ export function BaseDrawer({
                     maxHeight: isMaximized ? "100vh" : "calc(100vh - 32px)",
                 }}
                 className={cn(
-                    "pointer-events-auto absolute top-0 left-0 flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
-                    isMaximized ? "rounded-none" : "rounded-xl",
+                    "pointer-events-auto absolute flex flex-col bg-card shadow-2xl border border-border overflow-hidden",
+                    isMobile
+                        ? "bottom-0 left-0 right-0 top-auto rounded-t-2xl rounded-b-none border-x-0 border-b-0"
+                        : cn("top-0 left-0", isMaximized ? "rounded-none" : "rounded-xl"),
                     windowClass
                 )}
             >
+                {/* Mobile Drag Indicator Handle */}
+                {isMobile && (
+                    <div className="flex justify-center pt-2.5 pb-1 bg-muted/30 cursor-grab active:cursor-grabbing border-b border-border/20">
+                        <div className="h-1.5 w-12 rounded-full bg-muted-foreground/30" />
+                    </div>
+                )}
+
                 {/* Header / Draggable Title Bar */}
                 <div
                     className={cn(
                         "flex items-center justify-between border-b border-border/40 px-4 py-3 bg-muted/30 select-none",
-                        !isMaximized && "cursor-grab active:cursor-grabbing"
+                        !isMaximized && !isMobile && "cursor-grab active:cursor-grabbing"
                     )}
                     onPointerDown={handlePointerDown}
                     onDoubleClick={toggleMaximize}
                 >
-                    <div className="flex items-center gap-3">
-                        <GripHorizontal className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                    <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-0.5">
+                        {!isMobile && (
+                            <GripHorizontal className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                        )}
                         {headerLeft}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
                         {headerIconTools || headerRight}
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6"
+                            className={cn(isMobile ? "h-8 w-8" : "h-6 w-6")}
                             onClick={toggleMaximize}
                             title={isMaximized ? "Restore down" : "Maximize"}
                         >
-                            {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                            {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                         </Button>
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
+                            className={cn(
+                                "hover:bg-destructive/10 hover:text-destructive",
+                                isMobile ? "h-8 w-8" : "h-6 w-6"
+                            )}
                             onClick={onClose}
                             title="Close"
                         >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>

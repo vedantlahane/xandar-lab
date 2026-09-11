@@ -25,13 +25,13 @@ export function ModuleHeader({ modes, activeLayoutId, children }: ModuleHeaderPr
   return (
     <header
       className={cn(
-        "h-12 flex-shrink-0 flex items-center px-6",
+        "h-12 flex-shrink-0 flex items-center px-3 sm:px-6",
         "border-b border-border/40 bg-card/80 backdrop-blur-sm z-50 relative"
       )}
     >
-      <div className="flex-1" />
+      <div className="flex-1 hidden sm:block" />
 
-      <nav className="flex items-center gap-1">
+      <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-full">
         {modes.map((mode) => {
           let isActive = false;
           if (mode.match) {

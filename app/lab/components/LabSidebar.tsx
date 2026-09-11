@@ -5,7 +5,7 @@
 import type { Transition } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -30,18 +30,108 @@ const NAV = [
 export default function LabSidebar() {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPeeking, setIsPeeking] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchMovedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsTouch(window.matchMedia("(pointer: coarse)").matches);
+    }
+  }, []);
+
+  // Close when pathname changes
+  useEffect(() => {
+    setIsOpen(false);
+    setIsPeeking(false);
+  }, [pathname]);
+
+  const isExpanded = isHovered || isOpen || isPeeking;
+
+  const handleTouchStart = () => {
+    touchMovedRef.current = false;
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    // 180ms hold triggers peek mode
+    holdTimerRef.current = setTimeout(() => {
+      if (!touchMovedRef.current) {
+        setIsPeeking(true);
+      }
+    }, 180);
+  };
+
+  const handleTouchMove = () => {
+    touchMovedRef.current = true;
+  };
+
+  const handleTouchEnd = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    if (isPeeking) {
+      setIsPeeking(false);
+    } else if (!touchMovedRef.current) {
+      // Short tap toggles open / closed
+      setIsOpen((prev) => !prev);
+    }
+  };
+
+  const handleTouchCancel = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    setIsPeeking(false);
+  };
 
   return (
     <>
+      {/* Outside Tap Backdrop to dismiss open capsule on touch */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-30 bg-black/20 backdrop-blur-[2px]"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Main Navigation */}
-      <aside className="fixed left-0 top-0 z-40 flex h-full items-center justify-start pl-4 pointer-events-none">
+      <aside className="fixed left-0 top-0 z-40 flex h-full items-center justify-start pl-2 sm:pl-4 pointer-events-none">
         <motion.div
           layout
           transition={{ layout: smoothSpring }}
-          className="pointer-events-auto relative flex flex-col gap-3 py-4 pr-4"
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
+          className={cn(
+            "pointer-events-auto relative flex flex-col gap-3 transition-all duration-300 select-none",
+            isTouch
+              ? cn(
+                  "border shadow-lg transition-colors",
+                  isExpanded
+                    ? "p-3.5 rounded-2xl bg-card/95 dark:bg-zinc-900/95 backdrop-blur-xl border-border/80 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 min-w-[170px]"
+                    : "py-3.5 px-2.5 rounded-2xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-md border-border/40 shadow-sm"
+                )
+              : "py-4 pr-4"
+          )}
+          onHoverStart={() => !isTouch && setIsHovered(true)}
+          onHoverEnd={() => !isTouch && setIsHovered(false)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
         >
+          {/* Touch capsule indicator hint */}
+          {isTouch && isExpanded && (
+            <div className="flex items-center justify-between pb-1 px-1 text-[11px] font-semibold tracking-wider text-muted-foreground/60 uppercase border-b border-border/40">
+              <span>Navigation</span>
+              <span className="text-[9px] lowercase opacity-70">tap outside to close</span>
+            </div>
+          )}
+
           {NAV.map((item, index) => {
             const isActive =
               pathname === item.href ||
@@ -53,26 +143,33 @@ export default function LabSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="group flex items-center gap-3"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsPeeking(false);
+                }}
+                className={cn(
+                  "group flex items-center gap-3 rounded-lg transition-colors",
+                  isTouch && isExpanded && "px-1.5 py-1 hover:bg-muted/40 active:bg-muted/60"
+                )}
               >
                 <motion.div
                   layout
                   transition={smoothSpring}
                   className={cn(
-                    "h-1 rounded-full transition-all duration-300",
+                    "h-1 rounded-full transition-all duration-300 shrink-0",
                     isActive
                       ? "bg-primary"
                       : cn("bg-muted-foreground/30 group-hover:bg-gradient-to-r group-hover:animate-gradient", item.hoverGradient)
                   )}
                   animate={{
-                    width: isHovered ? 6 : isBig ? 24 : 12,
-                    height: isHovered ? 6 : 4,
-                    opacity: isHovered ? 0 : 1,
+                    width: isExpanded ? 6 : isBig ? 24 : 12,
+                    height: isExpanded ? 6 : 4,
+                    opacity: isExpanded ? 0 : 1,
                   }}
                 />
 
                 <AnimatePresence initial={false}>
-                  {isHovered && (
+                  {isExpanded && (
                     <motion.span
                       initial={{ opacity: 0, width: 0, x: -10 }}
                       animate={{ opacity: 1, width: "auto", x: 0 }}
@@ -94,7 +191,6 @@ export default function LabSidebar() {
           })}
         </motion.div>
       </aside>
-
     </>
   );
 }

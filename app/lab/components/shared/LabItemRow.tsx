@@ -58,7 +58,7 @@ export function LabItemRow({
                 </div>
 
                 {hoverContent && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3 max-md:opacity-70 opacity-0 transition-opacity group-hover:opacity-100">
                         {hoverContent}
                     </div>
                 )}
