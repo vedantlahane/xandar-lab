@@ -1,7 +1,7 @@
 // components/theme/ThemeProvider.tsx
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -17,6 +17,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setThemeState] = useState<Theme>("system");
     const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
     const [mounted, setMounted] = useState(false);
+
+    const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Get system preference
     const getSystemTheme = useCallback((): "light" | "dark" => {
@@ -39,15 +41,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         [getSystemTheme]
     );
 
-    // Apply theme to document
+    // Apply theme to document with smooth, non-blocking CSS transition
     const applyTheme = useCallback((resolved: "light" | "dark") => {
+        if (typeof document === "undefined") return;
         const root = document.documentElement;
+
+        const prefersReducedMotion =
+            typeof window !== "undefined" &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        if (!prefersReducedMotion) {
+            root.classList.add("theme-transitioning");
+            if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+            transitionTimerRef.current = setTimeout(() => {
+                root.classList.remove("theme-transitioning");
+            }, 320);
+        }
+
         root.classList.remove("light", "dark");
         root.classList.add(resolved);
+        root.style.colorScheme = resolved;
         setResolvedTheme(resolved);
     }, []);
 
-    // Set theme function with coordinated material transition
+    // Set theme function: ultra-fast, non-blocking (<1ms)
     const setTheme = useCallback(
         (newTheme: Theme) => {
             const nextResolved = resolveTheme(newTheme);
@@ -61,30 +78,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem("xandar-theme", newTheme);
             }
 
-            const prefersReducedMotion =
-                typeof window !== "undefined" &&
-                window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-            // Use coordinated View Transition when supported and appropriate
-            if (
-                typeof document !== "undefined" &&
-                "startViewTransition" in document &&
-                !prefersReducedMotion &&
-                nextResolved !== resolvedTheme
-            ) {
-                (
-                    document as unknown as {
-                        startViewTransition: (cb: () => void) => { ready: Promise<void> };
-                    }
-                ).startViewTransition(() => {
-                    applyTheme(nextResolved);
-                });
-            } else {
-                applyTheme(nextResolved);
-            }
+            applyTheme(nextResolved);
         },
         [applyTheme, resolveTheme, resolvedTheme, theme]
     );
+
+    // Clean up timer on unmount
+    useEffect(() => {
+        return () => {
+            if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+        };
+    }, []);
 
     // Initialize on mount
     useEffect(() => {

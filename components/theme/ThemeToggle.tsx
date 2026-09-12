@@ -35,7 +35,7 @@ export function ThemeToggle() {
             <motion.div
                 layout
                 transition={smoothSpring}
-                className="flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 p-1"
+                className="flex items-center gap-1 rounded-full nav-blur-surface-capsule border border-border/40 p-1 shadow-sm"
             >
                 <AnimatePresence mode="wait">
                     {isExpanded ? (
@@ -53,7 +53,12 @@ export function ThemeToggle() {
                                 return (
                                     <motion.button
                                         key={t.id}
-                                        onClick={() => setTheme(t.id)}
+                                        type="button"
+                                        aria-label={t.label}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setTheme(t.id);
+                                        }}
                                         className={`relative flex h-7 w-7 items-center justify-center rounded-full transition-colors ${isActive
                                                 ? "text-zinc-900 dark:text-zinc-100"
                                                 : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"

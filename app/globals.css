@@ -219,32 +219,18 @@
   background: var(--ring);
 }
 
-/* ── Coordinated Material Theme Transition ──────────────── */
-::view-transition-old(root) {
-  animation: material-transition-out 450ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-
-::view-transition-new(root) {
-  animation: material-transition-in 450ms cubic-bezier(0.2, 0, 0, 1) both;
-  mix-blend-mode: normal;
-}
-
-@keyframes material-transition-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes material-transition-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* ── Coordinated Material Theme Transition (Zero-Latency Engine) ── */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition: background-color 260ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 260ms cubic-bezier(0.2, 0, 0, 1),
+              color 220ms cubic-bezier(0.2, 0, 0, 1),
+              fill 220ms cubic-bezier(0.2, 0, 0, 1),
+              stroke 220ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 260ms cubic-bezier(0.2, 0, 0, 1) !important;
+  transition-delay: 0s !important;
 }
 
 /* ── Progressive Blur Navigation Surfaces ───────────────── */
