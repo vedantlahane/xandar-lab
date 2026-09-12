@@ -11,12 +11,10 @@ export function HackathonDrawer({
     hackathon,
     onClose,
     position,
-    originRect,
 }: {
     hackathon: Hackathon;
     onClose: () => void;
     position: { x: number; y: number };
-    originRect?: { top: number; left: number; width: number; height: number };
 }) {
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -69,7 +67,6 @@ export function HackathonDrawer({
         <BaseDrawer
             onClose={onClose}
             position={position}
-            originRect={originRect}
             defaultWidth="700px"
             defaultHeight="550px"
             headerLeft={headerLeft}

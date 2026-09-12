@@ -1,7 +1,7 @@
 // app/lab/experiments/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import CategorySidebar from "./components/CategorySidebar";
 import ExperimentCanvas from "./components/ExperimentCanvas";
 import { ExperimentDrawer } from "./components/ExperimentDrawer";
@@ -24,12 +24,11 @@ export default function ExperimentsPage() {
                 />
             )}
             renderSidebar={() => <CategorySidebar />}
-            renderDrawer={({ item, position, originRect, onClose }) => (
+            renderDrawer={({ item, position, onClose }) => (
                 <ExperimentDrawer
                     key={item.id}
                     experiment={item}
                     position={position}
-                    originRect={originRect}
                     onClose={onClose}
                 />
             )}

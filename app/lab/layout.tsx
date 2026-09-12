@@ -4,7 +4,6 @@ import { MobileNav } from "./components/MobileNav";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ThemeToggleWrapper } from "@/components/theme/ThemeToggleWrapper";
-import { SpatialPageContainer } from "@/components/spatial/SpatialPageContainer";
 
 export default function LabLayout({
   children,
@@ -26,11 +25,9 @@ export default function LabLayout({
           <MobileNav />
         </div>
 
-        {/* Main Lab Content with Spatial Surface Reconfiguration */}
+        {/* Main Lab Content */}
         <main className="flex-1 overflow-hidden">
-          <SpatialPageContainer>
-            {children}
-          </SpatialPageContainer>
+          {children}
         </main>
 
         {/* Global Login Modal */}

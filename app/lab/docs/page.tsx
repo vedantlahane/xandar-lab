@@ -24,12 +24,11 @@ export default function DocsPage() {
                 />
             )}
             renderSidebar={() => <SectionSidebar />}
-            renderDrawer={({ item, position, originRect, onClose }) => (
+            renderDrawer={({ item, position, onClose }) => (
                 <DocumentDrawer
                     key={item.id}
                     document={item}
                     position={position}
-                    originRect={originRect}
                     onClose={onClose}
                 />
             )}

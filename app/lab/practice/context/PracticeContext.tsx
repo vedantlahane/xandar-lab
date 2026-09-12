@@ -17,7 +17,6 @@ import { type DSAProblem, SHEET } from "../data/sheet";
 export interface DrawerState {
   problemId: string;
   position: { x: number; y: number };
-  originRect?: { top: number; left: number; width: number; height: number };
 }
 
 interface PracticeContextValue {
@@ -65,19 +64,7 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
         ? { x: event.clientX, y: event.clientY }
         : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-      let originRect: { top: number; left: number; width: number; height: number } | undefined;
-      const target = (event?.currentTarget as HTMLElement) || (event?.target as HTMLElement)?.closest("button");
-      if (target && typeof target.getBoundingClientRect === "function") {
-        const rect = target.getBoundingClientRect();
-        originRect = {
-          top: Math.round(rect.top),
-          left: Math.round(rect.left),
-          width: Math.round(rect.width),
-          height: Math.round(rect.height),
-        };
-      }
-
-      setActiveDrawer({ problemId, position, originRect });
+      setActiveDrawer({ problemId, position });
     },
     [],
   );

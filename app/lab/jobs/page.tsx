@@ -24,12 +24,11 @@ export default function JobsPage() {
                     onJobSelect={onSelect}
                 />
             )}
-            renderDrawer={({ item, position, originRect, onClose }) => (
+            renderDrawer={({ item, position, onClose }) => (
                 <JobDrawer
                     key={item.id}
                     job={item}
                     position={position}
-                    originRect={originRect}
                     onClose={onClose}
                 />
             )}

@@ -219,19 +219,6 @@
   background: var(--ring);
 }
 
-/* ── Coordinated Material Theme Transition (Zero-Latency Engine) ── */
-.theme-transitioning,
-.theme-transitioning *,
-.theme-transitioning *::before,
-.theme-transitioning *::after {
-  transition: background-color 260ms cubic-bezier(0.2, 0, 0, 1),
-              border-color 260ms cubic-bezier(0.2, 0, 0, 1),
-              color 220ms cubic-bezier(0.2, 0, 0, 1),
-              fill 220ms cubic-bezier(0.2, 0, 0, 1),
-              stroke 220ms cubic-bezier(0.2, 0, 0, 1),
-              box-shadow 260ms cubic-bezier(0.2, 0, 0, 1) !important;
-  transition-delay: 0s !important;
-}
 
 /* ── Progressive Blur Navigation Surfaces ───────────────── */
 .nav-blur-surface-left {

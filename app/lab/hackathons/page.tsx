@@ -24,12 +24,11 @@ export default function HackathonsPage() {
                 />
             )}
             renderSidebar={() => <MonthSidebar />}
-            renderDrawer={({ item, position, originRect, onClose }) => (
+            renderDrawer={({ item, position, onClose }) => (
                 <HackathonDrawer
                     key={item.id}
                     hackathon={item}
                     position={position}
-                    originRect={originRect}
                     onClose={onClose}
                 />
             )}

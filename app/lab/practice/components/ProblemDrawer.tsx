@@ -75,12 +75,10 @@ export function ProblemDrawer({
   problem,
   onClose,
   position,
-  originRect,
 }: {
   problem: DSAProblem;
   onClose: () => void;
   position: { x: number; y: number };
-  originRect?: { top: number; left: number; width: number; height: number };
 }) {
   const [activeTab, setActiveTab] = useState<
     "details" | "attempts" | "explain"
@@ -510,7 +508,6 @@ ${prob.tags?.map((tag) => `- ${tag}`).join("\n") || "No tags available"}
     <BaseDrawer
       onClose={onClose}
       position={position}
-      originRect={originRect}
       defaultWidth="700px"
       defaultHeight="600px"
       headerLeft={headerLeft}

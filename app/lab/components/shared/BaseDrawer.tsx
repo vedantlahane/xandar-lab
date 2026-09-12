@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 export interface BaseDrawerProps {
     onClose: () => void;
     position?: { x: number; y: number };
-    originRect?: { top: number; left: number; width: number; height: number };
     defaultWidth?: number | string;
     defaultHeight?: number | string;
     headerLeft?: React.ReactNode;
@@ -60,7 +59,6 @@ function calculateSafePos(
 export function BaseDrawer({
     onClose,
     position,
-    originRect,
     defaultWidth = "700px",
     defaultHeight = "600px",
     headerLeft,
@@ -85,7 +83,24 @@ export function BaseDrawer({
     }, []);
 
     const [initialPos] = useState(() => calculateSafePos(position, defaultWidth, defaultHeight));
+    const x = useMotionValue(initialPos.x);
+    const y = useMotionValue(initialPos.y);
     const [prevPos, setPrevPos] = useState(initialPos);
+
+    // Keep window in bounds on viewport resize (desktop only)
+    useEffect(() => {
+        const handleResize = () => {
+            if (isMaximized || isMobile) return;
+            const widthNum = typeof defaultWidth === "number" ? defaultWidth : parseInt(defaultWidth as string, 10) || 700;
+            const heightNum = typeof defaultHeight === "number" ? defaultHeight : parseInt(defaultHeight as string, 10) || 600;
+            const maxX = Math.max(16, window.innerWidth - widthNum - 16);
+            const maxY = Math.max(16, window.innerHeight - heightNum - 16);
+            if (x.get() > maxX) x.set(maxX);
+            if (y.get() > maxY) y.set(maxY);
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [isMaximized, isMobile, defaultWidth, defaultHeight, x, y]);
 
     // Close on Escape key
     useEffect(() => {
@@ -99,7 +114,16 @@ export function BaseDrawer({
     }, [onClose]);
 
     const toggleMaximize = () => {
-        setIsMaximized((prev) => !prev);
+        if (!isMaximized) {
+            setPrevPos({ x: x.get(), y: y.get() });
+            x.set(0);
+            y.set(0);
+            setIsMaximized(true);
+        } else {
+            x.set(prevPos.x);
+            y.set(prevPos.y);
+            setIsMaximized(false);
+        }
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
@@ -111,63 +135,11 @@ export function BaseDrawer({
         dragControls.start(e);
     };
 
-    // Subtle origin settlement (Apple-grade inspector feel)
-    const nudgeY = originRect ? Math.max(-12, Math.min(12, Math.round((originRect.top - initialPos.y) * 0.08))) : 8;
-
-    const desktopInitial = {
-        opacity: 0,
-        scale: 0.99,
-        x: initialPos.x,
-        y: initialPos.y + nudgeY,
-        width: defaultWidth,
-        height: defaultHeight,
-        borderRadius: "12px",
-    };
-
-    const desktopAnimate = {
-        opacity: 1,
-        scale: 1,
-        x: isMaximized ? 0 : initialPos.x,
-        y: isMaximized ? 0 : initialPos.y,
-        width: isMaximized ? "100vw" : defaultWidth,
-        height: isMaximized ? "100vh" : defaultHeight,
-        borderRadius: isMaximized ? "0px" : "12px",
-    };
-
-    const desktopExit = {
-        opacity: 0,
-        scale: 0.99,
-        x: isMaximized ? 0 : initialPos.x,
-        y: isMaximized ? 0 : initialPos.y + nudgeY,
-    };
-
-    const mobileInitial = {
-        opacity: 0,
-        y: "25%",
-        scale: 0.99,
-    };
-
-    const mobileAnimate = {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-    };
-
-    const mobileExit = {
-        opacity: 0,
-        y: "25%",
-        scale: 0.99,
-    };
-
     return (
         <div ref={containerRef} className="fixed inset-0 z-50 pointer-events-none">
             {/* Backdrop */}
-            <motion.div
+            <div
                 onClick={onClose}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
                 className={cn("absolute inset-0 pointer-events-auto", backdropClass)}
             />
 
@@ -184,12 +156,19 @@ export function BaseDrawer({
                         onClose();
                     }
                 } : undefined}
-                initial={isMobile ? mobileInitial : desktopInitial}
-                animate={isMobile ? mobileAnimate : desktopAnimate}
-                exit={isMobile ? mobileExit : desktopExit}
+                initial={isMobile ? { opacity: 0, y: "100%" } : { opacity: 0, scale: 0.95 }}
+                animate={isMobile ? { opacity: 1, y: 0 } : {
+                    opacity: 1,
+                    scale: 1,
+                    width: isMaximized ? "100vw" : defaultWidth,
+                    height: isMaximized ? "100vh" : defaultHeight,
+                }}
+                exit={isMobile ? { opacity: 0, y: "100%" } : { opacity: 0, scale: 0.95 }}
                 transition={{
-                    duration: 0.38,
-                    ease: [0.2, 0, 0, 1],
+                    type: "spring",
+                    damping: 30,
+                    stiffness: 400,
+                    mass: 0.8,
                 }}
                 style={isMobile ? {
                     width: "100vw",
@@ -197,6 +176,10 @@ export function BaseDrawer({
                     height: isMaximized ? "100vh" : "88vh",
                     maxHeight: "92vh",
                 } : {
+                    x,
+                    y,
+                    width: isMaximized ? "100vw" : defaultWidth,
+                    height: isMaximized ? "100vh" : defaultHeight,
                     maxWidth: isMaximized ? "100vw" : "calc(100vw - 32px)",
                     maxHeight: isMaximized ? "100vh" : "calc(100vh - 32px)",
                 }}

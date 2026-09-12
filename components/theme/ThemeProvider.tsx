@@ -1,7 +1,7 @@
 // components/theme/ThemeProvider.tsx
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -17,8 +17,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setThemeState] = useState<Theme>("system");
     const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
     const [mounted, setMounted] = useState(false);
-
-    const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Get system preference
     const getSystemTheme = useCallback((): "light" | "dark" => {
@@ -41,54 +39,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         [getSystemTheme]
     );
 
-    // Apply theme to document with smooth, non-blocking CSS transition
+    // Apply theme to document
     const applyTheme = useCallback((resolved: "light" | "dark") => {
-        if (typeof document === "undefined") return;
         const root = document.documentElement;
-
-        const prefersReducedMotion =
-            typeof window !== "undefined" &&
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-        if (!prefersReducedMotion) {
-            root.classList.add("theme-transitioning");
-            if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-            transitionTimerRef.current = setTimeout(() => {
-                root.classList.remove("theme-transitioning");
-            }, 320);
-        }
-
         root.classList.remove("light", "dark");
         root.classList.add(resolved);
-        root.style.colorScheme = resolved;
         setResolvedTheme(resolved);
     }, []);
 
-    // Set theme function: ultra-fast, non-blocking (<1ms)
+    // Set theme function
     const setTheme = useCallback(
         (newTheme: Theme) => {
-            const nextResolved = resolveTheme(newTheme);
-
-            if (nextResolved === resolvedTheme && newTheme === theme) {
-                return;
-            }
-
             setThemeState(newTheme);
             if (typeof window !== "undefined") {
                 localStorage.setItem("xandar-theme", newTheme);
             }
-
-            applyTheme(nextResolved);
+            applyTheme(resolveTheme(newTheme));
         },
-        [applyTheme, resolveTheme, resolvedTheme, theme]
+        [applyTheme, resolveTheme]
     );
-
-    // Clean up timer on unmount
-    useEffect(() => {
-        return () => {
-            if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-        };
-    }, []);
 
     // Initialize on mount
     useEffect(() => {
