@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
@@ -42,20 +42,21 @@ const itemVariants = {
     },
 };
 
-// Letter by letter animation component
+// Animated text component
 function AnimatedTitle({ text, className }: { text: string; className?: string }) {
     return (
-        <span className={className}>
+        <span className={className || "inline-flex"}>
             {text.split("").map((char, i) => (
                 <motion.span
                     key={i}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
-                        duration: 0.4,
+                        duration: 0.3,
                         delay: i * 0.03,
                         ease: "easeOut",
                     }}
+                    className="inline-block"
                 >
                     {char}
                 </motion.span>
@@ -66,16 +67,18 @@ function AnimatedTitle({ text, className }: { text: string; className?: string }
 
 export default function LabPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const { isAuthenticated, isLoading, openLoginModal, user } = useAuth();
     // Check for login mode from URL
     useEffect(() => {
-        if (searchParams.get("mode") === "login" && !isAuthenticated && !isLoading) {
-            openLoginModal();
-            // Clean up the URL
-            router.replace("/lab");
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("mode") === "login" && !isAuthenticated && !isLoading) {
+                openLoginModal();
+                // Clean up the URL
+                router.replace("/lab");
+            }
         }
-    }, [searchParams, isAuthenticated, isLoading, openLoginModal, router]);
+    }, [isAuthenticated, isLoading, openLoginModal, router]);
 
     // Get current time-based greeting
     const getGreeting = () => {

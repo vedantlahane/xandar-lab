@@ -88,11 +88,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         return () => mediaQuery.removeEventListener("change", handleChange);
     }, [theme, mounted, applyTheme, getSystemTheme]);
 
-    // Prevent flash of wrong theme
-    if (!mounted) {
-        return null;
-    }
-
     const contextValue = useMemo(
         () => ({ theme, resolvedTheme, setTheme }),
         [theme, resolvedTheme, setTheme]

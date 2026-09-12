@@ -1,9 +1,9 @@
-﻿// components/auth/ProfileDropdown.tsx
+// components/auth/ProfileDropdown.tsx
 "use client";
 
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { User, Settings, LogOut, ChevronUp, Activity, Shield, Layers, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthContext";
@@ -34,13 +34,12 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
     const { isAuthenticated, user, logout, openLoginModal } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const searchParams = useSearchParams();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setIsOpen(false);
-    }, [pathname, searchParams]);
+    }, [pathname]);
 
     // Single hook covers both click-outside and Escape â€” only active when open
     useClickOutside(dropdownRef, () => setIsOpen(false), isOpen);
@@ -181,7 +180,9 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                         {/* Nav items */}
                         <div className="p-1 space-y-0.5">
                             {MENU_ITEMS.map((item, index) => {
-                                const currentTab = searchParams.get("tab") || "stats";
+                                const currentTab = typeof window !== "undefined"
+                                    ? new URLSearchParams(window.location.search).get("tab") || "stats"
+                                    : "stats";
                                 const isProfilePath = pathname === "/lab/profile";
                                 const itemTabMatch = item.path.match(/tab=([^&]+)/);
                                 const itemTab = itemTabMatch ? itemTabMatch[1] : null;

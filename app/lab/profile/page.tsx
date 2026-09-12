@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,16 +97,26 @@ type TabType = "stats" | "profile" | "sessions" | "password" | "danger";
 export default function ProfilePage() {
     const { user, isLoading, isAuthenticated, logout, updateUser } = useAuth();
     const router = useRouter();
-    const searchParams = useSearchParams();
-
     // Initialize tab from query param or default to "stats"
     const [activeTab, setActiveTab] = useState<TabType>(() => {
-        const tabParam = searchParams.get("tab");
-        if (tabParam && ["stats", "profile", "sessions", "password", "danger"].includes(tabParam)) {
-            return tabParam as TabType;
+        if (typeof window !== "undefined") {
+            const tabParam = new URLSearchParams(window.location.search).get("tab");
+            if (tabParam && ["stats", "profile", "sessions", "password", "danger"].includes(tabParam)) {
+                return tabParam as TabType;
+            }
         }
         return "stats";
     });
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const tabParam = new URLSearchParams(window.location.search).get("tab");
+            if (tabParam && ["stats", "profile", "sessions", "password", "danger"].includes(tabParam)) {
+                setActiveTab(tabParam as TabType);
+            }
+        }
+    }, []);
+
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [fetchingProfile, setFetchingProfile] = useState(true);
 
