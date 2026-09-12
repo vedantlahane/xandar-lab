@@ -53,7 +53,7 @@ export default function LabProfile() {
                 <div
                     className={cn(
                         "pointer-events-auto relative rounded-2xl transition-all duration-200 select-none cursor-pointer",
-                        isExpanded ? "bg-card shadow-lg ring-1 ring-border/50" : ""
+                        isExpanded ? "nav-blur-surface-capsule shadow-xl ring-1 ring-border/40" : ""
                     )}
                     onMouseEnter={() => !isTouch && setIsHovered(true)}
                     onMouseLeave={() => !isTouch && setIsHovered(false)}

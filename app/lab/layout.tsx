@@ -1,5 +1,6 @@
 import LabSidebar from "./components/LabSidebar";
 import LabProfile from "./components/LabProfile";
+import { MobileNav } from "./components/MobileNav";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ThemeToggleWrapper } from "@/components/theme/ThemeToggleWrapper";
@@ -13,9 +14,17 @@ export default function LabLayout({
   return (
     <AuthProvider>
       <div className="flex min-h-screen">
-        {/* Left Sidebar */}
-        <LabSidebar />
-        <LabProfile />
+        {/* Desktop Sidebar & Widgets (>= 768px) */}
+        <div className="hidden md:block">
+          <LabSidebar />
+          <LabProfile />
+          <ThemeToggleWrapper />
+        </div>
+
+        {/* Dedicated Non-Overlapping Mobile Navigation (< 768px) */}
+        <div className="md:hidden">
+          <MobileNav />
+        </div>
 
         {/* Main Lab Content with Spatial Surface Reconfiguration */}
         <main className="flex-1 overflow-hidden">
@@ -24,13 +33,9 @@ export default function LabLayout({
           </SpatialPageContainer>
         </main>
 
-        {/* Theme Toggle - Bottom Right */}
-        <ThemeToggleWrapper />
-
         {/* Global Login Modal */}
         <LoginModal />
       </div>
     </AuthProvider>
-
   );
 }

@@ -118,7 +118,7 @@ export function BaseSidebar({ activeId, categories }: BaseSidebarProps) {
                 />
             )}
 
-            <aside className="fixed right-0 top-0 z-40 flex h-full items-center pr-2 sm:pr-6 pointer-events-none">
+            <aside className="hidden md:flex fixed right-0 top-0 z-40 h-full items-center pr-2 sm:pr-6 pointer-events-none">
                 <AnimatePresence>
                     {categories.length > 0 && (
                         <div
@@ -126,7 +126,7 @@ export function BaseSidebar({ activeId, categories }: BaseSidebarProps) {
                             className={cn(
                                 "pointer-events-auto relative flex flex-col gap-3 max-h-[65vh] overflow-y-auto no-scrollbar select-none transition-all duration-200",
                                 isExpanded
-                                    ? "p-3.5 rounded-xl bg-card border border-border/50 shadow-lg min-w-[160px]"
+                                    ? "py-3.5 pr-3.5 pl-8 rounded-2xl nav-blur-surface-right border-y border-r border-border/40 shadow-2xl min-w-[170px]"
                                     : "py-4 pr-3 pl-4 bg-transparent"
                             )}
                             onMouseEnter={() => !isTouch && setIsHovered(true)}

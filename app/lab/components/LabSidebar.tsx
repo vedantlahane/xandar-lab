@@ -104,7 +104,7 @@ export default function LabSidebar() {
           className={cn(
             "pointer-events-auto relative flex flex-col gap-3 transition-all duration-200 select-none",
             isExpanded
-              ? "p-3.5 rounded-xl bg-card border border-border/50 shadow-lg min-w-[160px]"
+              ? "py-3.5 pl-3.5 pr-8 rounded-2xl nav-blur-surface-left border-y border-l border-border/40 shadow-2xl min-w-[170px]"
               : "py-4 pr-4 bg-transparent"
           )}
           onMouseEnter={() => !isTouch && setIsHovered(true)}
