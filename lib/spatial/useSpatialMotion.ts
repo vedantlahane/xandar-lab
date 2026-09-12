@@ -3,7 +3,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SPATIAL_EASING, DURATION_SPATIAL, DURATION_MICRO, DURATION_MAJOR } from "./constants";
+import {
+  CONTINUITY_EASING,
+  DURATION_PAGE,
+  DURATION_MICRO,
+  DURATION_DRAWER,
+} from "./constants";
 import type { Transition } from "framer-motion";
 
 export function usePrefersReducedMotion(): boolean {
@@ -11,9 +16,7 @@ export function usePrefersReducedMotion(): boolean {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-color-scheme: reduce)");
     const motionMq = window.matchMedia("(prefers-reduced-motion: reduce)");
-
     setReducedMotion(motionMq.matches);
 
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
@@ -24,34 +27,34 @@ export function usePrefersReducedMotion(): boolean {
   return reducedMotion;
 }
 
-export function useSpatialTransitions() {
+export function useContinuityTransitions() {
   const reducedMotion = usePrefersReducedMotion();
 
-  const spatialTransition: Transition = reducedMotion
+  const pageTransition: Transition = reducedMotion
     ? { duration: 0.01 }
     : {
-        duration: DURATION_SPATIAL,
-        ease: SPATIAL_EASING,
+        duration: DURATION_PAGE,
+        ease: CONTINUITY_EASING,
       };
 
   const microTransition: Transition = reducedMotion
     ? { duration: 0.01 }
     : {
         duration: DURATION_MICRO,
-        ease: SPATIAL_EASING,
+        ease: CONTINUITY_EASING,
       };
 
-  const majorTransition: Transition = reducedMotion
+  const drawerTransition: Transition = reducedMotion
     ? { duration: 0.01 }
     : {
-        duration: DURATION_MAJOR,
-        ease: SPATIAL_EASING,
+        duration: DURATION_DRAWER,
+        ease: CONTINUITY_EASING,
       };
 
   return {
     reducedMotion,
-    spatialTransition,
+    pageTransition,
     microTransition,
-    majorTransition,
+    drawerTransition,
   };
 }

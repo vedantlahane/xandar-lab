@@ -5,6 +5,8 @@
 import { Search, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { CONTINUITY_EASING } from "@/lib/spatial/constants";
 
 interface SearchBarProps {
   query: string;
@@ -27,15 +29,19 @@ export function SearchBar({
 }: SearchBarProps) {
   return (
     <div className="flex gap-3">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <motion.div
+        layoutId="xandar-shared-search-frame"
+        transition={{ duration: 0.32, ease: CONTINUITY_EASING }}
+        className="relative flex-1"
+      >
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
         <Input
           placeholder={placeholder}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          className="pl-9 bg-background/50 border-border/50 focus:border-primary/50 text-sm h-10 transition-all hover:bg-background/80"
+          className="pl-9 bg-background/50 border-border/50 focus:border-primary/50 text-sm h-10 transition-colors hover:bg-background/80"
         />
-      </div>
+      </motion.div>
       {onRandom && (
         <Button
           variant="outline"

@@ -53,12 +53,7 @@ export function ThemeToggle() {
                                 return (
                                     <motion.button
                                         key={t.id}
-                                        onClick={(e) => {
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            const x = rect.left + rect.width / 2;
-                                            const y = rect.top + rect.height / 2;
-                                            setTheme(t.id, { x, y });
-                                        }}
+                                        onClick={() => setTheme(t.id)}
                                         className={`relative flex h-7 w-7 items-center justify-center rounded-full transition-colors ${isActive
                                                 ? "text-zinc-900 dark:text-zinc-100"
                                                 : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"

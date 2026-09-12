@@ -111,19 +111,14 @@ export function BaseDrawer({
         dragControls.start(e);
     };
 
-    // Calculate physical unfolding variants based on originRect and platform
-    const desktopInitial = originRect ? {
-        opacity: 0.85,
-        x: originRect.left,
-        y: originRect.top,
-        width: originRect.width,
-        height: originRect.height,
-        borderRadius: "8px",
-    } : {
+    // Subtle origin settlement (Apple-grade inspector feel)
+    const nudgeY = originRect ? Math.max(-12, Math.min(12, Math.round((originRect.top - initialPos.y) * 0.08))) : 8;
+
+    const desktopInitial = {
         opacity: 0,
-        scale: 0.95,
+        scale: 0.99,
         x: initialPos.x,
-        y: initialPos.y,
+        y: initialPos.y + nudgeY,
         width: defaultWidth,
         height: defaultHeight,
         borderRadius: "12px",
@@ -139,22 +134,17 @@ export function BaseDrawer({
         borderRadius: isMaximized ? "0px" : "12px",
     };
 
-    const desktopExit = originRect ? {
+    const desktopExit = {
         opacity: 0,
-        x: originRect.left,
-        y: originRect.top,
-        width: originRect.width,
-        height: originRect.height,
-        borderRadius: "8px",
-    } : {
-        opacity: 0,
-        scale: 0.95,
+        scale: 0.99,
+        x: isMaximized ? 0 : initialPos.x,
+        y: isMaximized ? 0 : initialPos.y + nudgeY,
     };
 
     const mobileInitial = {
-        opacity: 0.5,
-        y: originRect ? Math.max(60, originRect.top - 60) : "100%",
-        scale: 0.96,
+        opacity: 0,
+        y: "25%",
+        scale: 0.99,
     };
 
     const mobileAnimate = {
@@ -165,8 +155,8 @@ export function BaseDrawer({
 
     const mobileExit = {
         opacity: 0,
-        y: originRect ? Math.max(60, originRect.top - 60) : "100%",
-        scale: 0.96,
+        y: "25%",
+        scale: 0.99,
     };
 
     return (
@@ -177,7 +167,7 @@ export function BaseDrawer({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
+                transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
                 className={cn("absolute inset-0 pointer-events-auto", backdropClass)}
             />
 
@@ -198,10 +188,8 @@ export function BaseDrawer({
                 animate={isMobile ? mobileAnimate : desktopAnimate}
                 exit={isMobile ? mobileExit : desktopExit}
                 transition={{
-                    type: "spring",
-                    damping: 32,
-                    stiffness: 360,
-                    mass: 0.7,
+                    duration: 0.38,
+                    ease: [0.2, 0, 0, 1],
                 }}
                 style={isMobile ? {
                     width: "100vw",
