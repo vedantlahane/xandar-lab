@@ -1,7 +1,7 @@
 // components/theme/ThemeProvider.tsx
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -42,19 +42,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Apply theme to document
     const applyTheme = useCallback((resolved: "light" | "dark") => {
         const root = document.documentElement;
-        root.classList.remove("light", "dark");
-        root.classList.add(resolved);
+        if (!root.classList.contains(resolved)) {
+            root.classList.remove("light", "dark");
+            root.classList.add(resolved);
+        }
+        root.style.colorScheme = resolved;
         setResolvedTheme(resolved);
     }, []);
 
     // Set theme function
     const setTheme = useCallback(
         (newTheme: Theme) => {
+            const nextResolved = resolveTheme(newTheme);
             setThemeState(newTheme);
             if (typeof window !== "undefined") {
                 localStorage.setItem("xandar-theme", newTheme);
             }
-            applyTheme(resolveTheme(newTheme));
+            applyTheme(nextResolved);
         },
         [applyTheme, resolveTheme]
     );
@@ -89,8 +93,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         return null;
     }
 
+    const contextValue = useMemo(
+        () => ({ theme, resolvedTheme, setTheme }),
+        [theme, resolvedTheme, setTheme]
+    );
+
     return (
-        <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+        <ThemeContext.Provider value={contextValue}>
             {children}
         </ThemeContext.Provider>
     );

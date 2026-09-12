@@ -28,8 +28,8 @@ export function LabItemRow({
         <button
             onClick={(e) => onClick(id, e)}
             className={cn(
-                "group relative w-full border-b border-border/40 px-3.5 sm:px-4 py-2.5 sm:py-3 text-left backdrop-blur-md",
-                "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10",
+                "group relative w-full border-b border-border/40 px-3.5 sm:px-4 py-2.5 sm:py-3 text-left",
+                "transition-colors hover:bg-white/5 dark:hover:bg-white/5",
                 isActive && "bg-white/10 dark:bg-white/10"
             )}
         >

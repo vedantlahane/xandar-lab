@@ -326,8 +326,8 @@ export default function IdeasCatalogPage() {
                         key={idea._id}
                         onClick={() => router.push(`/lab/ideas/${idea.slug}`)}
                         className={cn(
-                          "group relative w-full border-b border-border/40 px-4 py-4 text-left backdrop-blur-md",
-                          "transition-all hover:bg-linear-to-r hover:from-white/5 hover:to-white/10 dark:hover:from-white/5 dark:hover:to-white/10"
+                          "group relative w-full border-b border-border/40 px-4 py-4 text-left",
+                          "transition-colors hover:bg-white/5 dark:hover:bg-white/5"
                         )}
                       >
                         <div className="flex flex-col gap-2">
