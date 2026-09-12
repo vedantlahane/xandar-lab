@@ -28,6 +28,7 @@ export function DrawerOverlay() {
             key={activeDrawer.problemId}
             problem={problem}
             position={activeDrawer.position}
+            originRect={activeDrawer.originRect}
             onClose={closeDrawer}
           />
         </div>

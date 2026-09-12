@@ -24,11 +24,12 @@ export default function NotesPage() {
                 />
             )}
             renderSidebar={() => <GroupSidebar />}
-            renderDrawer={({ item, position, onClose }) => (
+            renderDrawer={({ item, position, originRect, onClose }) => (
                 <NoteDrawer
                     key={item.id}
                     note={item}
                     position={position}
+                    originRect={originRect}
                     onClose={onClose}
                 />
             )}

@@ -8,7 +8,7 @@ type Theme = "light" | "dark" | "system";
 interface ThemeContextType {
     theme: Theme;
     resolvedTheme: "light" | "dark";
-    setTheme: (theme: Theme) => void;
+    setTheme: (theme: Theme, origin?: { x: number; y: number }) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -47,14 +47,97 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setResolvedTheme(resolved);
     }, []);
 
-    // Set theme function
+    // Set theme function with origin-based planar spatial transition
     const setTheme = useCallback(
-        (newTheme: Theme) => {
+        (newTheme: Theme, origin?: { x: number; y: number }) => {
+            const nextResolved = resolveTheme(newTheme);
+
+            if (nextResolved === resolvedTheme && newTheme === theme) {
+                return;
+            }
+
             setThemeState(newTheme);
-            localStorage.setItem("xandar-theme", newTheme);
-            applyTheme(resolveTheme(newTheme));
+            if (typeof window !== "undefined") {
+                localStorage.setItem("xandar-theme", newTheme);
+            }
+
+            const prefersReducedMotion =
+                typeof window !== "undefined" &&
+                window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            // Use origin-based planar View Transition when supported and appropriate
+            if (
+                typeof document !== "undefined" &&
+                "startViewTransition" in document &&
+                !prefersReducedMotion &&
+                nextResolved !== resolvedTheme
+            ) {
+                const originX = origin?.x ?? (typeof window !== "undefined" ? window.innerWidth - 48 : 0);
+                const originY = origin?.y ?? (typeof window !== "undefined" ? window.innerHeight - 48 : 0);
+
+                const transition = (
+                    document as unknown as {
+                        startViewTransition: (cb: () => void) => { ready: Promise<void> };
+                    }
+                ).startViewTransition(() => {
+                    applyTheme(nextResolved);
+                });
+
+                transition.ready
+                    .then(() => {
+                        const maxDim = Math.max(window.innerWidth, window.innerHeight);
+                        const R = Math.round(maxDim * 2.2);
+
+                        // Animate incoming theme view with planar diamond sweep
+                        document.documentElement.animate(
+                            [
+                                {
+                                    clipPath: `polygon(${originX}px ${originY}px, ${originX}px ${originY}px, ${originX}px ${originY}px, ${originX}px ${originY}px)`,
+                                    transform: "scale(1.008)",
+                                    transformOrigin: `${originX}px ${originY}px`,
+                                },
+                                {
+                                    clipPath: `polygon(${originX}px ${originY - R}px, ${originX + R}px ${originY}px, ${originX}px ${originY + R}px, ${originX - R}px ${originY}px)`,
+                                    transform: "scale(1)",
+                                    transformOrigin: `${originX}px ${originY}px`,
+                                },
+                            ],
+                            {
+                                duration: 620,
+                                easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+                                pseudoElement: "::view-transition-new(root)",
+                            }
+                        );
+
+                        // Animate outgoing theme view with subtle scale relaxation
+                        document.documentElement.animate(
+                            [
+                                {
+                                    transform: "scale(1)",
+                                    opacity: 1,
+                                    transformOrigin: `${originX}px ${originY}px`,
+                                },
+                                {
+                                    transform: "scale(0.994)",
+                                    opacity: 0.95,
+                                    transformOrigin: `${originX}px ${originY}px`,
+                                },
+                            ],
+                            {
+                                duration: 620,
+                                easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+                                pseudoElement: "::view-transition-old(root)",
+                            }
+                        );
+                    })
+                    .catch(() => {
+                        applyTheme(nextResolved);
+                    });
+            } else {
+                applyTheme(nextResolved);
+            }
         },
-        [applyTheme, resolveTheme]
+        [applyTheme, resolveTheme, resolvedTheme, theme]
     );
 
     // Initialize on mount

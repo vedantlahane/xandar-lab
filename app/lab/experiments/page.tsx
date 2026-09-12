@@ -24,11 +24,12 @@ export default function ExperimentsPage() {
                 />
             )}
             renderSidebar={() => <CategorySidebar />}
-            renderDrawer={({ item, position, onClose }) => (
+            renderDrawer={({ item, position, originRect, onClose }) => (
                 <ExperimentDrawer
                     key={item.id}
                     experiment={item}
                     position={position}
+                    originRect={originRect}
                     onClose={onClose}
                 />
             )}

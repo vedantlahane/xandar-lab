@@ -7,7 +7,12 @@ export interface LabPageLayoutProps<T> {
     getItemId: (item: T) => string;
     renderCanvas: (props: { activeId: string | null; onSelect: (id: string, event: React.MouseEvent) => void }) => ReactNode;
     renderSidebar?: () => ReactNode;
-    renderDrawer: (props: { item: T; position: { x: number; y: number }; onClose: () => void }) => ReactNode;
+    renderDrawer: (props: {
+        item: T;
+        position: { x: number; y: number };
+        originRect?: { top: number; left: number; width: number; height: number };
+        onClose: () => void;
+    }) => ReactNode;
     header?: ReactNode;
 }
 
@@ -21,6 +26,7 @@ export function LabPageLayout<T>({
 }: LabPageLayoutProps<T>) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
+    const [originRect, setOriginRect] = useState<{ top: number; left: number; width: number; height: number } | undefined>(undefined);
     const { isAuthenticated, openLoginModal } = useAuth();
 
     const itemIndex = useMemo(() => {
@@ -37,6 +43,18 @@ export function LabPageLayout<T>({
             return;
         }
         setClickPosition({ x: event.clientX, y: event.clientY });
+        const target = (event.currentTarget as HTMLElement) || (event.target as HTMLElement)?.closest("button");
+        if (target && typeof target.getBoundingClientRect === "function") {
+            const rect = target.getBoundingClientRect();
+            setOriginRect({
+                top: Math.round(rect.top),
+                left: Math.round(rect.left),
+                width: Math.round(rect.width),
+                height: Math.round(rect.height),
+            });
+        } else {
+            setOriginRect(undefined);
+        }
         setActiveId(id);
     };
 
@@ -64,7 +82,11 @@ export function LabPageLayout<T>({
                         {renderDrawer({
                             item: activeItem,
                             position: clickPosition,
-                            onClose: () => setActiveId(null),
+                            originRect,
+                            onClose: () => {
+                                setActiveId(null);
+                                setOriginRect(undefined);
+                            },
                         })}
                     </div>
                 )}

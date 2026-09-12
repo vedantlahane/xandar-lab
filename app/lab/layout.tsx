@@ -3,6 +3,7 @@ import LabProfile from "./components/LabProfile";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ThemeToggleWrapper } from "@/components/theme/ThemeToggleWrapper";
+import { SpatialPageContainer } from "@/components/spatial/SpatialPageContainer";
 
 export default function LabLayout({
   children,
@@ -16,9 +17,11 @@ export default function LabLayout({
         <LabSidebar />
         <LabProfile />
 
-        {/* Main Lab Content */}
+        {/* Main Lab Content with Spatial Surface Reconfiguration */}
         <main className="flex-1 overflow-hidden">
-          {children}
+          <SpatialPageContainer>
+            {children}
+          </SpatialPageContainer>
         </main>
 
         {/* Theme Toggle - Bottom Right */}

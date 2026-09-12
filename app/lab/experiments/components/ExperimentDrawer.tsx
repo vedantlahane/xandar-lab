@@ -11,10 +11,12 @@ export function ExperimentDrawer({
     experiment,
     onClose,
     position,
+    originRect,
 }: {
     experiment: Experiment;
     onClose: () => void;
     position: { x: number; y: number };
+    originRect?: { top: number; left: number; width: number; height: number };
 }) {
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -59,6 +61,7 @@ export function ExperimentDrawer({
         <BaseDrawer
             onClose={onClose}
             position={position}
+            originRect={originRect}
             defaultWidth="700px"
             defaultHeight="550px"
             headerLeft={headerLeft}

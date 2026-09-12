@@ -13,10 +13,12 @@ export function DocumentDrawer({
     document,
     onClose,
     position,
+    originRect,
 }: {
     document: Document;
     onClose: () => void;
     position: { x: number; y: number };
+    originRect?: { top: number; left: number; width: number; height: number };
 }) {
     const [copied, setCopied] = useState(false);
 
@@ -70,6 +72,7 @@ export function DocumentDrawer({
         <BaseDrawer
             onClose={onClose}
             position={position}
+            originRect={originRect}
             defaultWidth="700px"
             defaultHeight="500px"
             headerLeft={headerLeft}

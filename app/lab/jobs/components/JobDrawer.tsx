@@ -35,10 +35,12 @@ export function JobDrawer({
     job,
     onClose,
     position,
+    originRect,
 }: {
     job: Job;
     onClose: () => void;
     position: { x: number; y: number };
+    originRect?: { top: number; left: number; width: number; height: number };
 }) {
     const [activeTab, setActiveTab] = useState<"details" | "tracking">("details");
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -183,6 +185,7 @@ export function JobDrawer({
         <BaseDrawer
             onClose={onClose}
             position={position}
+            originRect={originRect}
             defaultWidth="700px"
             defaultHeight="600px"
             headerLeft={headerLeft}

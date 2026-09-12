@@ -12,10 +12,12 @@ export function NoteDrawer({
     note,
     onClose,
     position,
+    originRect,
 }: {
     note: Note;
     onClose: () => void;
     position: { x: number; y: number };
+    originRect?: { top: number; left: number; width: number; height: number };
 }) {
     const [copied, setCopied] = useState(false);
 
@@ -93,6 +95,7 @@ export function NoteDrawer({
         <BaseDrawer
             onClose={onClose}
             position={position}
+            originRect={originRect}
             defaultWidth="700px"
             defaultHeight="550px"
             headerLeft={headerLeft}

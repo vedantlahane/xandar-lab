@@ -10,9 +10,13 @@ import type { IIdea } from "@/models/Idea";
 export function IdeaDrawer({
     idea,
     onClose,
+    position,
+    originRect,
 }: {
     idea: IIdea;
     onClose: () => void;
+    position?: { x: number; y: number };
+    originRect?: { top: number; left: number; width: number; height: number };
 }) {
     const [hasVoted, setHasVoted] = useState(false);
     const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
@@ -63,6 +67,8 @@ export function IdeaDrawer({
     return (
         <BaseDrawer
             onClose={onClose}
+            position={position}
+            originRect={originRect}
             defaultWidth="800px"
             defaultHeight="80vh"
             headerLeft={headerLeft}
