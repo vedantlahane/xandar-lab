@@ -103,7 +103,7 @@ export function BaseDrawer({
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
-        if (isMaximized || isMobile) return;
+        if (isMaximized) return;
         const target = e.target as HTMLElement;
         if (target.closest("button, a, input, select, textarea, [role='button'], [data-no-drag]")) {
             return;
@@ -174,10 +174,10 @@ export function BaseDrawer({
             {/* Window / Bottom Sheet */}
             <motion.div
                 drag={isMobile ? "y" : !isMaximized}
-                dragControls={isMobile ? undefined : dragControls}
+                dragControls={dragControls}
                 dragListener={false}
                 dragConstraints={isMobile ? { top: 0, bottom: 0 } : containerRef}
-                dragElastic={isMobile ? { top: 0, bottom: 0.5 } : 0}
+                dragElastic={isMobile ? { top: 0.05, bottom: 0.7 } : 0}
                 dragMomentum={false}
                 onDragEnd={isMobile ? (e, info) => {
                     if (info.offset.y > 100 || info.velocity.y > 300) {
@@ -210,7 +210,10 @@ export function BaseDrawer({
             >
                 {/* Mobile Drag Indicator Handle */}
                 {isMobile && (
-                    <div className="flex justify-center pt-2.5 pb-1 bg-muted/30 cursor-grab active:cursor-grabbing border-b border-border/20">
+                    <div
+                        onPointerDown={(e) => dragControls.start(e)}
+                        className="flex justify-center pt-2.5 pb-2 bg-muted/30 cursor-grab active:cursor-grabbing border-b border-border/20 touch-none select-none"
+                    >
                         <div className="h-1.5 w-12 rounded-full bg-muted-foreground/30" />
                     </div>
                 )}
@@ -219,7 +222,7 @@ export function BaseDrawer({
                 <div
                     className={cn(
                         "flex items-center justify-between border-b border-border/40 px-4 py-3 bg-muted/30 select-none",
-                        !isMaximized && !isMobile && "cursor-grab active:cursor-grabbing"
+                        !isMaximized && (isMobile ? "cursor-grab active:cursor-grabbing touch-none" : "cursor-grab active:cursor-grabbing")
                     )}
                     onPointerDown={handlePointerDown}
                     onDoubleClick={toggleMaximize}

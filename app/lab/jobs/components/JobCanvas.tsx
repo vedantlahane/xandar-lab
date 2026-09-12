@@ -8,7 +8,6 @@ import {
     Layers, GraduationCap, Clock4, FileSignature, Handshake,
     Wifi, Building, Globe,
     Linkedin, Code2, Github,
-    ArrowUpDown, ChevronDown, ChevronUp,
     Tag, DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +16,8 @@ import { useAuth } from "@/components/auth/AuthContext";
 import JobSidebar from "./JobSidebar";
 import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
 import { LabItemRow } from "@/app/lab/components/shared/LabItemRow";
+import { CanvasSortSelect } from "@/app/lab/components/shared/CanvasSortSelect";
+import { CanvasStatsCard } from "@/app/lab/components/shared/CanvasStatsCard";
 
 interface JobCanvasProps {
     activeJobId: string | null;
@@ -168,26 +169,15 @@ export default function JobCanvas({
         <>
 
                                 {/* Stats card */}
-                                <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                        <Briefcase className="h-4 w-4 text-cyan-500" />
-                                        Overview
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-2 text-center">
-                                        <div>
-                                            <div className="text-lg font-bold text-foreground">{totalCount}</div>
-                                            <div className="text-[10px] text-muted-foreground">Total</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-lg font-bold text-emerald-500">{remoteCount}</div>
-                                            <div className="text-[10px] text-muted-foreground">Remote</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-lg font-bold text-blue-500">{internCount}</div>
-                                            <div className="text-[10px] text-muted-foreground">Interns</div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <CanvasStatsCard
+                                    icon={Briefcase}
+                                    iconColor="text-cyan-500"
+                                    stats={[
+                                        { label: "Total", value: totalCount },
+                                        { label: "Remote", value: remoteCount, color: "text-emerald-500" },
+                                        { label: "Interns", value: internCount, color: "text-blue-500" },
+                                    ]}
+                                />
 
                                 {/* ── Job Type ── */}
                                 <div className="space-y-0.5">
@@ -301,39 +291,13 @@ export default function JobCanvas({
                                 </div>
 
                                 {/* ── Sort ── */}
-                                <div className="space-y-1">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
-                                        <ArrowUpDown className="h-3 w-3" />
-                                        Sort by
-                                    </h3>
-                                    <div className="space-y-0.5">
-                                        {SORT_ITEMS.map((item) => {
-                                            const isActive = sortOption === item.value;
-                                            return (
-                                                <button
-                                                    key={item.value}
-                                                    onClick={() => {
-                                                        if (isActive) setSortDesc(!sortDesc);
-                                                        else { setSortOption(item.value); setSortDesc(true); }
-                                                    }}
-                                                    className={cn(
-                                                        "flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                                                        isActive
-                                                            ? "bg-primary/10 text-primary font-medium"
-                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
-                                                    )}
-                                                >
-                                                    <span>{item.label}</span>
-                                                    {isActive ? (
-                                                        sortDesc ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />
-                                                    ) : (
-                                                        <ArrowUpDown className="h-3 w-3 opacity-30" />
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                                <CanvasSortSelect
+                                    items={SORT_ITEMS}
+                                    currentSort={sortOption}
+                                    sortDesc={sortDesc}
+                                    onSortChange={setSortOption}
+                                    onSortDescChange={setSortDesc}
+                                />
         </>
     );
 
@@ -342,7 +306,7 @@ export default function JobCanvas({
             <JobSidebar />
             <BaseCanvas scrollId="jobs-scroll-container" sidebarContent={sidebarContent}>
                             {/* Sticky search bar */}
-                            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
+                            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-2.5 sm:py-4">
                                 <SearchBar
                                     query={searchQuery}
                                     onQueryChange={setSearchQuery}

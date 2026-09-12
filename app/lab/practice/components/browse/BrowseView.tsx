@@ -221,9 +221,9 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
             </aside>
 
             {/* ── Right column: Search + Problem list ── */}
-            <div className="space-y-4 pb-48 pt-8">
+            <div className="space-y-4 pb-36 md:pb-48 pt-2 sm:pt-4 md:pt-8">
               {/* Sticky search bar + Mobile Filter Button */}
-              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
+              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-2.5 sm:py-4">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <SearchBar
@@ -238,7 +238,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
                     variant="outline"
                     size="sm"
                     onClick={() => setShowMobileFilters(true)}
-                    className="md:hidden h-9 px-3 flex items-center gap-1.5 shrink-0 rounded-xl border-border bg-card/60 backdrop-blur-sm"
+                    className="md:hidden h-8 px-2.5 flex items-center gap-1.5 shrink-0 rounded-xl border-border/50 bg-card/60 backdrop-blur-sm"
                   >
                     <SlidersHorizontal className="h-3.5 w-3.5" />
                     <span className="text-xs font-medium">Filters</span>
@@ -285,7 +285,7 @@ export function BrowseView({ activeProblemId, onProblemSelect }: BrowseViewProps
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="relative z-10 w-full max-h-[85vh] bg-card border-t border-border rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
+              className="relative z-10 w-full max-h-[85vh] nav-blur-surface-capsule border-t border-border/40 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden"
             >
               <div className="flex items-center justify-between p-4 border-b border-border/40 bg-muted/20">
                 <div className="flex items-center gap-2">

@@ -56,11 +56,11 @@ export function MobileNav() {
     <>
       {/* Floating Bottom Dock */}
       <nav aria-label="Mobile Navigation" className="fixed bottom-3 left-3 right-3 z-40 max-w-sm mx-auto pointer-events-none">
-        <div className="pointer-events-auto flex items-center justify-between px-3 py-1.5 rounded-2xl nav-blur-surface-capsule border border-border/40 shadow-xl">
+        <div className="pointer-events-auto flex items-center justify-between px-3 py-1.5 rounded-2xl nav-blur-surface-capsule shadow-xl">
           {/* Active Route & Menu Trigger */}
           <button
             onClick={() => setIsOpen(true)}
-            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-muted/40 active:bg-muted/60 transition-colors"
+            className="flex items-center gap-2.5 px-2.5 py-1 rounded-xl hover:bg-muted/40 active:bg-muted/60 transition-colors"
           >
             <div
               className={cn(
@@ -137,7 +137,7 @@ export function MobileNav() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="relative z-10 w-full max-w-sm rounded-3xl nav-blur-surface-capsule border border-border/50 shadow-2xl p-4 flex flex-col gap-3 max-h-[80vh] overflow-y-auto"
+              className="relative z-10 w-full max-w-sm rounded-3xl nav-blur-surface-capsule shadow-2xl p-4 flex flex-col gap-2.5 max-h-[80vh] overflow-y-auto"
             >
               {/* Sheet Header */}
               <div className="flex items-center justify-between pb-2 border-b border-border/30">

@@ -7,13 +7,14 @@ import {
     Beaker, Calendar, GitBranch, ExternalLink,
     Layers, Activity, CheckCircle2, Archive, ClipboardList,
     Monitor, Server, Boxes, Brain, Smartphone, Settings,
-    ArrowUpDown, ChevronDown, ChevronUp,
     Tag
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
 import { LabItemRow } from "@/app/lab/components/shared/LabItemRow";
+import { CanvasSortSelect } from "@/app/lab/components/shared/CanvasSortSelect";
+import { CanvasStatsCard } from "@/app/lab/components/shared/CanvasStatsCard";
 
 interface ExperimentCanvasProps {
     activeExpId: string | null;
@@ -133,26 +134,15 @@ export default function ExperimentCanvas({
             sidebarContent={
                 <>
                     {/* Stats card */}
-                    <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-3.5 space-y-2">
-                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                            <Beaker className="h-4 w-4 text-rose-500" />
-                            Overview
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                            <div>
-                                <div className="text-lg font-bold text-foreground">{totalCount}</div>
-                                <div className="text-[10px] text-muted-foreground">Total</div>
-                            </div>
-                            <div>
-                                <div className="text-lg font-bold text-green-500">{activeCount}</div>
-                                <div className="text-[10px] text-muted-foreground">Active</div>
-                            </div>
-                            <div>
-                                <div className="text-lg font-bold text-blue-500">{completedCount}</div>
-                                <div className="text-[10px] text-muted-foreground">Done</div>
-                            </div>
-                        </div>
-                    </div>
+                    <CanvasStatsCard
+                        icon={Beaker}
+                        iconColor="text-rose-500"
+                        stats={[
+                            { label: "Total", value: totalCount },
+                            { label: "Active", value: activeCount, color: "text-green-500" },
+                            { label: "Done", value: completedCount, color: "text-blue-500" },
+                        ]}
+                    />
 
                     {/* ── Status ── */}
                     <div className="space-y-0.5">
@@ -240,44 +230,18 @@ export default function ExperimentCanvas({
                     </div>
 
                     {/* ── Sort ── */}
-                    <div className="space-y-1">
-                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
-                            <ArrowUpDown className="h-3 w-3" />
-                            Sort by
-                        </h3>
-                        <div className="space-y-0.5">
-                            {SORT_ITEMS.map((item) => {
-                                const isActive = sortOption === item.value;
-                                return (
-                                    <button
-                                        key={item.value}
-                                        onClick={() => {
-                                            if (isActive) setSortDesc(!sortDesc);
-                                            else { setSortOption(item.value); setSortDesc(true); }
-                                        }}
-                                        className={cn(
-                                            "flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                                            isActive
-                                                ? "bg-primary/10 text-primary font-medium"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
-                                        )}
-                                    >
-                                        <span>{item.label}</span>
-                                        {isActive ? (
-                                            sortDesc ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />
-                                        ) : (
-                                            <ArrowUpDown className="h-3 w-3 opacity-30" />
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <CanvasSortSelect
+                        items={SORT_ITEMS}
+                        currentSort={sortOption}
+                        sortDesc={sortDesc}
+                        onSortChange={setSortOption}
+                        onSortDescChange={setSortDesc}
+                    />
                 </>
             }
         >
             {/* Sticky search bar */}
-            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
+            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-2.5 sm:py-4">
                 <SearchBar
                     query={searchQuery}
                     onQueryChange={setSearchQuery}

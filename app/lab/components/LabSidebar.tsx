@@ -102,10 +102,10 @@ export default function LabSidebar() {
       <aside className="fixed left-0 top-0 z-40 flex h-full items-center justify-start pl-2 sm:pl-4 pointer-events-none">
         <div
           className={cn(
-            "pointer-events-auto relative flex flex-col gap-3 transition-all duration-200 select-none",
+            "pointer-events-auto relative flex flex-col gap-1.5 transition-all duration-200 select-none",
             isExpanded
-              ? "py-3.5 pl-3.5 pr-8 rounded-2xl nav-blur-surface-left border-y border-l border-border/40 shadow-2xl min-w-[170px]"
-              : "py-4 pr-4 bg-transparent"
+              ? "py-2.5 pl-3 pr-5 rounded-2xl nav-blur-surface-left shadow-2xl min-w-[150px]"
+              : "py-2.5 pr-3 bg-transparent"
           )}
           onMouseEnter={() => !isTouch && setIsHovered(true)}
           onMouseLeave={() => !isTouch && setIsHovered(false)}
@@ -130,7 +130,7 @@ export default function LabSidebar() {
                   setIsPeeking(false);
                 }}
                 className={cn(
-                  "group flex items-center gap-3 py-1 rounded-md transition-colors",
+                  "group flex items-center gap-2.5 py-0.5 rounded-md transition-colors",
                   isExpanded && "px-1.5 hover:bg-muted/40 active:bg-muted/60"
                 )}
               >

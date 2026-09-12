@@ -124,10 +124,10 @@ export function BaseSidebar({ activeId, categories }: BaseSidebarProps) {
                         <div
                             ref={scrollRef}
                             className={cn(
-                                "pointer-events-auto relative flex flex-col gap-3 max-h-[65vh] overflow-y-auto no-scrollbar select-none transition-all duration-200",
+                                "pointer-events-auto relative flex flex-col gap-1.5 max-h-[65vh] overflow-y-auto no-scrollbar select-none transition-all duration-200",
                                 isExpanded
-                                    ? "py-3.5 pr-3.5 pl-8 rounded-2xl nav-blur-surface-right border-y border-r border-border/40 shadow-2xl min-w-[170px]"
-                                    : "py-4 pr-3 pl-4 bg-transparent"
+                                    ? "py-2.5 pr-3 pl-5 rounded-2xl nav-blur-surface-right shadow-2xl min-w-[150px]"
+                                    : "py-2.5 pr-2.5 pl-3 bg-transparent"
                             )}
                             onMouseEnter={() => !isTouch && setIsHovered(true)}
                             onMouseLeave={() => !isTouch && setIsHovered(false)}
@@ -146,7 +146,7 @@ export function BaseSidebar({ activeId, categories }: BaseSidebarProps) {
                                         id={`sidebar-item-${section.id}`}
                                         onClick={() => scrollToSection(section.id)}
                                         className={cn(
-                                            "group flex flex-row-reverse items-center gap-3 py-1 rounded-md transition-colors",
+                                            "group flex flex-row-reverse items-center gap-2.5 py-0.5 rounded-md transition-colors",
                                             isExpanded && "px-1.5 hover:bg-muted/40 active:bg-muted/60"
                                         )}
                                     >

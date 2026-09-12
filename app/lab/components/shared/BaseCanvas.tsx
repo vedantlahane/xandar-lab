@@ -30,12 +30,12 @@ export function BaseCanvas({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
                     {/* Mobile Filter Trigger */}
                     {sidebarContent && (
-                        <div className="md:hidden flex justify-end pt-3 -mb-2">
+                        <div className="md:hidden flex justify-end pt-2 pb-1">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setShowMobileSidebar(true)}
-                                className="h-8 px-2.5 flex items-center gap-1.5 rounded-xl border-border bg-card/60 backdrop-blur-sm"
+                                className="h-8 px-2.5 flex items-center gap-1.5 rounded-xl border-border/50 bg-card/60 backdrop-blur-sm"
                             >
                                 <SlidersHorizontal className="h-3.5 w-3.5" />
                                 <span className="text-xs font-medium">Filters & Options</span>
@@ -44,7 +44,7 @@ export function BaseCanvas({
                     )}
 
                     <div className={cn(
-                        "grid gap-10 min-h-full",
+                        "grid gap-6 md:gap-10 min-h-full",
                         sidebarContent ? "grid-cols-1 md:grid-cols-[240px_1fr]" : "grid-cols-1"
                     )}>
                         {/* ── Left column ── */}
@@ -57,7 +57,7 @@ export function BaseCanvas({
                         )}
                         
                         {/* ── Right column ── */}
-                        <div className={cn("space-y-4 pb-48 pt-8", rightColumnClass)}>
+                        <div className={cn("space-y-4 pb-36 md:pb-48 pt-2 sm:pt-4 md:pt-8", rightColumnClass)}>
                              {children}
                         </div>
 
@@ -81,7 +81,7 @@ export function BaseCanvas({
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                            className="relative z-10 w-full max-h-[85vh] bg-card border-t border-border rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
+                            className="relative z-10 w-full max-h-[85vh] nav-blur-surface-capsule border-t border-border/40 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden"
                         >
                             <div className="flex items-center justify-between p-4 border-b border-border/40 bg-muted/20">
                                 <div className="flex items-center gap-2">
