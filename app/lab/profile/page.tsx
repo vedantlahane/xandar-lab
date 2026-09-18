@@ -359,14 +359,6 @@ export default function ProfilePage() {
 
     return (
         <div className="relative flex min-h-screen text-foreground bg-background overflow-hidden">
-            {/* Subtle noise texture overlay */}
-            <div
-                className="pointer-events-none fixed inset-0 opacity-[0.015] dark:opacity-[0.025]"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                }}
-            />
-
             <div className="flex-1 overflow-y-auto pb-32">
                 <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8 sm:py-12">
                     <motion.div
@@ -378,11 +370,8 @@ export default function ProfilePage() {
                         {/* Hero Showcase Card */}
                         <motion.div
                             variants={itemVariants}
-                            className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md p-6 sm:p-8 shadow-sm"
+                            className="relative overflow-hidden rounded-xl border border-border bg-card p-6 sm:p-8 shadow-sm"
                         >
-                            {/* Decorative background glow */}
-                            <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
                                 <div className="flex items-start gap-4 sm:gap-5">
                                     {/* Avatar with click to customize */}
@@ -540,36 +529,36 @@ export default function ProfilePage() {
 
                             {/* Stats Summary Strip */}
                             <div className="mt-6 pt-6 border-t border-border/40 grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
-                                    <p className="text-lg sm:text-xl font-bold text-violet-500">
+                                <div className="rounded-xl border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-foreground">
                                         {profile.contributions?.notes || 0}
                                     </p>
                                     <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Notes</p>
                                 </div>
 
-                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
-                                    <p className="text-lg sm:text-xl font-bold text-rose-500">
+                                <div className="rounded-xl border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-foreground">
                                         {profile.contributions?.experiments || 0}
                                     </p>
                                     <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Experiments</p>
                                 </div>
 
-                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
-                                    <p className="text-lg sm:text-xl font-bold text-amber-500">
+                                <div className="rounded-xl border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-foreground">
                                         {profile.contributions?.ideas || 0}
                                     </p>
                                     <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Ideas</p>
                                 </div>
 
-                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
-                                    <p className="text-lg sm:text-xl font-bold text-emerald-500">
+                                <div className="rounded-xl border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-foreground">
                                         {profile.completedProblems?.length || 0}
                                     </p>
                                     <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Solved</p>
                                 </div>
 
-                                <div className="col-span-2 sm:col-span-1 rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
-                                    <p className="text-lg sm:text-xl font-bold text-primary">
+                                <div className="col-span-2 sm:col-span-1 rounded-xl border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-foreground">
                                         {profile.reputationScore || 0}
                                     </p>
                                     <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Reputation</p>
@@ -588,7 +577,10 @@ export default function ProfilePage() {
                                 return (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            window.history.replaceState(null, "", `?tab=${tab.id}`);
+                                        }}
                                         className={cn(
                                             "relative flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap",
                                             isActive

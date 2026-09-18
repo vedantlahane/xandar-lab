@@ -34,7 +34,7 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
                 const [notesRes, expRes, ideasRes] = await Promise.all([
                     fetch("/api/notes?tab=my"),
                     fetch("/api/experiments?tab=my"),
-                    fetch("/api/ideas?limit=100"), // Will filter author on client or backend
+                    fetch("/api/ideas?tab=my&limit=100"),
                 ]);
 
                 if (isMounted) {
@@ -80,7 +80,7 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
                             : "text-muted-foreground hover:text-foreground"
                     )}
                 >
-                    <StickyNote className="h-3.5 w-3.5 text-violet-500" />
+                    <StickyNote className={cn("h-3.5 w-3.5", activeSection === "notes" ? "text-primary" : "text-muted-foreground")} />
                     <span>My Notes</span>
                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-muted font-bold text-muted-foreground">
                         {notesCount}
@@ -96,7 +96,7 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
                             : "text-muted-foreground hover:text-foreground"
                     )}
                 >
-                    <Beaker className="h-3.5 w-3.5 text-rose-500" />
+                    <Beaker className={cn("h-3.5 w-3.5", activeSection === "experiments" ? "text-primary" : "text-muted-foreground")} />
                     <span>Experiments</span>
                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-muted font-bold text-muted-foreground">
                         {experimentsCount}
@@ -112,7 +112,7 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
                             : "text-muted-foreground hover:text-foreground"
                     )}
                 >
-                    <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+                    <Lightbulb className={cn("h-3.5 w-3.5", activeSection === "ideas" ? "text-primary" : "text-muted-foreground")} />
                     <span>Project Ideas</span>
                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-muted font-bold text-muted-foreground">
                         {ideasCount}

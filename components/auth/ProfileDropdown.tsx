@@ -1,9 +1,9 @@
 // components/auth/ProfileDropdown.tsx
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { User, Settings, LogOut, ChevronUp, Activity, Shield, Layers, AlertTriangle, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthContext";
@@ -22,10 +22,11 @@ interface ProfileDropdownProps {
     isExpanded: boolean;
 }
 
-export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
+function ProfileDropdownInner({ isExpanded }: ProfileDropdownProps) {
     const { isAuthenticated, user, logout, openLoginModal } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -169,9 +170,7 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                         {/* Nav items */}
                         <div className="p-1 space-y-0.5">
                             {menuItems.map((item, index) => {
-                                const currentTab = typeof window !== "undefined"
-                                    ? new URLSearchParams(window.location.search).get("tab") || "contributions"
-                                    : "contributions";
+                                const currentTab = searchParams?.get("tab") || "contributions";
                                 const isProfilePath = pathname === "/lab/profile";
                                 const itemTabMatch = item.path.match(/tab=([^&]+)/);
                                 const itemTab = itemTabMatch ? itemTabMatch[1] : null;
@@ -227,5 +226,13 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                 )}
             </AnimatePresence>
         </div>
+    );
+}
+
+export function ProfileDropdown(props: ProfileDropdownProps) {
+    return (
+        <React.Suspense fallback={<div className="h-10 w-full animate-pulse bg-zinc-200 dark:bg-zinc-800 rounded-xl" />}>
+            <ProfileDropdownInner {...props} />
+        </React.Suspense>
     );
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
     Shield, Search, Check, AlertTriangle,
     Loader2, Users, ChevronLeft, ChevronRight, Sparkles
@@ -160,9 +161,9 @@ export function AdminUsersManager() {
                                                         {u.username.charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <span className="font-semibold text-foreground">
+                                                        <Link href={`/lab/u/${u.username}`} className="font-semibold text-foreground hover:text-primary transition-colors">
                                                             @{u.username}
-                                                        </span>
+                                                        </Link>
                                                         {u.email && (
                                                             <p className="text-[11px] text-muted-foreground">
                                                                 {u.email}

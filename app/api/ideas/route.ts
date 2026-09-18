@@ -10,18 +10,32 @@ export async function GET(request: Request) {
     const domain = searchParams.get("domain");
     const q = searchParams.get("q");
     const sort = searchParams.get("sort") || "confidence";
+    const tab = searchParams.get("tab") || "all";
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "12", 10);
 
     const skip = (page - 1) * limit;
 
+    const { getSession } = await import("@/lib/auth");
+    const session = await getSession();
+    const currentUserId = session?.userId;
+
     await connectDB();
 
-    const query: Record<string, any> = { status: "published" };
+    const query: Record<string, any> = {};
     const projection: Record<string, any> = { evidence: 0, marketData: 0, techReview: 0 };
 
+    if (tab === "my") {
+        if (!currentUserId) {
+            return NextResponse.json({ ideas: [], pagination: { total: 0 } });
+        }
+        query.authorId = currentUserId;
+    } else {
+        query.status = "published";
+    }
+
     if (domain && domain !== "all") {
-      query.domain = domain;
+        query.domain = domain;
     }
 
     if (q) {
