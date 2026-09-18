@@ -81,3 +81,78 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const { getSession } = await import("@/lib/auth");
+    const session = await getSession();
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized: Sign in to submit ideas" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      title,
+      problem,
+      solution,
+      domain = "Developer Tools",
+      targetUser = "Developers",
+      techStack = [],
+      timeline = "2-4 weeks",
+      monetization,
+      risks,
+      confidence = 80,
+      complexity = "medium",
+    } = body;
+
+    if (!title || !problem || !solution) {
+      return NextResponse.json(
+        { error: "Title, problem, and solution are required" },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const baseSlug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 50);
+    const slug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`;
+
+    const newIdea = await Idea.create({
+      authorId: new mongoose.Types.ObjectId(session.userId),
+      title: title.trim(),
+      slug,
+      problem: problem.trim(),
+      solution: solution.trim(),
+      targetUser: targetUser.trim(),
+      domain: domain.trim(),
+      tags: Array.isArray(techStack) ? techStack : [],
+      confidence: Math.min(100, Math.max(10, Number(confidence) || 80)),
+      complexity,
+      timeline,
+      techStack: Array.isArray(techStack) ? techStack : [],
+      monetization: monetization?.trim() || undefined,
+      risks: risks?.trim() || undefined,
+      evidence: [],
+      marketData: {},
+      techReview: {},
+      batchId: `community-${Date.now()}`,
+      iteration: 1,
+      upvotes: 1,
+      bookmarks: 0,
+      status: "published",
+      signalDate: new Date(),
+    });
+
+    return NextResponse.json({ success: true, idea: newIdea }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to create idea", details: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
+

@@ -2,28 +2,57 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Pin, Calendar, Clock } from "lucide-react";
+import { Copy, Check, Pin, Calendar, Clock, Edit3, Globe, Lock, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Note, NoteColor } from "../data/notes";
 import { cn } from "@/lib/utils";
 import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
+import { usePermissions } from "@/components/auth/hooks/usePermissions";
+import { RoleBadge } from "@/components/shared/RoleBadge";
+import { NoteEditorDrawer } from "./NoteEditorDrawer";
 
 export function NoteDrawer({
     note,
     onClose,
     position,
+    onNoteUpdated,
+    onNoteDeleted,
 }: {
-    note: Note;
+    note: any;
     onClose: () => void;
-    position: { x: number; y: number };
+    position?: { x: number; y: number };
+    onNoteUpdated?: (updated: any) => void;
+    onNoteDeleted?: (id: string) => void;
 }) {
     const [copied, setCopied] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const { canEdit, isAuthenticated } = usePermissions();
+
+    const canModify = !note.isCurated && canEdit(note.authorId);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(note.content);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+
+    if (isEditing) {
+        return (
+            <NoteEditorDrawer
+                note={note}
+                onClose={() => setIsEditing(false)}
+                onSaved={(updated) => {
+                    setIsEditing(false);
+                    if (onNoteUpdated) onNoteUpdated(updated);
+                }}
+                onDeleted={(id) => {
+                    setIsEditing(false);
+                    if (onNoteDeleted) onNoteDeleted(id);
+                    onClose();
+                }}
+            />
+        );
+    }
 
     const getCategoryColor = (category: string) => {
         switch (category) {
@@ -50,7 +79,7 @@ export function NoteDrawer({
     };
 
     const headerLeft = (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
             <span className="text-xs font-medium text-muted-foreground/70">
                 Notes
             </span>
@@ -70,23 +99,42 @@ export function NoteDrawer({
                     Pinned
                 </span>
             )}
+            {note.visibility && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border/40">
+                    {note.visibility === "public" ? <Globe className="h-2.5 w-2.5 text-emerald-500" /> : <Lock className="h-2.5 w-2.5" />}
+                    {note.visibility === "public" ? "Community" : "Private"}
+                </span>
+            )}
         </div>
     );
 
     const headerIconTools = (
-        <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={handleCopy}
-            title={copied ? "Copied!" : "Copy note content"}
-        >
-            {copied ? (
-                <Check className="h-3.5 w-3.5 text-green-500" />
-            ) : (
-                <Copy className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-1">
+            {canModify && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setIsEditing(true)}
+                    title="Edit Note"
+                >
+                    <Edit3 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                </Button>
             )}
-        </Button>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={handleCopy}
+                title={copied ? "Copied!" : "Copy note content"}
+            >
+                {copied ? (
+                    <Check className="h-3.5 w-3.5 text-green-500" />
+                ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                )}
+            </Button>
+        </div>
     );
 
     return (
@@ -102,12 +150,22 @@ export function NoteDrawer({
             <div className="p-6">
                 <div className="space-y-6">
                     <div className="space-y-3">
-                        <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                            {note.title}
-                        </h2>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                                {note.title}
+                            </h2>
+                            {note.authorUsername && (
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <UserIcon className="h-3.5 w-3.5 text-muted-foreground/60" />
+                                    <span>{note.authorUsername}</span>
+                                    <RoleBadge role={note.authorRole} />
+                                </div>
+                            )}
+                        </div>
+
                         {note.tags && note.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2">
-                                {note.tags.map((tag) => (
+                                {note.tags.map((tag: string) => (
                                     <span
                                         key={tag}
                                         className="inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium border border-border/50 bg-muted/40 text-muted-foreground"

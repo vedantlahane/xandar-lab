@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { IdeaDrawer } from "./components/IdeaDrawer";
-import { Search, Sparkles, Filter, Activity, Clock3, HardDrive, Dices, Loader2, ArrowUpDown, ChevronDown, ChevronUp, Layers, Tag, Target, Calendar } from "lucide-react";
+import { IdeaEditorDrawer } from "./components/IdeaEditorDrawer";
+import { useAuth } from "@/components/auth/AuthContext";
+import { Search, Sparkles, Filter, Activity, Clock3, HardDrive, Dices, Loader2, ArrowUpDown, ChevronDown, ChevronUp, Layers, Tag, Target, Calendar, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,10 +36,12 @@ type APIResponse = {
 
 export default function IdeasCatalogPage() {
   const router = useRouter();
+  const { isAuthenticated, openLoginModal } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [data, setData] = useState<APIResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingSurprise, setLoadingSurprise] = useState(false);
+  const [isSubmittingIdea, setIsSubmittingIdea] = useState(false);
 
   // Infinite scroll states
   const [ideas, setIdeas] = useState<IIdea[]>([]);
@@ -268,8 +272,21 @@ export default function IdeasCatalogPage() {
                   </div>
                 </div>
 
-                {/* Action button */}
-                <div className="pt-4">
+                {/* Action buttons */}
+                <div className="pt-3 space-y-2">
+                  <Button
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        openLoginModal();
+                        return;
+                      }
+                      setIsSubmittingIdea(true);
+                    }}
+                    className="w-full justify-center bg-primary text-primary-foreground font-medium text-xs h-9 gap-1.5 shadow-sm hover:opacity-95"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Submit Idea
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={handleSurpriseMe}
@@ -286,8 +303,8 @@ export default function IdeasCatalogPage() {
             {/* Right Column: Search & Content */}
             <div className="space-y-4 pt-6">
               
-              {/* Sticky Search */}
-              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4">
+              {/* Sticky Search & Submit Action */}
+              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-4 flex items-center gap-2.5">
                 <div className="relative flex-1 group">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
                   <Input
@@ -297,6 +314,19 @@ export default function IdeasCatalogPage() {
                     onChange={handleSearchChange}
                   />
                 </div>
+                <Button
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      openLoginModal();
+                      return;
+                    }
+                    setIsSubmittingIdea(true);
+                  }}
+                  className="shrink-0 h-11 px-3.5 gap-1.5 rounded-xl bg-primary text-primary-foreground font-medium shadow-sm hover:opacity-95 transition-all text-xs sm:text-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Submit Idea</span>
+                </Button>
               </div>
 
               {loading && page === 1 ? (
@@ -410,6 +440,23 @@ export default function IdeasCatalogPage() {
           <IdeaDrawer idea={activeIdea} onClose={() => router.push("/lab/ideas")} />
         )}
       </AnimatePresence>
+
+      {/* Submit Idea Drawer */}
+      {isSubmittingIdea && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <div className="pointer-events-auto h-full w-full">
+            <IdeaEditorDrawer
+              onClose={() => setIsSubmittingIdea(false)}
+              onSaved={(newIdea) => {
+                setIsSubmittingIdea(false);
+                setIdeas((prev) => [newIdea, ...prev]);
+                setStats((prev) => prev ? { ...prev, totalIdeas: prev.totalIdeas + 1 } : null);
+                router.push(`/lab/ideas/${newIdea.slug}`);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

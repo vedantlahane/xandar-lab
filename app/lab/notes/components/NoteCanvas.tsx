@@ -2,19 +2,27 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { NOTES, NoteCategory } from "../data/notes";
+import { NOTES as DEFAULT_STATIC_NOTES, NoteCategory } from "../data/notes";
 import {
     StickyNote, Pin, Calendar, Tag,
     Layers, BookOpen, Lightbulb, ListTodo, BookMarked, User, Briefcase,
+    Plus, Lock, Globe, Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
 import { LabItemRow } from "@/app/lab/components/shared/LabItemRow";
 import { CanvasSortSelect } from "@/app/lab/components/shared/CanvasSortSelect";
 import { CanvasStatsCard } from "@/app/lab/components/shared/CanvasStatsCard";
+import { useAuth } from "@/components/auth/AuthContext";
+import { RoleBadge } from "@/components/shared/RoleBadge";
 
 interface NoteCanvasProps {
+    notes?: any[];
+    activeTab?: "all" | "my" | "community";
+    onTabChange?: (tab: "all" | "my" | "community") => void;
+    onNewNote?: () => void;
     activeNoteId: string | null;
     onNoteSelect: (id: string, event: React.MouseEvent) => void;
 }
@@ -41,15 +49,19 @@ const SORT_ITEMS: { value: SortOption; label: string }[] = [
     { value: "Title", label: "Title" },
 ];
 
-// Extract unique tags
-const ALL_TAGS = Array.from(
-    new Set(NOTES.flatMap(g => g.notes.flatMap(n => n.tags || [])))
-).sort();
+const CATEGORY_ORDER: NoteCategory[] = [
+    "Learning", "Ideas", "Todo", "Reference", "Personal", "Work"
+];
 
 export default function NoteCanvas({
+    notes: propNotes,
+    activeTab = "all",
+    onTabChange,
+    onNewNote,
     activeNoteId,
     onNoteSelect,
 }: NoteCanvasProps) {
+    const { isAuthenticated, openLoginModal } = useAuth();
     const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("All");
     const [pinnedFilter, setPinnedFilter] = useState<FilterPinned>("All");
     const [tagFilter, setTagFilter] = useState<string>("All");
@@ -57,15 +69,66 @@ export default function NoteCanvas({
     const [sortDesc, setSortDesc] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Fallback if propNotes not provided
+    const sourceNotes = useMemo(() => {
+        if (propNotes && propNotes.length > 0) return propNotes;
+        return DEFAULT_STATIC_NOTES.flatMap((g) => g.notes);
+    }, [propNotes]);
+
+    // Extract unique tags from current notes
+    const allTags = useMemo(() => {
+        return Array.from(
+            new Set(sourceNotes.flatMap((n: any) => n.tags || []))
+        ).sort();
+    }, [sourceNotes]);
+
+    // Dynamic grouping
+    const noteGroups = useMemo(() => {
+        const groups: { groupName: string; notes: any[] }[] = [];
+
+        // Pinned notes
+        const pinned = sourceNotes.filter((n: any) => n.isPinned);
+        if (pinned.length > 0) {
+            groups.push({
+                groupName: "Pinned",
+                notes: pinned,
+            });
+        }
+
+        // Category notes (exclude pinned to avoid exact duplicate headers)
+        for (const cat of CATEGORY_ORDER) {
+            const catNotes = sourceNotes.filter((n: any) => n.category === cat && !n.isPinned);
+            if (catNotes.length > 0) {
+                groups.push({
+                    groupName: cat,
+                    notes: catNotes,
+                });
+            }
+        }
+
+        // Any notes outside standard categories
+        const unassigned = sourceNotes.filter(
+            (n: any) => !n.isPinned && !CATEGORY_ORDER.includes(n.category)
+        );
+        if (unassigned.length > 0) {
+            groups.push({
+                groupName: "Other",
+                notes: unassigned,
+            });
+        }
+
+        return groups;
+    }, [sourceNotes]);
+
     const filteredNotes = useMemo(() => {
-        return NOTES.map((group) => {
-            const filteredItems = group.notes.filter((note) => {
+        return noteGroups.map((group) => {
+            const filteredItems = group.notes.filter((note: any) => {
                 if (searchQuery) {
                     const q = searchQuery.toLowerCase();
                     if (
                         !note.title.toLowerCase().includes(q) &&
                         !note.content.toLowerCase().includes(q) &&
-                        !note.tags?.some(t => t.toLowerCase().includes(q))
+                        !note.tags?.some((t: string) => t.toLowerCase().includes(q))
                     ) return false;
                 }
                 if (categoryFilter !== "All" && note.category !== categoryFilter) return false;
@@ -74,35 +137,44 @@ export default function NoteCanvas({
                 return true;
             });
 
-            const sorted = [...filteredItems].sort((a, b) => {
+            const sorted = [...filteredItems].sort((a: any, b: any) => {
                 let cmp = 0;
-                if (sortOption === "Updated") cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-                else if (sortOption === "Created") cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                else if (sortOption === "Title") cmp = a.title.localeCompare(b.title);
+                if (sortOption === "Updated") {
+                    cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+                } else if (sortOption === "Created") {
+                    cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                } else if (sortOption === "Title") {
+                    cmp = a.title.localeCompare(b.title);
+                }
                 return sortDesc ? -cmp : cmp;
             });
 
             return { ...group, notes: sorted };
         }).filter((group) => group.notes.length > 0);
-    }, [categoryFilter, pinnedFilter, tagFilter, searchQuery, sortOption, sortDesc]);
+    }, [noteGroups, categoryFilter, pinnedFilter, tagFilter, searchQuery, sortOption, sortDesc]);
 
     // Stats
-    const allNotes = NOTES.flatMap(g => g.notes);
-    const totalCount = allNotes.length;
-    const pinnedCount = allNotes.filter(n => n.isPinned).length;
-    const categoryCount = new Set(allNotes.map(n => n.category)).size;
+    const totalCount = sourceNotes.length;
+    const pinnedCount = sourceNotes.filter((n: any) => n.isPinned).length;
+    const categoryCount = new Set(sourceNotes.map((n: any) => n.category)).size;
 
-
+    const handleCreateClick = () => {
+        if (!isAuthenticated) {
+            openLoginModal();
+            return;
+        }
+        if (onNewNote) onNewNote();
+    };
 
     const getCategoryColor = (cat: string) => {
         switch (cat) {
-            case 'Learning': return 'text-blue-500';
-            case 'Ideas': return 'text-pink-500';
-            case 'Todo': return 'text-orange-500';
-            case 'Reference': return 'text-green-500';
-            case 'Personal': return 'text-purple-500';
-            case 'Work': return 'text-cyan-500';
-            default: return 'text-muted-foreground';
+            case "Learning": return "text-blue-500";
+            case "Ideas": return "text-pink-500";
+            case "Todo": return "text-orange-500";
+            case "Reference": return "text-emerald-500";
+            case "Personal": return "text-purple-500";
+            case "Work": return "text-cyan-500";
+            default: return "text-muted-foreground";
         }
     };
 
@@ -121,6 +193,57 @@ export default function NoteCanvas({
                             { label: "Categories", value: categoryCount, color: "text-violet-500" },
                         ]}
                     />
+
+                    {/* Feed Selector (All / My / Community) */}
+                    <div className="space-y-1.5">
+                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1 flex items-center justify-between">
+                            <span>Feed</span>
+                        </h3>
+                        <div className="grid grid-cols-3 p-1 bg-muted/40 rounded-lg border border-border/40 gap-1 text-xs">
+                            <button
+                                onClick={() => onTabChange?.("all")}
+                                className={cn(
+                                    "py-1 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1",
+                                    activeTab === "all"
+                                        ? "bg-background text-foreground shadow-sm font-semibold"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                <Globe className="h-3 w-3" />
+                                All
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!isAuthenticated) {
+                                        openLoginModal();
+                                        return;
+                                    }
+                                    onTabChange?.("my");
+                                }}
+                                className={cn(
+                                    "py-1 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1",
+                                    activeTab === "my"
+                                        ? "bg-background text-foreground shadow-sm font-semibold"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                <User className="h-3 w-3" />
+                                Mine
+                            </button>
+                            <button
+                                onClick={() => onTabChange?.("community")}
+                                className={cn(
+                                    "py-1 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1",
+                                    activeTab === "community"
+                                        ? "bg-background text-foreground shadow-sm font-semibold"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                <Users className="h-3 w-3" />
+                                Public
+                            </button>
+                        </div>
+                    </div>
 
                     {/* Quick filter: Pinned */}
                     <button
@@ -167,34 +290,34 @@ export default function NoteCanvas({
                         })}
                     </div>
 
-
-
                     {/* ── Tags ── */}
-                    <div className="space-y-1">
-                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
-                            <Tag className="h-3 w-3" />
-                            Tags
-                        </h3>
-                        <div className="flex gap-1 flex-wrap">
-                            {ALL_TAGS.slice(0, 12).map((tag) => {
-                                const isActive = tagFilter === tag;
-                                return (
-                                    <button
-                                        key={tag}
-                                        onClick={() => setTagFilter(isActive ? "All" : tag)}
-                                        className={cn(
-                                            "px-2 py-0.5 rounded-md text-[11px] font-medium border transition-all",
-                                            isActive
-                                                ? "bg-primary/10 text-primary border-primary/30"
-                                                : "border-transparent text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground",
-                                        )}
-                                    >
-                                        {tag}
-                                    </button>
-                                );
-                            })}
+                    {allTags.length > 0 && (
+                        <div className="space-y-1">
+                            <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center gap-1.5">
+                                <Tag className="h-3 w-3" />
+                                Tags
+                            </h3>
+                            <div className="flex gap-1 flex-wrap">
+                                {allTags.slice(0, 14).map((tag) => {
+                                    const isActive = tagFilter === tag;
+                                    return (
+                                        <button
+                                            key={tag}
+                                            onClick={() => setTagFilter(isActive ? "All" : tag)}
+                                            className={cn(
+                                                "px-2 py-0.5 rounded-md text-[11px] font-medium border transition-all",
+                                                isActive
+                                                    ? "bg-primary/10 text-primary border-primary/30"
+                                                    : "border-transparent text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground",
+                                            )}
+                                        >
+                                            {tag}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* ── Sort ── */}
                     <CanvasSortSelect
@@ -207,20 +330,38 @@ export default function NoteCanvas({
                 </>
             }
         >
-            {/* Sticky search bar */}
-            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-2.5 sm:py-4">
-                <SearchBar
-                    query={searchQuery}
-                    onQueryChange={setSearchQuery}
-                    placeholder="Search notes, tags..."
-                />
+            {/* Sticky search bar + New Note button */}
+            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-2.5 sm:py-4 flex items-center gap-2.5">
+                <div className="flex-1">
+                    <SearchBar
+                        query={searchQuery}
+                        onQueryChange={setSearchQuery}
+                        placeholder="Search notes, tags..."
+                    />
+                </div>
+                <Button
+                    onClick={handleCreateClick}
+                    className="shrink-0 h-10 px-3.5 gap-1.5 rounded-xl bg-primary text-primary-foreground font-medium shadow-sm hover:opacity-95 transition-all text-xs sm:text-sm"
+                >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">New Note</span>
+                </Button>
             </div>
 
             {filteredNotes.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-16 text-muted-foreground">
                     <StickyNote className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                    <p className="text-lg font-medium">No notes match your filters</p>
-                    <p className="text-sm mt-1">Try adjusting your filters to see more notes</p>
+                    <p className="text-lg font-medium text-foreground">No notes found</p>
+                    <p className="text-sm mt-1 mb-5">
+                        {activeTab === "my"
+                            ? "You haven't created any notes yet. Click below to add one!"
+                            : "Try adjusting your filters to see more notes."}
+                    </p>
+                    {activeTab === "my" && (
+                        <Button onClick={handleCreateClick} size="sm" className="gap-1.5">
+                            <Plus className="h-4 w-4" /> Create First Note
+                        </Button>
+                    )}
                 </div>
             ) : (
                 filteredNotes.map((group) => (
@@ -231,15 +372,17 @@ export default function NoteCanvas({
                         data-category-title={group.groupName}
                         className="space-y-5"
                     >
-                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
-                            <h2 className="text-lg font-semibold">{group.groupName}</h2>
-                            <p className="text-sm text-muted-foreground">
-                                {group.notes.length} notes
-                            </p>
+                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-semibold">{group.groupName}</h2>
+                                <p className="text-xs text-muted-foreground">
+                                    {group.notes.length} {group.notes.length === 1 ? "note" : "notes"}
+                                </p>
+                            </div>
                         </div>
 
                         <div className="space-y-0">
-                            {group.notes.map((note) => {
+                            {group.notes.map((note: any) => {
                                 const isActive = activeNoteId === note.id;
                                 return (
                                     <LabItemRow
@@ -254,13 +397,26 @@ export default function NoteCanvas({
                                                 {note.isPinned && <Pin className="h-3 w-3 text-amber-500" />}
                                             </>
                                         }
-                                        subtitle={`${note.content.replace(/[#\-\[\]`*]/g, '').substring(0, 100)}...`}
+                                        subtitle={`${note.content.replace(/[#\-\[\]`*]/g, "").substring(0, 100)}...`}
                                         tags={
                                             <>
                                                 <span className={getCategoryColor(note.category)}>
                                                     {note.category}
                                                 </span>
-                                                {note.tags?.slice(0, 3).map((tag) => (
+                                                {note.authorUsername && (
+                                                    <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+                                                        • @{note.authorUsername}
+                                                        {note.authorRole && note.authorRole !== "user" && (
+                                                            <RoleBadge role={note.authorRole} size="sm" />
+                                                        )}
+                                                    </span>
+                                                )}
+                                                {note.visibility === "private" && (
+                                                    <span className="inline-flex items-center gap-0.5 text-amber-500/80 font-medium">
+                                                        • <Lock className="h-2.5 w-2.5" /> Private
+                                                    </span>
+                                                )}
+                                                {note.tags?.slice(0, 3).map((tag: string) => (
                                                     <span key={tag} className="text-muted-foreground/50">
                                                         • #{tag}
                                                     </span>
@@ -283,4 +439,3 @@ export default function NoteCanvas({
         </BaseCanvas>
     );
 }
-
