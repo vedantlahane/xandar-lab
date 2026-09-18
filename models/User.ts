@@ -15,6 +15,9 @@ export interface IUser {
   email?: string;
   bio?: string;
   avatarGradient?: string;  // Avatar color preference
+  githubUrl?: string;       // GitHub profile or username
+  websiteUrl?: string;      // Portfolio or personal website
+  twitterHandle?: string;   // Twitter / X handle
   password?: string;
   savedProblems: string[];
   completedProblems: string[];
@@ -78,6 +81,24 @@ const UserSchema = new Schema({
   },
   avatarGradient: {
     type: String,
+    default: '',
+  },
+  githubUrl: {
+    type: String,
+    trim: true,
+    maxlength: 120,
+    default: '',
+  },
+  websiteUrl: {
+    type: String,
+    trim: true,
+    maxlength: 120,
+    default: '',
+  },
+  twitterHandle: {
+    type: String,
+    trim: true,
+    maxlength: 60,
     default: '',
   },
   password: {

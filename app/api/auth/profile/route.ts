@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
+import Note from '@/models/Note';
+import Experiment from '@/models/Experiment';
+import Idea from '@/models/Idea';
 import { getValidatedSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/auth/profile - Get current user's profile
+// GET /api/auth/profile - Get current user's profile with contribution stats
 export async function GET() {
     try {
         const session = await getValidatedSession();
@@ -22,6 +25,13 @@ export async function GET() {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        // Fetch contribution counts in parallel
+        const [notesCount, experimentsCount, ideasCount] = await Promise.all([
+            Note.countDocuments({ authorId: user._id }),
+            Experiment.countDocuments({ authorId: user._id }),
+            Idea.countDocuments({ authorId: user._id }),
+        ]);
+
         const userObj = user.toObject();
         const { password: _, sessions: __, ...userWithoutSensitive } = userObj;
 
@@ -29,6 +39,11 @@ export async function GET() {
             user: {
                 ...userWithoutSensitive,
                 hasPassword: !!user.password,
+                contributions: {
+                    notes: notesCount,
+                    experiments: experimentsCount,
+                    ideas: ideasCount,
+                },
             }
         });
     } catch (error: any) {
@@ -47,7 +62,16 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json();
-        const { email, bio, avatarGradient } = body;
+        const {
+            email,
+            bio,
+            avatarGradient,
+            githubUrl,
+            websiteUrl,
+            twitterHandle,
+            isProfilePublic,
+            sharingPreferences,
+        } = body;
 
         await connectDB();
 
@@ -81,7 +105,39 @@ export async function PUT(req: Request) {
             user.avatarGradient = avatarGradient;
         }
 
+        // Update developer social links
+        if (githubUrl !== undefined) {
+            user.githubUrl = githubUrl.trim();
+        }
+
+        if (websiteUrl !== undefined) {
+            user.websiteUrl = websiteUrl.trim();
+        }
+
+        if (twitterHandle !== undefined) {
+            user.twitterHandle = twitterHandle.trim().replace(/^@/, '');
+        }
+
+        // Update privacy & community preferences
+        if (isProfilePublic !== undefined) {
+            user.isProfilePublic = Boolean(isProfilePublic);
+        }
+
+        if (sharingPreferences !== undefined) {
+            user.sharingPreferences = {
+                autoShareCompletedProblems: Boolean(sharingPreferences.autoShareCompletedProblems),
+                autoShareHackathonResults: Boolean(sharingPreferences.autoShareHackathonResults),
+            };
+        }
+
         await user.save();
+
+        // Fetch refreshed contribution counts
+        const [notesCount, experimentsCount, ideasCount] = await Promise.all([
+            Note.countDocuments({ authorId: user._id }),
+            Experiment.countDocuments({ authorId: user._id }),
+            Idea.countDocuments({ authorId: user._id }),
+        ]);
 
         const updatedUserObj = user.toObject();
         const { password: _, sessions: __, ...updatedUserWithoutSensitive } = updatedUserObj;
@@ -91,6 +147,11 @@ export async function PUT(req: Request) {
             user: {
                 ...updatedUserWithoutSensitive,
                 hasPassword: !!user.password,
+                contributions: {
+                    notes: notesCount,
+                    experiments: experimentsCount,
+                    ideas: ideasCount,
+                },
             }
         });
     } catch (error: any) {

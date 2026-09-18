@@ -4,15 +4,25 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Check, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import {
+    Loader2, Check, AlertTriangle, Eye, EyeOff,
+    Github, Globe, Twitter, ExternalLink, Shield,
+    Edit3, KeyRound, Laptop, Trash2, Sparkles,
+    Lock, Layers, Activity, LogOut, Share2,
+    Calendar, CheckCircle2, Bookmark, Flame
+} from "lucide-react";
 import { StatsDashboard } from "./components/StatsDashboard";
+import { UserContributions } from "./components/UserContributions";
+import { AdminUsersManager } from "./components/AdminUsersManager";
 import { SessionsManager } from "@/components/auth/SessionsManager";
 import { AvatarCustomizer, getAvatarGradientClass, getDefaultAvatarGradient } from "@/components/auth/AvatarCustomizer";
+import { RoleBadge } from "@/components/shared/RoleBadge";
+import { cn } from "@/lib/utils";
 
-// Smooth spring config for organic motion
 const smoothSpring = {
     type: "spring" as const,
     stiffness: 100,
@@ -20,31 +30,29 @@ const smoothSpring = {
     mass: 0.8,
 };
 
-// Stagger animation variants
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.08,
-            delayChildren: 0.1,
+            staggerChildren: 0.06,
+            delayChildren: 0.05,
         },
     },
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, filter: "blur(4px)" },
+    hidden: { opacity: 0, y: 8 },
     visible: {
         opacity: 1,
-        filter: "blur(0px)",
+        y: 0,
         transition: {
-            duration: 0.5,
+            duration: 0.4,
             ease: "easeOut" as const,
         },
     },
 };
 
-// Animated loading dots
 function LoadingDots() {
     return (
         <div className="flex min-h-screen items-center justify-center">
@@ -71,9 +79,12 @@ function LoadingDots() {
 
 interface ProfileData {
     username: string;
-    email: string;
-    bio: string;
+    email?: string;
+    bio?: string;
     avatarGradient?: string;
+    githubUrl?: string;
+    websiteUrl?: string;
+    twitterHandle?: string;
     savedProblems: string[];
     completedProblems: string[];
     savedJobs: string[];
@@ -87,35 +98,31 @@ interface ProfileData {
         autoShareHackathonResults: boolean;
     };
     createdAt: string;
-    lastLoginAt: string;
+    lastLoginAt?: string;
     hasPassword: boolean;
-    role: 'user' | 'pro' | 'contributor' | 'moderator' | 'admin';
+    role: "user" | "pro" | "contributor" | "moderator" | "admin";
+    contributions?: {
+        notes: number;
+        experiments: number;
+        ideas: number;
+    };
 }
 
-type TabType = "stats" | "profile" | "sessions" | "password" | "danger";
+type TabType = "contributions" | "stats" | "profile" | "security" | "admin" | "danger";
 
 export default function ProfilePage() {
     const { user, isLoading, isAuthenticated, logout, updateUser } = useAuth();
     const router = useRouter();
-    // Initialize tab from query param or default to "stats"
+
     const [activeTab, setActiveTab] = useState<TabType>(() => {
         if (typeof window !== "undefined") {
             const tabParam = new URLSearchParams(window.location.search).get("tab");
-            if (tabParam && ["stats", "profile", "sessions", "password", "danger"].includes(tabParam)) {
+            if (tabParam && ["contributions", "stats", "profile", "security", "admin", "danger"].includes(tabParam)) {
                 return tabParam as TabType;
             }
         }
-        return "stats";
+        return "contributions";
     });
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const tabParam = new URLSearchParams(window.location.search).get("tab");
-            if (tabParam && ["stats", "profile", "sessions", "password", "danger"].includes(tabParam)) {
-                setActiveTab(tabParam as TabType);
-            }
-        }
-    }, []);
 
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [fetchingProfile, setFetchingProfile] = useState(true);
@@ -123,6 +130,11 @@ export default function ProfilePage() {
     // Profile form state
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
+    const [githubUrl, setGithubUrl] = useState("");
+    const [websiteUrl, setWebsiteUrl] = useState("");
+    const [twitterHandle, setTwitterHandle] = useState("");
+    const [isProfilePublic, setIsProfilePublic] = useState(false);
+    const [autoShareCompleted, setAutoShareCompleted] = useState(false);
     const [profileSaving, setProfileSaving] = useState(false);
     const [profileSuccess, setProfileSuccess] = useState(false);
     const [profileError, setProfileError] = useState("");
@@ -144,6 +156,9 @@ export default function ProfilePage() {
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState("");
 
+    // Modal state for avatar customization
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+
     // Redirect if not authenticated
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -161,9 +176,15 @@ export default function ProfilePage() {
 
                 if (res.ok) {
                     const data = await res.json();
-                    setProfile(data.user);
-                    setEmail(data.user.email || "");
-                    setBio(data.user.bio || "");
+                    const u: ProfileData = data.user;
+                    setProfile(u);
+                    setEmail(u.email || "");
+                    setBio(u.bio || "");
+                    setGithubUrl(u.githubUrl || "");
+                    setWebsiteUrl(u.websiteUrl || "");
+                    setTwitterHandle(u.twitterHandle || "");
+                    setIsProfilePublic(Boolean(u.isProfilePublic));
+                    setAutoShareCompleted(Boolean(u.sharingPreferences?.autoShareCompletedProblems));
                 } else {
                     console.error("Profile API returned not ok:", res.status);
                 }
@@ -185,27 +206,10 @@ export default function ProfilePage() {
         return <LoadingDots />;
     }
 
-    if (!isAuthenticated) {
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-                <h1 className="text-2xl font-bold text-red-500">Not Authenticated</h1>
-                <p>AuthContext returned isAuthenticated: false</p>
-                <button onClick={() => router.push("/lab")} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Go Home</button>
-            </div>
-        );
+    if (!isAuthenticated || !profile) {
+        return null;
     }
 
-    if (!profile) {
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-                <h1 className="text-2xl font-bold text-red-500">Profile Data Missing</h1>
-                <p>Failed to load profile from /api/auth/profile</p>
-                <button onClick={() => router.push("/lab")} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Go Home</button>
-            </div>
-        );
-    }
-
-    // Handle profile update
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         setProfileSaving(true);
@@ -217,7 +221,18 @@ export default function ProfilePage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ email, bio }),
+                body: JSON.stringify({
+                    email,
+                    bio,
+                    githubUrl,
+                    websiteUrl,
+                    twitterHandle,
+                    isProfilePublic,
+                    sharingPreferences: {
+                        autoShareCompletedProblems: autoShareCompleted,
+                        autoShareHackathonResults: false,
+                    },
+                }),
             });
 
             if (!res.ok) {
@@ -227,7 +242,14 @@ export default function ProfilePage() {
 
             const data = await res.json();
             setProfile(data.user);
-            updateUser({ email: data.user.email, bio: data.user.bio });
+            updateUser({
+                email: data.user.email,
+                bio: data.user.bio,
+                githubUrl: data.user.githubUrl,
+                websiteUrl: data.user.websiteUrl,
+                twitterHandle: data.user.twitterHandle,
+                isProfilePublic: data.user.isProfilePublic,
+            });
             setProfileSuccess(true);
             setTimeout(() => setProfileSuccess(false), 3000);
         } catch (err: any) {
@@ -237,7 +259,6 @@ export default function ProfilePage() {
         }
     };
 
-    // Handle password change
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
         setPasswordSaving(true);
@@ -273,7 +294,7 @@ export default function ProfilePage() {
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
-            setProfile(prev => prev ? { ...prev, hasPassword: true } : null);
+            setProfile((prev) => (prev ? { ...prev, hasPassword: true } : null));
             updateUser({ hasPassword: true });
             setTimeout(() => setPasswordSuccess(false), 3000);
         } catch (err: any) {
@@ -283,7 +304,6 @@ export default function ProfilePage() {
         }
     };
 
-    // Handle account deletion
     const handleDeleteAccount = async (e: React.FormEvent) => {
         e.preventDefault();
         setDeleting(true);
@@ -305,7 +325,6 @@ export default function ProfilePage() {
                 throw new Error(data.error || "Failed to delete account");
             }
 
-            // Account deleted, redirect to home
             await logout();
             router.push("/lab");
         } catch (err: any) {
@@ -315,45 +334,29 @@ export default function ProfilePage() {
         }
     };
 
-    // Format date
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "N/A";
         return new Date(dateStr).toLocaleDateString("en-US", {
             year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    };
-
-    const formatDateTime = (dateStr: string) => {
-        if (!dateStr) return "N/A";
-        return new Date(dateStr).toLocaleString("en-US", {
-            year: "numeric",
             month: "short",
             day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
         });
     };
 
-    if (isLoading || fetchingProfile) {
-        return <LoadingDots />;
-    }
-
-    if (!isAuthenticated || !profile) {
-        return null;
-    }
-
-    const tabs: { id: TabType; label: string }[] = [
-        { id: "stats", label: "Statistics" },
-        { id: "profile", label: "Profile" },
-        { id: "sessions", label: "Sessions" },
-        { id: "password", label: "Password" },
-        { id: "danger", label: "Danger Zone" },
+    const tabs: { id: TabType; label: string; icon: any; badge?: number | string; adminOnly?: boolean }[] = [
+        { id: "contributions", label: "Contributions", icon: Layers, badge: (profile.contributions?.notes || 0) + (profile.contributions?.experiments || 0) + (profile.contributions?.ideas || 0) },
+        { id: "stats", label: "Analytics & Streaks", icon: Activity },
+        { id: "profile", label: "Edit Profile", icon: Edit3 },
+        { id: "security", label: "Security & Sessions", icon: KeyRound },
+        ...(profile.role === "admin" ? [{ id: "admin" as TabType, label: "Admin & Roles", icon: Shield, adminOnly: true }] : []),
+        { id: "danger", label: "Danger Zone", icon: Trash2 },
     ];
 
+    const cleanGithub = profile.githubUrl?.replace(/^https?:\/\/github\.com\//, "").replace(/\/$/, "");
+    const cleanTwitter = profile.twitterHandle?.replace(/^@/, "");
+
     return (
-        <div className="relative flex min-h-screen text-zinc-800 dark:text-zinc-200 overflow-hidden">
+        <div className="relative flex min-h-screen text-foreground bg-background overflow-hidden">
             {/* Subtle noise texture overlay */}
             <div
                 className="pointer-events-none fixed inset-0 opacity-[0.015] dark:opacity-[0.025]"
@@ -362,135 +365,274 @@ export default function ProfilePage() {
                 }}
             />
 
-            <div className="flex-1 overflow-auto">
-                <div className="mx-auto max-w-2xl px-6 py-12">
+            <div className="flex-1 overflow-y-auto pb-32">
+                <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8 sm:py-12">
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
-                        className="space-y-8"
+                        className="space-y-6 sm:space-y-8"
                     >
-                        {/* Header */}
-                        <motion.div variants={itemVariants} className="space-y-2">
-                            <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                Manage your profile and account preferences
-                            </p>
-                        </motion.div>
-
-                        {/* User Info Card */}
+                        {/* Hero Showcase Card */}
                         <motion.div
                             variants={itemVariants}
-                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-6"
+                            className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md p-6 sm:p-8 shadow-sm"
                         >
-                            <div className="flex items-start gap-4">
-                                {/* Avatar */}
-                                <div
-                                    className={`h-16 w-16 rounded-full bg-gradient-to-br ${getAvatarGradientClass(
-                                        profile.avatarGradient || getDefaultAvatarGradient(profile.username)
-                                    )} flex items-center justify-center text-2xl font-bold text-white uppercase shadow-lg`}
-                                >
-                                    {profile.username.charAt(0)}
-                                </div>
+                            {/* Decorative background glow */}
+                            <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
 
-                                <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-3">
-                                        <h2 className="text-xl font-semibold">{profile.username}</h2>
-                                        {profile.role === 'admin' && (
-                                            <span className="shrink-0 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                                                Admin
-                                            </span>
-                                        )}
-                                        {profile.role === 'moderator' && (
-                                            <span className="shrink-0 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                                                Mod
-                                            </span>
-                                        )}
-                                        {profile.role === 'pro' && (
-                                            <span className="shrink-0 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                                                Pro
-                                            </span>
-                                        )}
-                                        {profile.role === 'contributor' && (
-                                            <span className="shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                                                Creator
-                                            </span>
-                                        )}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                                <div className="flex items-start gap-4 sm:gap-5">
+                                    {/* Avatar with click to customize */}
+                                    <div className="relative group shrink-0">
+                                        <div
+                                            className={cn(
+                                                "h-18 w-18 sm:h-20 sm:w-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-3xl font-black text-white uppercase shadow-md transition-transform group-hover:scale-105 duration-200",
+                                                getAvatarGradientClass(
+                                                    profile.avatarGradient || getDefaultAvatarGradient(profile.username)
+                                                )
+                                            )}
+                                        >
+                                            {profile.username.charAt(0)}
+                                        </div>
+                                        <button
+                                            onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                                            className="absolute -bottom-1.5 -right-1.5 h-6 w-6 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-foreground shadow-sm hover:scale-110 transition-all"
+                                            title="Customize Avatar"
+                                        >
+                                            <Sparkles className="h-3 w-3 text-primary" />
+                                        </button>
                                     </div>
-                                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                        Member since {formatDate(profile.createdAt)}
-                                    </p>
-                                    {profile.lastLoginAt && (
-                                        <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                                            Last active: {formatDateTime(profile.lastLoginAt)}
-                                        </p>
-                                    )}
+
+                                    {/* User Details */}
+                                    <div className="space-y-1.5">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                                                @{profile.username}
+                                            </h1>
+                                            <RoleBadge role={profile.role} size="md" />
+
+                                            {profile.isProfilePublic ? (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                                    <Globe className="h-2.5 w-2.5" /> Public
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                                                    <Lock className="h-2.5 w-2.5" /> Private
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {profile.bio ? (
+                                            <p className="text-xs sm:text-sm text-muted-foreground max-w-lg leading-relaxed">
+                                                "{profile.bio}"
+                                            </p>
+                                        ) : (
+                                            <p className="text-xs text-muted-foreground/60 italic">
+                                                No bio written yet. Click 'Edit Profile' to introduce yourself.
+                                            </p>
+                                        )}
+
+                                        {/* Developer Social Links */}
+                                        <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-muted-foreground">
+                                            <span className="flex items-center gap-1 text-muted-foreground/60">
+                                                <Calendar className="h-3 w-3" />
+                                                Joined {formatDate(profile.createdAt)}
+                                            </span>
+
+                                            {cleanGithub && (
+                                                <a
+                                                    href={`https://github.com/${cleanGithub}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-foreground hover:text-primary transition-colors font-medium"
+                                                >
+                                                    <Github className="h-3 w-3" />
+                                                    {cleanGithub}
+                                                </a>
+                                            )}
+
+                                            {profile.websiteUrl && (
+                                                <a
+                                                    href={profile.websiteUrl.startsWith("http") ? profile.websiteUrl : `https://${profile.websiteUrl}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-foreground hover:text-primary transition-colors font-medium"
+                                                >
+                                                    <Globe className="h-3 w-3" />
+                                                    Portfolio
+                                                    <ExternalLink className="h-2.5 w-2.5" />
+                                                </a>
+                                            )}
+
+                                            {cleanTwitter && (
+                                                <a
+                                                    href={`https://x.com/${cleanTwitter}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-foreground hover:text-primary transition-colors font-medium"
+                                                >
+                                                    <Twitter className="h-3 w-3" />
+                                                    @{cleanTwitter}
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={logout}
-                                    className="text-destructive border-destructive/30 hover:bg-destructive hover:text-destructive-foreground transition-colors duration-200"
-                                >
-                                    Logout
-                                </Button>
+                                {/* Actions */}
+                                <div className="flex sm:flex-col items-center gap-2 w-full sm:w-auto shrink-0">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setActiveTab("profile")}
+                                        className="h-8 text-xs gap-1.5 flex-1 sm:flex-none border-border/80"
+                                    >
+                                        <Edit3 className="h-3.5 w-3.5" />
+                                        Edit Profile
+                                    </Button>
+
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={logout}
+                                        className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex-1 sm:flex-none"
+                                    >
+                                        <LogOut className="h-3.5 w-3.5" />
+                                        Logout
+                                    </Button>
+                                </div>
                             </div>
 
-                            {/* Stats */}
-                            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4 text-center">
-                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                                        {profile.savedProblems?.length || 0}
-                                    </p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Saved Problems</p>
+                            {/* Avatar Picker Drawer/Box when toggled */}
+                            {showAvatarPicker && (
+                                <div className="mt-6 pt-5 border-t border-border/60">
+                                    <h4 className="text-xs font-semibold mb-3 text-foreground flex items-center justify-between">
+                                        <span>Choose Your Gradient Avatar</span>
+                                        <button
+                                            onClick={() => setShowAvatarPicker(false)}
+                                            className="text-xs text-muted-foreground hover:text-foreground"
+                                        >
+                                            Done
+                                        </button>
+                                    </h4>
+                                    <AvatarCustomizer
+                                        username={profile.username}
+                                        currentGradient={profile.avatarGradient}
+                                        onSave={async (gradientId) => {
+                                            const res = await fetch("/api/auth/profile", {
+                                                method: "PUT",
+                                                headers: { "Content-Type": "application/json" },
+                                                credentials: "include",
+                                                body: JSON.stringify({ avatarGradient: gradientId }),
+                                            });
+                                            if (res.ok) {
+                                                setProfile((prev) => (prev ? { ...prev, avatarGradient: gradientId } : null));
+                                                updateUser({ avatarGradient: gradientId });
+                                                setShowAvatarPicker(false);
+                                            }
+                                        }}
+                                    />
                                 </div>
-                                <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4 text-center">
-                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                            )}
+
+                            {/* Stats Summary Strip */}
+                            <div className="mt-6 pt-6 border-t border-border/40 grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-violet-500">
+                                        {profile.contributions?.notes || 0}
+                                    </p>
+                                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Notes</p>
+                                </div>
+
+                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-rose-500">
+                                        {profile.contributions?.experiments || 0}
+                                    </p>
+                                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Experiments</p>
+                                </div>
+
+                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-amber-500">
+                                        {profile.contributions?.ideas || 0}
+                                    </p>
+                                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Ideas</p>
+                                </div>
+
+                                <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-emerald-500">
                                         {profile.completedProblems?.length || 0}
                                     </p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Completed</p>
+                                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Solved</p>
                                 </div>
-                                <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4 text-center">
-                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                                        {profile.savedJobs?.length || 0}
-                                    </p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Saved Jobs</p>
-                                </div>
-                                <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4 text-center">
-                                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+
+                                <div className="col-span-2 sm:col-span-1 rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
+                                    <p className="text-lg sm:text-xl font-bold text-primary">
                                         {profile.reputationScore || 0}
                                     </p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Reputation</p>
+                                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Reputation</p>
                                 </div>
                             </div>
                         </motion.div>
 
-                        {/* Tabs */}
-                        <motion.div variants={itemVariants} className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`relative px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${activeTab === tab.id
-                                        ? "text-zinc-900 dark:text-zinc-100"
-                                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-                                        } ${tab.id === "danger" ? "text-destructive hover:text-destructive" : ""}`}
-                                >
-                                    {tab.label}
-                                    {activeTab === tab.id && (
-                                        <motion.div
-                                            layoutId="activeTab"
-                                            className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-900 dark:bg-zinc-100"
-                                            transition={smoothSpring}
-                                        />
-                                    )}
-                                </button>
-                            ))}
+                        {/* Navigation Tabs */}
+                        <motion.div
+                            variants={itemVariants}
+                            className="flex items-center gap-1 border-b border-border/60 overflow-x-auto no-scrollbar"
+                        >
+                            {tabs.map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={cn(
+                                            "relative flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap",
+                                            isActive
+                                                ? "text-foreground font-semibold"
+                                                : "text-muted-foreground hover:text-foreground",
+                                            tab.id === "danger" && "hover:text-destructive",
+                                            tab.adminOnly && "text-red-500/90 hover:text-red-500 font-semibold"
+                                        )}
+                                    >
+                                        <Icon className={cn("h-3.5 w-3.5", isActive ? "text-primary" : "text-muted-foreground/70", tab.adminOnly && "text-red-500")} />
+                                        <span>{tab.label}</span>
+
+                                        {tab.badge !== undefined && typeof tab.badge === "number" && tab.badge > 0 && (
+                                            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-muted text-muted-foreground">
+                                                {tab.badge}
+                                            </span>
+                                        )}
+
+                                        {isActive && (
+                                            <motion.div
+                                                layoutId="profileActiveTab"
+                                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                                                transition={smoothSpring}
+                                            />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </motion.div>
 
-                        {/* Tab Content */}
+                        {/* Tab Contents */}
                         <AnimatePresence mode="wait">
+                            {/* 1. Contributions */}
+                            {activeTab === "contributions" && (
+                                <motion.div
+                                    key="contributions"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <UserContributions initialCounts={profile.contributions} />
+                                </motion.div>
+                            )}
+
+                            {/* 2. Analytics */}
                             {activeTab === "stats" && (
                                 <motion.div
                                     key="stats"
@@ -503,6 +645,7 @@ export default function ProfilePage() {
                                 </motion.div>
                             )}
 
+                            {/* 3. Profile Settings */}
                             {activeTab === "profile" && (
                                 <motion.div
                                     key="profile"
@@ -510,64 +653,135 @@ export default function ProfilePage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.2 }}
-                                    className="space-y-6"
+                                    className="space-y-6 max-w-2xl"
                                 >
-                                    {/* Avatar Customization */}
-                                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 p-6">
-                                        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-                                            Customize Avatar
-                                        </h3>
-                                        <AvatarCustomizer
-                                            username={profile.username}
-                                            currentGradient={profile.avatarGradient}
-                                            onSave={async (gradientId) => {
-                                                const res = await fetch("/api/auth/profile", {
-                                                    method: "PUT",
-                                                    headers: { "Content-Type": "application/json" },
-                                                    credentials: "include",
-                                                    body: JSON.stringify({ avatarGradient: gradientId }),
-                                                });
-                                                if (res.ok) {
-                                                    const data = await res.json();
-                                                    setProfile(prev => prev ? { ...prev, avatarGradient: gradientId } : null);
-                                                    updateUser({ avatarGradient: gradientId });
-                                                }
-                                            }}
-                                        />
-                                    </div>
-
-                                    <form onSubmit={handleProfileUpdate} className="space-y-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                Email
-                                            </label>
-                                            <Input
-                                                type="email"
-                                                placeholder="your@email.com"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                className="bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-zinc-500 transition-colors h-11"
-                                            />
-                                            <p className="text-xs text-zinc-400">
-                                                Optional. Used for account recovery.
-                                            </p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                Bio
-                                            </label>
+                                    <form onSubmit={handleProfileUpdate} className="space-y-5">
+                                        {/* Bio */}
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                    About You / Bio
+                                                </label>
+                                                <span className="text-[11px] text-muted-foreground">
+                                                    {bio.length}/200
+                                                </span>
+                                            </div>
                                             <textarea
-                                                placeholder="Tell us about yourself..."
+                                                placeholder="Tell the engineering community what you're building or researching..."
                                                 value={bio}
                                                 onChange={(e) => setBio(e.target.value)}
                                                 maxLength={200}
                                                 rows={3}
-                                                className="w-full px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm placeholder:text-zinc-400 focus:outline-none focus:border-zinc-500 transition-colors resize-none"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-card/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 leading-relaxed resize-none"
                                             />
-                                            <p className="text-xs text-zinc-400 text-right">
-                                                {bio.length}/200
+                                        </div>
+
+                                        {/* Email */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Email Address
+                                            </label>
+                                            <Input
+                                                type="email"
+                                                placeholder="developer@example.com"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="h-10 text-sm bg-card/40"
+                                            />
+                                            <p className="text-[11px] text-muted-foreground">
+                                                Used for security updates and recovery notifications.
                                             </p>
+                                        </div>
+
+                                        {/* Developer Links */}
+                                        <div className="space-y-3 pt-2">
+                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Developer Links & Socials
+                                            </h3>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                                                        <Github className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        GitHub Username
+                                                    </label>
+                                                    <Input
+                                                        placeholder="e.g. torvalds"
+                                                        value={githubUrl}
+                                                        onChange={(e) => setGithubUrl(e.target.value)}
+                                                        className="h-9 text-xs bg-card/40"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                                                        <Twitter className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Twitter / X Handle
+                                                    </label>
+                                                    <Input
+                                                        placeholder="e.g. username"
+                                                        value={twitterHandle}
+                                                        onChange={(e) => setTwitterHandle(e.target.value)}
+                                                        className="h-9 text-xs bg-card/40"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                                                    <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                                                    Portfolio / Website URL
+                                                </label>
+                                                <Input
+                                                    placeholder="https://yourportfolio.dev"
+                                                    value={websiteUrl}
+                                                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                                                    className="h-9 text-xs bg-card/40"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Privacy & Sharing */}
+                                        <div className="space-y-3 pt-3 border-t border-border/60">
+                                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Privacy & Community
+                                            </h3>
+
+                                            <label className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/40 cursor-pointer hover:bg-card/70 transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isProfilePublic}
+                                                    onChange={(e) => setIsProfilePublic(e.target.checked)}
+                                                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40"
+                                                />
+                                                <div className="space-y-0.5">
+                                                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                                        <Globe className="h-3.5 w-3.5 text-emerald-500" />
+                                                        Public Developer Profile
+                                                    </p>
+                                                    <p className="text-[11px] text-muted-foreground">
+                                                        Allow other community members to view your public notes, experiments, and reputation score.
+                                                    </p>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/40 cursor-pointer hover:bg-card/70 transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={autoShareCompleted}
+                                                    onChange={(e) => setAutoShareCompleted(e.target.checked)}
+                                                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40"
+                                                />
+                                                <div className="space-y-0.5">
+                                                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                                                        Auto-Share Completed Practice Problems
+                                                    </p>
+                                                    <p className="text-[11px] text-muted-foreground">
+                                                        Post an achievement note to the community feed whenever you complete a practice problem.
+                                                    </p>
+                                                </div>
+                                            </label>
                                         </div>
 
                                         {profileError && (
@@ -578,154 +792,153 @@ export default function ProfilePage() {
                                         )}
 
                                         {profileSuccess && (
-                                            <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1.5">
+                                            <p className="text-xs text-emerald-500 font-medium flex items-center gap-1.5">
                                                 <Check className="h-3.5 w-3.5" />
-                                                Profile updated successfully
+                                                Profile preferences updated successfully
                                             </p>
                                         )}
 
                                         <Button
                                             type="submit"
-                                            className="h-10"
+                                            className="h-10 px-5 text-xs font-semibold gap-1.5"
                                             disabled={profileSaving}
                                         >
-                                            {profileSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Save Changes
+                                            {profileSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                            Save Profile Changes
                                         </Button>
                                     </form>
                                 </motion.div>
                             )}
 
-                            {activeTab === "password" && (
+                            {/* 4. Security & Sessions */}
+                            {activeTab === "security" && (
                                 <motion.div
-                                    key="password"
+                                    key="security"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.2 }}
-                                    className="space-y-6"
+                                    className="space-y-8 max-w-2xl"
                                 >
-                                    <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800/50 p-4">
-                                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                                    {/* Change Password Form */}
+                                    <div className="rounded-xl border border-border/60 bg-card/40 p-5 sm:p-6 space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <KeyRound className="h-4 w-4 text-primary" />
+                                            <h3 className="text-sm font-semibold text-foreground">
+                                                {profile.hasPassword ? "Change Password" : "Set Account Password"}
+                                            </h3>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
                                             {profile.hasPassword
-                                                ? "You have a password set. Enter your current password to change it."
-                                                : "You haven't set a password yet. Set one to secure your account."}
+                                                ? "You currently have a password enabled. Enter your existing password to set a new one."
+                                                : "Secure your account with a direct password."}
                                         </p>
-                                    </div>
 
-                                    <form onSubmit={handlePasswordChange} className="space-y-4">
-                                        {profile.hasPassword && (
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                    Current Password
-                                                </label>
+                                        <form onSubmit={handlePasswordChange} className="space-y-3.5 pt-1">
+                                            {profile.hasPassword && (
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-medium text-foreground">Current Password</label>
+                                                    <div className="relative">
+                                                        <Input
+                                                            type={showCurrentPassword ? "text" : "password"}
+                                                            placeholder="••••••••"
+                                                            value={currentPassword}
+                                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                                            required
+                                                            className="h-9 text-xs pr-9 bg-card/40"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            {showCurrentPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-foreground">New Password</label>
                                                 <div className="relative">
                                                     <Input
-                                                        type={showCurrentPassword ? "text" : "password"}
+                                                        type={showNewPassword ? "text" : "password"}
                                                         placeholder="••••••••"
-                                                        value={currentPassword}
-                                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                                        value={newPassword}
+                                                        onChange={(e) => setNewPassword(e.target.value)}
                                                         required
-                                                        className="bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-zinc-500 transition-colors h-11 pr-10"
+                                                        minLength={6}
+                                                        className="h-9 text-xs pr-9 bg-card/40"
                                                     />
                                                     <button
                                                         type="button"
-                                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                                     >
-                                                        {showCurrentPassword ? (
-                                                            <EyeOff className="h-4 w-4" />
-                                                        ) : (
-                                                            <Eye className="h-4 w-4" />
-                                                        )}
+                                                        {showNewPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                                                     </button>
                                                 </div>
+                                                <p className="text-[10px] text-muted-foreground">Minimum 6 characters</p>
                                             </div>
-                                        )}
 
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                New Password
-                                            </label>
-                                            <div className="relative">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-foreground">Confirm New Password</label>
                                                 <Input
-                                                    type={showNewPassword ? "text" : "password"}
+                                                    type="password"
                                                     placeholder="••••••••"
-                                                    value={newPassword}
-                                                    onChange={(e) => setNewPassword(e.target.value)}
+                                                    value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
                                                     required
-                                                    minLength={6}
-                                                    className="bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-zinc-500 transition-colors h-11 pr-10"
+                                                    className="h-9 text-xs bg-card/40"
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-                                                >
-                                                    {showNewPassword ? (
-                                                        <EyeOff className="h-4 w-4" />
-                                                    ) : (
-                                                        <Eye className="h-4 w-4" />
-                                                    )}
-                                                </button>
                                             </div>
-                                            <p className="text-xs text-zinc-400">
-                                                Minimum 6 characters
-                                            </p>
+
+                                            {passwordError && (
+                                                <p className="text-xs text-destructive font-medium flex items-center gap-1.5">
+                                                    <AlertTriangle className="h-3.5 w-3.5" />
+                                                    {passwordError}
+                                                </p>
+                                            )}
+
+                                            {passwordSuccess && (
+                                                <p className="text-xs text-emerald-500 font-medium flex items-center gap-1.5">
+                                                    <Check className="h-3.5 w-3.5" />
+                                                    {profile.hasPassword ? "Password changed successfully" : "Password set successfully"}
+                                                </p>
+                                            )}
+
+                                            <Button type="submit" size="sm" className="h-9 text-xs" disabled={passwordSaving}>
+                                                {passwordSaving && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                                                {profile.hasPassword ? "Update Password" : "Set Password"}
+                                            </Button>
+                                        </form>
+                                    </div>
+
+                                    {/* Sessions Manager */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Laptop className="h-4 w-4 text-primary" />
+                                            <h3 className="text-sm font-semibold text-foreground">Active Browser Sessions</h3>
                                         </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                Confirm New Password
-                                            </label>
-                                            <Input
-                                                type="password"
-                                                placeholder="••••••••"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                required
-                                                className="bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-zinc-500 transition-colors h-11"
-                                            />
-                                        </div>
-
-                                        {passwordError && (
-                                            <p className="text-xs text-destructive font-medium flex items-center gap-1.5">
-                                                <AlertTriangle className="h-3.5 w-3.5" />
-                                                {passwordError}
-                                            </p>
-                                        )}
-
-                                        {passwordSuccess && (
-                                            <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1.5">
-                                                <Check className="h-3.5 w-3.5" />
-                                                {profile.hasPassword ? "Password updated successfully" : "Password set successfully"}
-                                            </p>
-                                        )}
-
-                                        <Button
-                                            type="submit"
-                                            className="h-10"
-                                            disabled={passwordSaving}
-                                        >
-                                            {passwordSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            {profile.hasPassword ? "Change Password" : "Set Password"}
-                                        </Button>
-                                    </form>
+                                        <SessionsManager />
+                                    </div>
                                 </motion.div>
                             )}
 
-                            {activeTab === "sessions" && (
+                            {/* 5. Admin Panel */}
+                            {activeTab === "admin" && profile.role === "admin" && (
                                 <motion.div
-                                    key="sessions"
+                                    key="admin"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <SessionsManager />
+                                    <AdminUsersManager />
                                 </motion.div>
                             )}
 
+                            {/* 6. Danger Zone */}
                             {activeTab === "danger" && (
                                 <motion.div
                                     key="danger"
@@ -733,23 +946,23 @@ export default function ProfilePage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.2 }}
-                                    className="space-y-6"
+                                    className="max-w-2xl"
                                 >
                                     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 space-y-4">
                                         <div className="flex items-start gap-3">
                                             <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
                                             <div>
-                                                <h3 className="font-semibold text-destructive">Delete Account</h3>
-                                                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                                                    Once you delete your account, there is no going back. All your data will be permanently removed.
+                                                <h3 className="font-semibold text-destructive">Delete Account Permanently</h3>
+                                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                                    Once you delete your account, all your personal notes, practice stats, bookmarks, and sessions will be permanently purged. This action cannot be undone.
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <form onSubmit={handleDeleteAccount} className="space-y-4 pt-2">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                    Type your username to confirm: <span className="font-mono text-destructive">{profile.username}</span>
+                                        <form onSubmit={handleDeleteAccount} className="space-y-3.5 pt-2">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-medium text-foreground">
+                                                    Type your username to confirm: <span className="font-mono text-destructive font-bold">{profile.username}</span>
                                                 </label>
                                                 <Input
                                                     type="text"
@@ -757,15 +970,13 @@ export default function ProfilePage() {
                                                     value={deleteConfirmUsername}
                                                     onChange={(e) => setDeleteConfirmUsername(e.target.value)}
                                                     required
-                                                    className="bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-destructive transition-colors h-11"
+                                                    className="h-9 text-xs bg-background/50 border-destructive/30 focus-visible:border-destructive"
                                                 />
                                             </div>
 
                                             {profile.hasPassword && (
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                        Password
-                                                    </label>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-medium text-foreground">Your Password</label>
                                                     <div className="relative">
                                                         <Input
                                                             type={showDeletePassword ? "text" : "password"}
@@ -773,18 +984,14 @@ export default function ProfilePage() {
                                                             value={deletePassword}
                                                             onChange={(e) => setDeletePassword(e.target.value)}
                                                             required
-                                                            className="bg-transparent border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-destructive transition-colors h-11 pr-10"
+                                                            className="h-9 text-xs pr-9 bg-background/50 border-destructive/30"
                                                         />
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowDeletePassword(!showDeletePassword)}
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                                         >
-                                                            {showDeletePassword ? (
-                                                                <EyeOff className="h-4 w-4" />
-                                                            ) : (
-                                                                <Eye className="h-4 w-4" />
-                                                            )}
+                                                            {showDeletePassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -800,11 +1007,12 @@ export default function ProfilePage() {
                                             <Button
                                                 type="submit"
                                                 variant="destructive"
-                                                className="h-10"
+                                                size="sm"
+                                                className="h-9 text-xs font-semibold"
                                                 disabled={deleting || deleteConfirmUsername !== profile.username}
                                             >
-                                                {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                Delete My Account
+                                                {deleting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                                                Delete My Account Permanently
                                             </Button>
                                         </form>
                                     </div>

@@ -6,6 +6,9 @@ export interface User {
   email?: string;
   bio?: string;
   avatarGradient?: string;
+  githubUrl?: string;
+  websiteUrl?: string;
+  twitterHandle?: string;
   savedProblems?: string[];
   completedProblems?: string[];
   savedJobs?: string[];
