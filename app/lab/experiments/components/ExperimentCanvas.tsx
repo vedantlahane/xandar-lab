@@ -8,7 +8,7 @@ import {
     Layers, Activity, CheckCircle2, Archive, ClipboardList,
     Monitor, Server, Boxes, Brain, Smartphone, Settings,
     Tag, Plus, Lock, Globe, User as UserIcon, Users,
-    Pin, Sparkles, AlertCircle
+    Pin, Star, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -453,7 +453,7 @@ export default function ExperimentCanvas({
                                             <>
                                                 <Beaker className={cn("h-4 w-4 shrink-0", getStatusColor(exp.status))} />
                                                 {exp.isPinned && <Pin className="h-3 w-3 text-amber-500 fill-current" />}
-                                                {exp.isCurated && <Sparkles className="h-3 w-3 text-purple-400" />}
+                                                {exp.isCurated && <Star className="h-3 w-3 text-amber-400 fill-current" />}
                                             </>
                                         }
                                         subtitle={exp.description}
@@ -470,12 +470,9 @@ export default function ExperimentCanvas({
                                                         • Revision needed
                                                     </span>
                                                 )}
-                                                {exp.authorUsername && (
+                                                {exp.authorUsername && activeTab !== "my" && (
                                                     <span className="inline-flex items-center gap-1 text-muted-foreground/60">
                                                         • @{exp.authorUsername}
-                                                        {exp.authorRole && exp.authorRole !== "user" && (
-                                                            <RoleBadge role={exp.authorRole} size="sm" />
-                                                        )}
                                                     </span>
                                                 )}
                                                 {exp.visibility === "private" && (

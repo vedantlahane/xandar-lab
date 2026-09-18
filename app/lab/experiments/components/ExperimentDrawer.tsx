@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import {
     ExternalLink, Github, Calendar, Lightbulb, Edit3, Globe, Lock,
-    Pin, Sparkles, MessageSquare, Trash2, AlertCircle, CheckCircle2, Loader2, Send
+    Pin, Star, MessageSquare, Trash2, AlertCircle, CheckCircle2, Loader2, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -232,8 +232,8 @@ export function ExperimentDrawer({
                 {currentExp.type}
             </span>
             {currentExp.isCurated && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/25">
-                    <Sparkles className="h-2.5 w-2.5" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/25">
+                    <Star className="h-2.5 w-2.5" />
                     Curated
                 </span>
             )}
@@ -262,13 +262,13 @@ export function ExperimentDrawer({
                     className={cn(
                         "h-6 w-6 rounded-md transition-colors",
                         currentExp.isCurated
-                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25"
-                            : "text-muted-foreground hover:text-purple-400 hover:bg-purple-500/10"
+                            ? "text-amber-500 bg-amber-500/15 hover:bg-amber-500/25"
+                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
                     )}
                     onClick={handleToggleCurated}
                     title={currentExp.isCurated ? "Certified Curated (Click to uncurate)" : "Mark as Official Curated Content"}
                 >
-                    <Sparkles className={cn("h-3.5 w-3.5", currentExp.isCurated && "fill-current")} />
+                    <Star className={cn("h-3.5 w-3.5", currentExp.isCurated && "fill-current")} />
                 </Button>
             )}
 
@@ -462,7 +462,7 @@ export function ExperimentDrawer({
                             {currentExp.authorUsername && (
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
                                     <span>Built by <strong className="text-foreground font-medium">@{currentExp.authorUsername}</strong></span>
-                                    {currentExp.authorRole && currentExp.authorRole !== "user" && (
+                                    {currentExp.authorRole && currentExp.authorRole !== "user" && String(currentExp.authorId) !== String(user?._id) && (
                                         <RoleBadge role={currentExp.authorRole} size="sm" />
                                     )}
                                 </div>

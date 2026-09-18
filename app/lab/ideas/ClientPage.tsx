@@ -7,7 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { IdeaDrawer } from "./components/IdeaDrawer";
 import { IdeaEditorDrawer } from "./components/IdeaEditorDrawer";
 import { useAuth } from "@/components/auth/AuthContext";
-import { Search, Sparkles, Filter, Activity, Clock3, HardDrive, Dices, Loader2, ArrowUpDown, ChevronDown, ChevronUp, Layers, Tag, Target, Calendar, Plus, Pin } from "lucide-react";
+import { Search, Sparkles, Filter, Activity, Clock3, HardDrive, Dices, Loader2, ArrowUpDown, ChevronDown, ChevronUp, Layers, Tag, Target, Calendar, Plus, Pin, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -371,7 +371,7 @@ export default function IdeasCatalogPage() {
                                 <Pin className="h-3 w-3 text-amber-500 fill-current shrink-0" />
                               )}
                               {idea.isCurated && (
-                                <Sparkles className="h-3 w-3 text-purple-400 shrink-0" />
+                                <Star className="h-3 w-3 text-amber-400 fill-current shrink-0" />
                               )}
                               <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                                 {idea.title}
@@ -397,9 +397,6 @@ export default function IdeasCatalogPage() {
                             {idea.authorUsername && (
                               <span className="inline-flex items-center gap-1 border-l border-border/50 pl-2">
                                 @{idea.authorUsername}
-                                {idea.authorRole && idea.authorRole !== "user" && (
-                                  <RoleBadge role={idea.authorRole} size="sm" />
-                                )}
                               </span>
                             )}
                             

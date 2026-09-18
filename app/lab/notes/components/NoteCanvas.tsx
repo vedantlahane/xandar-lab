@@ -6,7 +6,7 @@ import { NOTES as DEFAULT_STATIC_NOTES, NoteCategory } from "../data/notes";
 import {
     StickyNote, Pin, Calendar, Tag,
     Layers, BookOpen, Lightbulb, ListTodo, BookMarked, User, Briefcase,
-    Plus, Lock, Globe, Users, AlertCircle, Sparkles
+    Plus, Lock, Globe, Users, AlertCircle, Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -396,7 +396,7 @@ export default function NoteCanvas({
                                             <>
                                                 <StickyNote className={cn("h-3.5 w-3.5 shrink-0", getCategoryColor(note.category))} />
                                                 {note.isPinned && <Pin className="h-3 w-3 text-amber-500 fill-current" />}
-                                                {note.isCurated && <Sparkles className="h-3 w-3 text-purple-400" />}
+                                                {note.isCurated && <Star className="h-3 w-3 text-amber-400 fill-current" />}
                                             </>
                                         }
                                         subtitle={`${note.content.replace(/[#\-\[\]`*]/g, "").substring(0, 100)}...`}
@@ -410,12 +410,9 @@ export default function NoteCanvas({
                                                         • Revision needed
                                                     </span>
                                                 )}
-                                                {note.authorUsername && (
+                                                {note.authorUsername && activeTab !== "my" && (
                                                     <span className="inline-flex items-center gap-1 text-muted-foreground/60">
                                                         • @{note.authorUsername}
-                                                        {note.authorRole && note.authorRole !== "user" && (
-                                                            <RoleBadge role={note.authorRole} size="sm" />
-                                                        )}
                                                     </span>
                                                 )}
                                                 {note.visibility === "private" && (

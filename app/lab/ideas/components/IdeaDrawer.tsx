@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import {
-    Copy, ShieldAlert, Sparkles, Target, ChevronDown, ChevronUp,
+    Copy, ShieldAlert, Star, Sparkles, Target, ChevronDown, ChevronUp,
     ExternalLink, Rocket, ThumbsUp, Pin, Trash2, Loader2, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -151,8 +151,8 @@ export function IdeaDrawer({
                 {currentIdea.domain.replace(/-/g, " ")}
             </span>
             {currentIdea.isCurated && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/25">
-                    <Sparkles className="h-2.5 w-2.5" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/25">
+                    <Star className="h-2.5 w-2.5" />
                     Curated
                 </span>
             )}
@@ -175,8 +175,8 @@ export function IdeaDrawer({
                     className={cn(
                         "h-6 w-6 rounded-md transition-colors",
                         currentIdea.isCurated
-                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25"
-                            : "text-muted-foreground hover:text-purple-400 hover:bg-purple-500/10"
+                            ? "text-amber-500 bg-amber-500/15 hover:bg-amber-500/25"
+                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
                     )}
                     onClick={handleToggleCurated}
                     disabled={loadingAction === "curate"}
@@ -185,7 +185,7 @@ export function IdeaDrawer({
                     {loadingAction === "curate" ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                        <Sparkles className={cn("h-3.5 w-3.5", currentIdea.isCurated && "fill-current")} />
+                        <Star className={cn("h-3.5 w-3.5", currentIdea.isCurated && "fill-current")} />
                     )}
                 </Button>
             )}
@@ -253,7 +253,7 @@ export function IdeaDrawer({
                             {currentIdea.authorUsername && (
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
                                     <span>by <strong className="text-foreground font-medium">@{currentIdea.authorUsername}</strong></span>
-                                    {currentIdea.authorRole && currentIdea.authorRole !== "user" && (
+                                    {currentIdea.authorRole && currentIdea.authorRole !== "user" && String(currentIdea.authorId) !== String(user?._id) && (
                                         <RoleBadge role={currentIdea.authorRole} size="sm" />
                                     )}
                                 </div>

@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import {
     Copy, Check, Pin, Calendar, Clock, Edit3, Globe, Lock,
-    Sparkles, MessageSquare, Trash2, AlertCircle, CheckCircle2, Loader2, Send
+    Star, MessageSquare, Trash2, AlertCircle, CheckCircle2, Loader2, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Note, NoteColor } from "../data/notes";
@@ -243,8 +243,8 @@ export function NoteDrawer({
                 </span>
             </div>
             {currentNote.isCurated && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/25">
-                    <Sparkles className="h-2.5 w-2.5" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/25">
+                    <Star className="h-2.5 w-2.5" />
                     Curated
                 </span>
             )}
@@ -273,13 +273,13 @@ export function NoteDrawer({
                     className={cn(
                         "h-6 w-6 rounded-md transition-colors",
                         currentNote.isCurated
-                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25"
-                            : "text-muted-foreground hover:text-purple-400 hover:bg-purple-500/10"
+                            ? "text-amber-500 bg-amber-500/15 hover:bg-amber-500/25"
+                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
                     )}
                     onClick={handleToggleCurated}
                     title={currentNote.isCurated ? "Certified Curated (Click to uncurate)" : "Mark as Official Curated Content"}
                 >
-                    <Sparkles className={cn("h-3.5 w-3.5", currentNote.isCurated && "fill-current")} />
+                    <Star className={cn("h-3.5 w-3.5", currentNote.isCurated && "fill-current")} />
                 </Button>
             )}
 
@@ -486,7 +486,7 @@ export function NoteDrawer({
                             {currentNote.authorUsername && (
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
                                     <span>by <strong className="text-foreground font-medium">@{currentNote.authorUsername}</strong></span>
-                                    {currentNote.authorRole && currentNote.authorRole !== "user" && (
+                                    {currentNote.authorRole && currentNote.authorRole !== "user" && String(currentNote.authorId) !== String(user?._id) && (
                                         <RoleBadge role={currentNote.authorRole} size="sm" />
                                     )}
                                 </div>
