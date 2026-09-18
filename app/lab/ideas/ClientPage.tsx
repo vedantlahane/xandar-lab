@@ -363,19 +363,15 @@ export default function IdeasCatalogPage() {
                       >
                         <div className="flex flex-col gap-2">
                           <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2.5 w-full flex-wrap">
+                            <div className="flex items-center gap-2 w-full min-w-0">
                               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded border", tone, "shrink-0")}>
                                 {idea.confidence}%
                               </span>
-                              {idea.isCurated && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30 shrink-0">
-                                  <Sparkles className="h-2.5 w-2.5" /> Curated
-                                </span>
-                              )}
                               {idea.isPinned && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0">
-                                  <Pin className="h-2.5 w-2.5 fill-current" /> Pinned
-                                </span>
+                                <Pin className="h-3 w-3 text-amber-500 fill-current shrink-0" />
+                              )}
+                              {idea.isCurated && (
+                                <Sparkles className="h-3 w-3 text-purple-400 shrink-0" />
                               )}
                               <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                                 {idea.title}
@@ -401,8 +397,8 @@ export default function IdeasCatalogPage() {
                             {idea.authorUsername && (
                               <span className="inline-flex items-center gap-1 border-l border-border/50 pl-2">
                                 @{idea.authorUsername}
-                                {idea.authorRole && (
-                                  <RoleBadge role={idea.authorRole} size="sm" showMember={true} />
+                                {idea.authorRole && idea.authorRole !== "user" && (
+                                  <RoleBadge role={idea.authorRole} size="sm" />
                                 )}
                               </span>
                             )}

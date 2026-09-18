@@ -2,16 +2,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Check, Pin, Calendar, Clock, Edit3, Globe, Lock, Sparkles } from "lucide-react";
+import {
+    Copy, Check, Pin, Calendar, Clock, Edit3, Globe, Lock,
+    Sparkles, MessageSquare, Trash2, AlertCircle, CheckCircle2, Loader2, Send
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Note, NoteColor } from "../data/notes";
 import { cn } from "@/lib/utils";
 import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 import { useAuth } from "@/components/auth/AuthContext";
 import { usePermissions } from "@/components/auth/hooks/usePermissions";
-import { AuthorCard } from "@/components/shared/AuthorCard";
-import { ChangeRequestBanner } from "@/components/shared/ChangeRequestBanner";
-import { ModerationBar } from "@/components/shared/ModerationBar";
+import { RoleBadge } from "@/components/shared/RoleBadge";
 import { NoteEditorDrawer } from "./NoteEditorDrawer";
 
 export function NoteDrawer({
@@ -31,6 +32,9 @@ export function NoteDrawer({
     const [copied, setCopied] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [showRequestForm, setShowRequestForm] = useState(false);
+    const [requestMessage, setRequestMessage] = useState("");
+    const [submittingRequest, setSubmittingRequest] = useState(false);
+    const [resolvingId, setResolvingId] = useState<string | null>(null);
 
     const { user } = useAuth();
     const {
@@ -54,13 +58,16 @@ export function NoteDrawer({
         user._id.toString() === currentNote.authorId.toString()
     );
 
+    const canResolve = isAuthor || isAdmin || isModerator;
+
     const handleCopy = async () => {
         await navigator.clipboard.writeText(currentNote.content);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleTogglePin = async (newPinned: boolean) => {
+    const handleTogglePin = async () => {
+        const newPinned = !currentNote.isPinned;
         try {
             const res = await fetch(`/api/notes/${currentNote.id}`, {
                 method: "PUT",
@@ -77,7 +84,8 @@ export function NoteDrawer({
         }
     };
 
-    const handleToggleCurated = async (newCurated: boolean) => {
+    const handleToggleCurated = async () => {
+        const newCurated = !currentNote.isCurated;
         try {
             const res = await fetch(`/api/notes/${currentNote.id}`, {
                 method: "PUT",
@@ -94,7 +102,8 @@ export function NoteDrawer({
         }
     };
 
-    const handleToggleVisibility = async (newVisibility: "public" | "private") => {
+    const handleToggleVisibility = async () => {
+        const newVisibility = currentNote.visibility === "public" ? "private" : "public";
         try {
             const res = await fetch(`/api/notes/${currentNote.id}`, {
                 method: "PUT",
@@ -126,10 +135,51 @@ export function NoteDrawer({
         }
     };
 
-    const handleRequestsUpdated = (requests: any[]) => {
-        const updated = { ...currentNote, changeRequests: requests };
-        setCurrentNote(updated);
-        if (onNoteUpdated) onNoteUpdated(updated);
+    const handleSubmitChangeRequest = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!requestMessage.trim()) return;
+
+        setSubmittingRequest(true);
+        try {
+            const res = await fetch(`/api/notes/${currentNote.id}/change-request`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: requestMessage.trim() }),
+            });
+            const data = await res.json();
+            if (res.ok && data.changeRequests) {
+                const updated = { ...currentNote, changeRequests: data.changeRequests };
+                setCurrentNote(updated);
+                if (onNoteUpdated) onNoteUpdated(updated);
+                setRequestMessage("");
+                setShowRequestForm(false);
+            }
+        } catch (err) {
+            console.error("Failed to submit change request", err);
+        } finally {
+            setSubmittingRequest(false);
+        }
+    };
+
+    const handleResolveRequest = async (requestId?: string) => {
+        setResolvingId(requestId || "latest");
+        try {
+            const res = await fetch(`/api/notes/${currentNote.id}/change-request`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requestId }),
+            });
+            const data = await res.json();
+            if (res.ok && data.changeRequests) {
+                const updated = { ...currentNote, changeRequests: data.changeRequests };
+                setCurrentNote(updated);
+                if (onNoteUpdated) onNoteUpdated(updated);
+            }
+        } catch (err) {
+            console.error("Failed to resolve change request", err);
+        } finally {
+            setResolvingId(null);
+        }
     };
 
     if (isEditing) {
@@ -175,35 +225,37 @@ export function NoteDrawer({
         }
     };
 
+    const pendingRequests = (currentNote.changeRequests || []).filter((r: any) => r.status === "pending");
+
     const headerLeft = (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
             <span className="text-xs font-medium text-muted-foreground/70">
                 Notes
             </span>
-            <div className="h-4 w-px bg-border" />
+            <div className="h-3.5 w-px bg-border/60" />
             <div className="flex items-center gap-1.5">
                 <span className={cn("h-2 w-2 rounded-full shrink-0", getColorDot(currentNote.color))} />
                 <span className={cn(
-                    "px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+                    "px-2 py-0.5 rounded text-[10px] font-semibold border",
                     getCategoryColor(currentNote.category)
                 )}>
                     {currentNote.category}
                 </span>
             </div>
             {currentNote.isCurated && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/25">
                     <Sparkles className="h-2.5 w-2.5" />
                     Curated
                 </span>
             )}
             {currentNote.isPinned && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                    <Pin className="h-3 w-3 fill-current" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/25">
+                    <Pin className="h-2.5 w-2.5 fill-current" />
                     Pinned
                 </span>
             )}
             {currentNote.visibility && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border/40">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/60 text-muted-foreground border border-border/40">
                     {currentNote.visibility === "public" ? <Globe className="h-2.5 w-2.5 text-emerald-500" /> : <Lock className="h-2.5 w-2.5" />}
                     {currentNote.visibility === "public" ? "Community" : "Private"}
                 </span>
@@ -212,11 +264,96 @@ export function NoteDrawer({
     );
 
     const headerIconTools = (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
+            {/* Curate Content (Admin Only) */}
+            {canCurate && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                        "h-6 w-6 rounded-md transition-colors",
+                        currentNote.isCurated
+                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25"
+                            : "text-muted-foreground hover:text-purple-400 hover:bg-purple-500/10"
+                    )}
+                    onClick={handleToggleCurated}
+                    title={currentNote.isCurated ? "Certified Curated (Click to uncurate)" : "Mark as Official Curated Content"}
+                >
+                    <Sparkles className={cn("h-3.5 w-3.5", currentNote.isCurated && "fill-current")} />
+                </Button>
+            )}
+
+            {/* Pin Content (Mod & Admin) */}
+            {canPin && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                        "h-6 w-6 rounded-md transition-colors",
+                        currentNote.isPinned
+                            ? "text-amber-500 bg-amber-500/15 hover:bg-amber-500/25"
+                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+                    )}
+                    onClick={handleTogglePin}
+                    title={currentNote.isPinned ? "Pinned to Top (Click to unpin)" : "Pin Note to Top"}
+                >
+                    <Pin className={cn("h-3.5 w-3.5", currentNote.isPinned && "fill-current")} />
+                </Button>
+            )}
+
+            {/* Visibility Toggle (Author / Mod / Admin) */}
+            {canChangeVisibility(currentNote.authorId) && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
+                    onClick={handleToggleVisibility}
+                    title={`Currently ${currentNote.visibility || "private"}. Click to switch.`}
+                >
+                    {currentNote.visibility === "public" ? (
+                        <Globe className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                        <Lock className="h-3.5 w-3.5" />
+                    )}
+                </Button>
+            )}
+
+            {/* Request Changes (Mod & Admin) */}
+            {canRequestChanges && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                        "h-6 w-6 rounded-md transition-colors",
+                        showRequestForm
+                            ? "text-amber-500 bg-amber-500/15"
+                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+                    )}
+                    onClick={() => setShowRequestForm(!showRequestForm)}
+                    title="Request Revision from Author"
+                >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                </Button>
+            )}
+
+            {/* Edit Note (Author / Mod / Admin) */}
+            {canEdit(currentNote.authorId) && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsEditing(true)}
+                    title="Edit Note"
+                >
+                    <Edit3 className="h-3.5 w-3.5" />
+                </Button>
+            )}
+
+            {/* Copy */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
+                className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
                 onClick={handleCopy}
                 title={copied ? "Copied!" : "Copy note content"}
             >
@@ -226,6 +363,19 @@ export function NoteDrawer({
                     <Copy className="h-3.5 w-3.5" />
                 )}
             </Button>
+
+            {/* Delete Note (Author / Admin) */}
+            {canDelete(currentNote.authorId) && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    onClick={handleDelete}
+                    title="Delete Note"
+                >
+                    <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+            )}
         </div>
     );
 
@@ -234,71 +384,122 @@ export function NoteDrawer({
             onClose={onClose}
             position={position}
             defaultWidth="720px"
-            defaultHeight="580px"
+            defaultHeight="560px"
             headerLeft={headerLeft}
             headerIconTools={headerIconTools}
             backdropClass="bg-black/20 backdrop-blur-sm"
         >
             <div className="p-6">
                 <div className="space-y-5">
-                    {/* Top Section: Author Showcase & In-Situ Moderation Bar */}
-                    <div className="flex items-center justify-between gap-3 flex-wrap pb-3.5 border-b border-border/40">
-                        <AuthorCard
-                            username={currentNote.authorUsername || "Anonymous"}
-                            role={currentNote.authorRole || "user"}
-                            date={currentNote.createdAt}
-                            size="md"
-                        />
+                    {/* Inline Change Request Form (Mod / Admin) */}
+                    {showRequestForm && (
+                        <form
+                            onSubmit={handleSubmitChangeRequest}
+                            className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-2.5 text-xs"
+                        >
+                            <div className="flex items-center justify-between text-amber-500 font-medium">
+                                <span className="flex items-center gap-1.5">
+                                    <MessageSquare className="h-3.5 w-3.5" /> Request changes from author
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRequestForm(false)}
+                                    className="text-muted-foreground hover:text-foreground text-[11px]"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                            <textarea
+                                value={requestMessage}
+                                onChange={(e) => setRequestMessage(e.target.value)}
+                                placeholder="Specify what should be improved or corrected before approval..."
+                                rows={2}
+                                className="w-full text-xs p-2.5 rounded-md border border-border/60 bg-background focus:outline-none focus:border-amber-500/50 resize-none font-sans"
+                                required
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowRequestForm(false)}
+                                    className="h-7 text-xs"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={submittingRequest || !requestMessage.trim()}
+                                    className="h-7 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium gap-1.5"
+                                >
+                                    {submittingRequest ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                                    Send Request
+                                </Button>
+                            </div>
+                        </form>
+                    )}
 
-                        <ModerationBar
-                            itemId={currentNote.id}
-                            itemType="notes"
-                            isPinned={!!currentNote.isPinned}
-                            isCurated={!!currentNote.isCurated}
-                            visibility={currentNote.visibility || "private"}
-                            authorId={currentNote.authorId}
-                            currentUserId={user?._id}
-                            currentUserRole={user?.role}
-                            canPin={canPin}
-                            canCurate={canCurate}
-                            canChangeVisibility={canChangeVisibility(currentNote.authorId)}
-                            canRequestChanges={canRequestChanges}
-                            canEdit={canEdit(currentNote.authorId)}
-                            canDelete={canDelete(currentNote.authorId)}
-                            onTogglePin={handleTogglePin}
-                            onToggleCurated={handleToggleCurated}
-                            onToggleVisibility={handleToggleVisibility}
-                            onRequestChangesClick={() => setShowRequestForm((prev) => !prev)}
-                            onEditClick={() => setIsEditing(true)}
-                            onDeleteClick={handleDelete}
-                        />
-                    </div>
+                    {/* Pending Change Requests Banner (Subtle & clean) */}
+                    {pendingRequests.map((req: any, idx: number) => (
+                        <div
+                            key={req._id || idx}
+                            className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-xs space-y-1.5"
+                        >
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 text-amber-500 font-medium text-xs">
+                                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                    <span>Revision requested by @{req.requestedBy}</span>
+                                    {req.requestedByRole && req.requestedByRole !== "user" && (
+                                        <RoleBadge role={req.requestedByRole} size="sm" />
+                                    )}
+                                </div>
+                                {canResolve && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleResolveRequest(req._id)}
+                                        disabled={resolvingId === (req._id || "latest")}
+                                        className="h-6 px-2 text-[11px] font-medium text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 gap-1"
+                                    >
+                                        {resolvingId === (req._id || "latest") ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                            <CheckCircle2 className="h-3 w-3" />
+                                        )}
+                                        Mark Resolved
+                                    </Button>
+                                )}
+                            </div>
+                            <p className="text-foreground/90 font-mono text-[11px] pl-5 border-l border-amber-500/30 leading-relaxed">
+                                "{req.message}"
+                            </p>
+                        </div>
+                    ))}
 
-                    {/* Change Requests Section (Pending revisions, resolve button, mod request form) */}
-                    <ChangeRequestBanner
-                        changeRequests={currentNote.changeRequests || []}
-                        itemId={currentNote.id}
-                        itemType="notes"
-                        isAuthor={isAuthor}
-                        isModerator={isModerator}
-                        isAdmin={isAdmin}
-                        showRequestForm={showRequestForm}
-                        onCloseForm={() => setShowRequestForm(false)}
-                        onRequestsUpdated={handleRequestsUpdated}
-                    />
+                    {/* Title & Author header */}
+                    <div className="space-y-2">
+                        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                                {currentNote.title}
+                            </h2>
+                            {currentNote.authorUsername && (
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+                                    <span>by <strong className="text-foreground font-medium">@{currentNote.authorUsername}</strong></span>
+                                    {currentNote.authorRole && currentNote.authorRole !== "user" && (
+                                        <RoleBadge role={currentNote.authorRole} size="sm" />
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
-                    {/* Title & Tags */}
-                    <div className="space-y-2.5">
-                        <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                            {currentNote.title}
-                        </h2>
-
+                        {/* Tags */}
                         {currentNote.tags && currentNote.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">
                                 {currentNote.tags.map((tag: string) => (
                                     <span
                                         key={tag}
-                                        className="inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium border border-border/50 bg-muted/40 text-muted-foreground"
+                                        className="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium border border-border/50 bg-muted/30 text-muted-foreground"
                                     >
                                         #{tag}
                                     </span>
@@ -308,7 +509,7 @@ export function NoteDrawer({
                     </div>
 
                     {/* Note Content */}
-                    <div className="rounded-xl border border-border/50 bg-muted/15 p-5">
+                    <div className="rounded-lg border border-border/50 bg-muted/20 p-4 sm:p-5">
                         <div className="text-sm text-foreground/90 whitespace-pre-wrap font-sans leading-relaxed select-text">
                             {currentNote.content}
                         </div>

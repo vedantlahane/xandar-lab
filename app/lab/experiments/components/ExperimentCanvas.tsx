@@ -465,31 +465,26 @@ export default function ExperimentCanvas({
                                                 <span className={getTypeColor(exp.type)}>
                                                     • {exp.type}
                                                 </span>
-                                                {exp.isCurated && (
-                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
-                                                        <Sparkles className="h-2.5 w-2.5" /> Curated
-                                                    </span>
-                                                )}
                                                 {hasPendingChanges && (
-                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                                                        <AlertCircle className="h-2.5 w-2.5" /> Changes Requested
+                                                    <span className="text-amber-500 font-medium">
+                                                        • Revision needed
                                                     </span>
                                                 )}
                                                 {exp.authorUsername && (
-                                                    <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+                                                    <span className="inline-flex items-center gap-1 text-muted-foreground/60">
                                                         • @{exp.authorUsername}
-                                                        {exp.authorRole && (
-                                                            <RoleBadge role={exp.authorRole} size="sm" showMember={true} />
+                                                        {exp.authorRole && exp.authorRole !== "user" && (
+                                                            <RoleBadge role={exp.authorRole} size="sm" />
                                                         )}
                                                     </span>
                                                 )}
                                                 {exp.visibility === "private" && (
-                                                    <span className="inline-flex items-center gap-0.5 text-amber-500/80 font-medium">
+                                                    <span className="inline-flex items-center gap-0.5 text-muted-foreground/60">
                                                         • <Lock className="h-2.5 w-2.5" /> Private
                                                     </span>
                                                 )}
                                                 {techs.slice(0, 3).map((tech) => (
-                                                    <span key={tech} className="text-xs text-muted-foreground/50">
+                                                    <span key={tech} className="text-muted-foreground/40">
                                                         • {tech}
                                                     </span>
                                                 ))}
