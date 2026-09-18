@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/db";
 import Note from "@/models/Note";
 import { getSession } from "@/lib/auth";
-import { canManageResource } from "@/lib/rbac";
+import { canManageResource, canDeleteResource } from "@/lib/rbac";
 import type { UserRole } from "@/lib/rbac";
 
 export async function GET(
@@ -97,7 +97,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { title, content, category, color, tags, isPinned, visibility } = body;
+        const { title, content, category, color, tags, isPinned, visibility, isCurated } = body;
 
         if (title !== undefined) note.title = title.trim();
         if (content !== undefined) note.content = content;
@@ -106,6 +106,9 @@ export async function PUT(
         if (tags !== undefined) note.tags = Array.isArray(tags) ? tags : [];
         if (isPinned !== undefined) note.isPinned = !!isPinned;
         if (visibility !== undefined) note.visibility = visibility;
+        if (isCurated !== undefined && userRole === "admin") {
+            note.isCurated = !!isCurated;
+        }
 
         await note.save();
 
@@ -123,7 +126,8 @@ export async function PUT(
                 authorId: note.authorId.toString(),
                 authorUsername: note.authorUsername,
                 authorRole: note.authorRole,
-                isCurated: false,
+                isCurated: !!note.isCurated,
+                changeRequests: note.changeRequests || [],
                 createdAt: new Date(note.createdAt).toISOString().split("T")[0],
                 updatedAt: new Date(note.updatedAt).toISOString().split("T")[0],
             },
@@ -160,7 +164,7 @@ export async function DELETE(
             return NextResponse.json({ error: "Note not found" }, { status: 404 });
         }
 
-        if (!canManageResource(session.userId, userRole, note.authorId.toString())) {
+        if (!canDeleteResource(session.userId, userRole, note.authorId.toString())) {
             return NextResponse.json({ error: "Forbidden: You do not have permission to delete this note" }, { status: 403 });
         }
 

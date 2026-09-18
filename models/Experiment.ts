@@ -4,6 +4,17 @@ import mongoose, { Schema, model, models } from "mongoose";
 export type ExperimentStatus = 'Active' | 'Completed' | 'Archived' | 'Planning';
 export type ExperimentType = 'Frontend' | 'Backend' | 'Full Stack' | 'AI/ML' | 'Mobile' | 'DevOps';
 
+export interface IChangeRequest {
+    _id?: string;
+    requestedBy: string;
+    requestedById: mongoose.Types.ObjectId;
+    requestedByRole: string;
+    message: string;
+    status: 'pending' | 'resolved';
+    createdAt: Date;
+    resolvedAt?: Date;
+}
+
 export interface IExperiment {
     _id: string;
     authorId: mongoose.Types.ObjectId;
@@ -21,6 +32,9 @@ export interface IExperiment {
     techStack: string[];
     highlights: string[];
     visibility: 'private' | 'public';
+    isPinned?: boolean;
+    isCurated?: boolean;
+    changeRequests?: IChangeRequest[];
     upvotes: number;
     upvotedBy: string[];
     createdAt: Date;
@@ -108,6 +122,27 @@ const ExperimentSchema = new Schema<IExperiment>(
             type: [String],
             default: [],
         },
+        isPinned: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        isCurated: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        changeRequests: [
+            {
+                requestedBy: { type: String, required: true },
+                requestedById: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+                requestedByRole: { type: String, default: 'admin' },
+                message: { type: String, required: true },
+                status: { type: String, enum: ['pending', 'resolved'], default: 'pending' },
+                createdAt: { type: Date, default: Date.now },
+                resolvedAt: { type: Date },
+            },
+        ],
     },
     {
         timestamps: true,

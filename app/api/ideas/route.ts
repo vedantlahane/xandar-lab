@@ -123,6 +123,10 @@ export async function POST(request: Request) {
 
     const newIdea = await Idea.create({
       authorId: new mongoose.Types.ObjectId(session.userId),
+      authorUsername: session.username || "Creator",
+      authorRole: session.role || "user",
+      isCurated: session.role === "admin",
+      isPinned: false,
       title: title.trim(),
       slug,
       problem: problem.trim(),

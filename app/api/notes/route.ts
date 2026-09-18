@@ -74,7 +74,8 @@ export async function GET(request: Request) {
             authorUsername: n.authorUsername || "Anonymous",
             authorRole: n.authorRole || "user",
             upvotes: n.upvotes || 0,
-            isCurated: false,
+            isCurated: !!n.isCurated,
+            changeRequests: n.changeRequests || [],
             createdAt: n.createdAt ? new Date(n.createdAt).toISOString().split("T")[0] : "Recently",
             updatedAt: n.updatedAt ? new Date(n.updatedAt).toISOString().split("T")[0] : "Recently",
         }));

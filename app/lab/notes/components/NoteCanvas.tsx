@@ -6,7 +6,7 @@ import { NOTES as DEFAULT_STATIC_NOTES, NoteCategory } from "../data/notes";
 import {
     StickyNote, Pin, Calendar, Tag,
     Layers, BookOpen, Lightbulb, ListTodo, BookMarked, User, Briefcase,
-    Plus, Lock, Globe, Users,
+    Plus, Lock, Globe, Users, AlertCircle, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -384,6 +384,7 @@ export default function NoteCanvas({
                         <div className="space-y-0">
                             {group.notes.map((note: any) => {
                                 const isActive = activeNoteId === note.id;
+                                const hasPendingChanges = note.changeRequests?.some((r: any) => r.status === "pending");
                                 return (
                                     <LabItemRow
                                         key={note.id}
@@ -394,7 +395,8 @@ export default function NoteCanvas({
                                         titleIcon={
                                             <>
                                                 <StickyNote className={cn("h-3.5 w-3.5 shrink-0", getCategoryColor(note.category))} />
-                                                {note.isPinned && <Pin className="h-3 w-3 text-amber-500" />}
+                                                {note.isPinned && <Pin className="h-3 w-3 text-amber-500 fill-current" />}
+                                                {note.isCurated && <Sparkles className="h-3 w-3 text-purple-400" />}
                                             </>
                                         }
                                         subtitle={`${note.content.replace(/[#\-\[\]`*]/g, "").substring(0, 100)}...`}
@@ -403,11 +405,21 @@ export default function NoteCanvas({
                                                 <span className={getCategoryColor(note.category)}>
                                                     {note.category}
                                                 </span>
+                                                {note.isCurated && (
+                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                                                        <Sparkles className="h-2.5 w-2.5" /> Curated
+                                                    </span>
+                                                )}
+                                                {hasPendingChanges && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                                                        <AlertCircle className="h-2.5 w-2.5" /> Changes Requested
+                                                    </span>
+                                                )}
                                                 {note.authorUsername && (
                                                     <span className="inline-flex items-center gap-1 text-muted-foreground/70">
                                                         • @{note.authorUsername}
-                                                        {note.authorRole && note.authorRole !== "user" && (
-                                                            <RoleBadge role={note.authorRole} size="sm" />
+                                                        {note.authorRole && (
+                                                            <RoleBadge role={note.authorRole} size="sm" showMember={true} />
                                                         )}
                                                     </span>
                                                 )}

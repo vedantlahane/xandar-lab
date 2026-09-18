@@ -7,7 +7,8 @@ import {
     Beaker, Calendar, GitBranch, ExternalLink,
     Layers, Activity, CheckCircle2, Archive, ClipboardList,
     Monitor, Server, Boxes, Brain, Smartphone, Settings,
-    Tag, Plus, Lock, Globe, User as UserIcon, Users
+    Tag, Plus, Lock, Globe, User as UserIcon, Users,
+    Pin, Sparkles, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -440,6 +441,7 @@ export default function ExperimentCanvas({
                             {category.experiments.map((exp: any) => {
                                 const isActive = activeExpId === exp.id;
                                 const techs: string[] = exp.technologies || exp.techStack || [];
+                                const hasPendingChanges = exp.changeRequests?.some((r: any) => r.status === "pending");
                                 return (
                                     <LabItemRow
                                         key={exp.id}
@@ -447,7 +449,13 @@ export default function ExperimentCanvas({
                                         isActive={isActive}
                                         onClick={onExpSelect}
                                         title={exp.title}
-                                        titleIcon={<Beaker className={cn("h-4 w-4 shrink-0", getStatusColor(exp.status))} />}
+                                        titleIcon={
+                                            <>
+                                                <Beaker className={cn("h-4 w-4 shrink-0", getStatusColor(exp.status))} />
+                                                {exp.isPinned && <Pin className="h-3 w-3 text-amber-500 fill-current" />}
+                                                {exp.isCurated && <Sparkles className="h-3 w-3 text-purple-400" />}
+                                            </>
+                                        }
                                         subtitle={exp.description}
                                         tags={
                                             <>
@@ -457,11 +465,21 @@ export default function ExperimentCanvas({
                                                 <span className={getTypeColor(exp.type)}>
                                                     • {exp.type}
                                                 </span>
+                                                {exp.isCurated && (
+                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                                                        <Sparkles className="h-2.5 w-2.5" /> Curated
+                                                    </span>
+                                                )}
+                                                {hasPendingChanges && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                                                        <AlertCircle className="h-2.5 w-2.5" /> Changes Requested
+                                                    </span>
+                                                )}
                                                 {exp.authorUsername && (
                                                     <span className="inline-flex items-center gap-1 text-muted-foreground/70">
                                                         • @{exp.authorUsername}
-                                                        {exp.authorRole && exp.authorRole !== "user" && (
-                                                            <RoleBadge role={exp.authorRole} size="sm" />
+                                                        {exp.authorRole && (
+                                                            <RoleBadge role={exp.authorRole} size="sm" showMember={true} />
                                                         )}
                                                     </span>
                                                 )}

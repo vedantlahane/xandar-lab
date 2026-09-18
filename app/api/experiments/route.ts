@@ -78,8 +78,11 @@ export async function GET(request: Request) {
             authorId: e.authorId?.toString(),
             authorUsername: e.authorUsername || "Builder",
             authorRole: e.authorRole || "user",
+            visibility: e.visibility || "public",
             upvotes: e.upvotes || 0,
-            isCurated: false,
+            isPinned: !!e.isPinned,
+            isCurated: !!e.isCurated,
+            changeRequests: e.changeRequests || [],
         }));
 
         const staticList = STATIC_EXPERIMENTS.flatMap((c) => c.experiments).map((e) => ({

@@ -6,6 +6,17 @@ export type NoteCategory = 'Learning' | 'Ideas' | 'Todo' | 'Reference' | 'Person
 export type NoteVisibility = 'private' | 'public';
 export type NoteStatus = 'draft' | 'published';
 
+export interface IChangeRequest {
+    _id?: string;
+    requestedBy: string;
+    requestedById: mongoose.Types.ObjectId;
+    requestedByRole: string;
+    message: string;
+    status: 'pending' | 'resolved';
+    createdAt: Date;
+    resolvedAt?: Date;
+}
+
 export interface INote {
     _id: string;
     authorId: mongoose.Types.ObjectId;
@@ -19,6 +30,8 @@ export interface INote {
     isPinned: boolean;
     visibility: NoteVisibility;
     status: NoteStatus;
+    isCurated?: boolean;
+    changeRequests?: IChangeRequest[];
     upvotes: number;
     upvotedBy: string[];
     createdAt: Date;
@@ -93,6 +106,22 @@ const NoteSchema = new Schema<INote>(
             type: [String],
             default: [],
         },
+        isCurated: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        changeRequests: [
+            {
+                requestedBy: { type: String, required: true },
+                requestedById: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+                requestedByRole: { type: String, default: 'admin' },
+                message: { type: String, required: true },
+                status: { type: String, enum: ['pending', 'resolved'], default: 'pending' },
+                createdAt: { type: Date, default: Date.now },
+                resolvedAt: { type: Date },
+            },
+        ],
     },
     {
         timestamps: true,

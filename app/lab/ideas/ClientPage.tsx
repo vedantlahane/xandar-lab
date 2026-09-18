@@ -7,10 +7,11 @@ import { AnimatePresence } from "framer-motion";
 import { IdeaDrawer } from "./components/IdeaDrawer";
 import { IdeaEditorDrawer } from "./components/IdeaEditorDrawer";
 import { useAuth } from "@/components/auth/AuthContext";
-import { Search, Sparkles, Filter, Activity, Clock3, HardDrive, Dices, Loader2, ArrowUpDown, ChevronDown, ChevronUp, Layers, Tag, Target, Calendar, Plus } from "lucide-react";
+import { Search, Sparkles, Filter, Activity, Clock3, HardDrive, Dices, Loader2, ArrowUpDown, ChevronDown, ChevronUp, Layers, Tag, Target, Calendar, Plus, Pin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RoleBadge } from "@/components/shared/RoleBadge";
 import { cn } from "@/lib/utils";
 import type { IIdea } from "@/models/Idea";
 
@@ -362,10 +363,20 @@ export default function IdeasCatalogPage() {
                       >
                         <div className="flex flex-col gap-2">
                           <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2.5 w-full">
+                            <div className="flex items-center gap-2.5 w-full flex-wrap">
                               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded border", tone, "shrink-0")}>
                                 {idea.confidence}%
                               </span>
+                              {idea.isCurated && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30 shrink-0">
+                                  <Sparkles className="h-2.5 w-2.5" /> Curated
+                                </span>
+                              )}
+                              {idea.isPinned && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0">
+                                  <Pin className="h-2.5 w-2.5 fill-current" /> Pinned
+                                </span>
+                              )}
                               <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                                 {idea.title}
                               </span>
@@ -386,8 +397,17 @@ export default function IdeasCatalogPage() {
                               if (ageDays < 42) return <span className="text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">Recent</span>;
                               return <span className="text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Archived</span>;
                             })()}
+
+                            {idea.authorUsername && (
+                              <span className="inline-flex items-center gap-1 border-l border-border/50 pl-2">
+                                @{idea.authorUsername}
+                                {idea.authorRole && (
+                                  <RoleBadge role={idea.authorRole} size="sm" showMember={true} />
+                                )}
+                              </span>
+                            )}
                             
-                            <span className="flex items-center gap-1"><Clock3 className="h-3 w-3" /> {idea.timeline || "2-4 weeks"}</span>
+                            <span className="flex items-center gap-1 border-l border-border/50 pl-2"><Clock3 className="h-3 w-3" /> {idea.timeline || "2-4 weeks"}</span>
                             {idea.techStack && idea.techStack.length > 0 && (
                                <span className="flex items-center gap-1 opacity-70 border-l border-border/50 pl-2">
                                  <Tag className="h-3 w-3" /> {idea.techStack.slice(0, 2).join(", ")} {idea.techStack.length > 2 && "..."}
@@ -418,11 +438,9 @@ export default function IdeasCatalogPage() {
 
               {/* Custom Generation CTA */}
               <div className="mt-16 pt-8 border-t border-border/30 text-center">
-                <Button asChild variant="ghost" className="text-muted-foreground hover:text-primary">
-                  <Link href="/lab/ideas/forge">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Launch Custom Idea Forge →
-                  </Link>
+                <p className="text-xs text-muted-foreground mb-3">Looking for custom ideas in a specific niche?</p>
+                <Button variant="outline" size="sm" onClick={() => setIsSubmittingIdea(true)} className="gap-2">
+                  <Sparkles className="w-3.5 h-3.5" /> Submit Custom Concept
                 </Button>
               </div>
 
@@ -437,7 +455,18 @@ export default function IdeasCatalogPage() {
       {/* Idea Overlay Drawer */}
       <AnimatePresence>
         {activeIdea && (
-          <IdeaDrawer idea={activeIdea} onClose={() => router.push("/lab/ideas")} />
+          <IdeaDrawer
+            idea={activeIdea}
+            onClose={() => router.push("/lab/ideas")}
+            onIdeaUpdated={(updated) => {
+              setActiveIdea(updated);
+              setIdeas((prev) => prev.map((i) => (i.slug === updated.slug ? updated : i)));
+            }}
+            onIdeaDeleted={(deletedSlug) => {
+              setIdeas((prev) => prev.filter((i) => i.slug !== deletedSlug));
+              router.push("/lab/ideas");
+            }}
+          />
         )}
       </AnimatePresence>
 

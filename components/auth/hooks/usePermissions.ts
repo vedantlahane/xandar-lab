@@ -2,7 +2,18 @@
 "use client";
 
 import { useAuth } from "../AuthContext";
-import { UserRole, hasMinimumRole, canManageResource, isModeratorOrAdmin, isAdmin } from "@/lib/rbac";
+import {
+    UserRole,
+    hasMinimumRole,
+    canEditResource,
+    canDeleteResource,
+    canPublishDirectly,
+    canRequestChanges,
+    canPinContent,
+    canCurateContent,
+    isModeratorOrAdmin,
+    isAdmin,
+} from "@/lib/rbac";
 
 export function usePermissions() {
     const { user, isAuthenticated } = useAuth();
@@ -11,11 +22,25 @@ export function usePermissions() {
     return {
         role: role || "user",
         isAuthenticated,
-        isAdmin: isAdmin(role),
-        isModerator: isModeratorOrAdmin(role),
+        // Role tiers: user < pro < contributor < moderator < admin
+        isUser: true,
+        isPro: hasMinimumRole(role, "pro"),
         isContributor: hasMinimumRole(role, "contributor"),
+        isModerator: hasMinimumRole(role, "moderator"),
+        isAdmin: isAdmin(role),
+
+        // In-situ contextual capabilities
         canCreate: isAuthenticated,
-        canEdit: (authorId?: string) => canManageResource(user?._id, role, authorId),
-        hasRole: (required: UserRole) => hasMinimumRole(role, required),
+        canPublishPublic: canPublishDirectly(role),
+        canRequestChanges: canRequestChanges(role),
+        canPin: canPinContent(role),
+        canCurate: canCurateContent(role),
+
+        // Resource-specific checks
+        canEdit: (authorId?: string): boolean => canEditResource(user?._id, role, authorId),
+        canDelete: (authorId?: string): boolean => canDeleteResource(user?._id, role, authorId),
+        canChangeVisibility: (authorId?: string): boolean => !!(isModeratorOrAdmin(role) || (user?._id && authorId && user._id === authorId)),
+        hasRole: (required: UserRole): boolean => hasMinimumRole(role, required),
     };
 }
+

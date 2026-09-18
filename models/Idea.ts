@@ -31,6 +31,10 @@ export interface IIdea {
   upvotes: number;
   bookmarks: number;
   status: "published" | "draft" | "archived" | "flagged";
+  authorUsername?: string;
+  authorRole?: string;
+  isPinned?: boolean;
+  isCurated?: boolean;
   signalDate: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -42,6 +46,24 @@ const IdeaSchema = new Schema<IIdea>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
+    },
+    authorUsername: {
+      type: String,
+      default: "AI Agent",
+    },
+    authorRole: {
+      type: String,
+      default: "admin",
+    },
+    isPinned: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isCurated: {
+      type: Boolean,
+      default: true,
       index: true,
     },
     title: {

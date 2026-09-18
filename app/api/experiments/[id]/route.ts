@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/db";
 import Experiment from "@/models/Experiment";
 import { getSession } from "@/lib/auth";
-import { canManageResource } from "@/lib/rbac";
+import { canManageResource, canDeleteResource } from "@/lib/rbac";
 import type { UserRole } from "@/lib/rbac";
 
 export async function PUT(
@@ -71,7 +71,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { title, description, status, type, githubUrl, liveUrl, techStack, highlights, visibility } = body;
+        const { title, description, status, type, githubUrl, liveUrl, techStack, highlights, visibility, isCurated, isPinned } = body;
 
         if (title !== undefined) experiment.title = title.trim();
         if (description !== undefined) experiment.description = description;
@@ -82,6 +82,10 @@ export async function PUT(
         if (techStack !== undefined) experiment.techStack = Array.isArray(techStack) ? techStack : [];
         if (highlights !== undefined) experiment.highlights = Array.isArray(highlights) ? highlights : [];
         if (visibility !== undefined) experiment.visibility = visibility;
+        if (isPinned !== undefined) experiment.isPinned = !!isPinned;
+        if (isCurated !== undefined && userRole === "admin") {
+            experiment.isCurated = !!isCurated;
+        }
 
         await experiment.save();
 
@@ -100,7 +104,9 @@ export async function PUT(
                 authorId: experiment.authorId.toString(),
                 authorUsername: experiment.authorUsername,
                 authorRole: experiment.authorRole,
-                isCurated: false,
+                isPinned: !!experiment.isPinned,
+                isCurated: !!experiment.isCurated,
+                changeRequests: experiment.changeRequests || [],
             },
         });
     } catch (error: any) {
@@ -135,7 +141,7 @@ export async function DELETE(
             return NextResponse.json({ error: "Experiment not found" }, { status: 404 });
         }
 
-        if (!canManageResource(session.userId, userRole, experiment.authorId.toString())) {
+        if (!canDeleteResource(session.userId, userRole, experiment.authorId.toString())) {
             return NextResponse.json({ error: "Forbidden: You do not have permission to delete this experiment" }, { status: 403 });
         }
 
