@@ -97,15 +97,30 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { title, content, category, color, tags, isPinned, visibility, isCurated } = body;
+        const { title, content, category, color, tags, isPinned, visibility, isCurated, icon, coverImage, isDeleted, dueDate } = body;
 
         if (title !== undefined) note.title = title.trim();
-        if (content !== undefined) note.content = content;
+        
+        if (content !== undefined && content !== note.content) {
+            // Push old content to revisions
+            if (!note.revisions) note.revisions = [];
+            note.revisions.push({
+                content: note.content,
+                updatedAt: note.updatedAt || new Date()
+            });
+            note.content = content;
+        }
+        
         if (category !== undefined) note.category = category;
         if (color !== undefined) note.color = color;
         if (tags !== undefined) note.tags = Array.isArray(tags) ? tags : [];
         if (isPinned !== undefined) note.isPinned = !!isPinned;
         if (visibility !== undefined) note.visibility = visibility;
+        if (icon !== undefined) note.icon = icon;
+        if (coverImage !== undefined) note.coverImage = coverImage;
+        if (isDeleted !== undefined) note.isDeleted = !!isDeleted;
+        if (dueDate !== undefined) note.dueDate = dueDate ? new Date(dueDate) : undefined;
+        
         if (isCurated !== undefined && userRole === "admin") {
             note.isCurated = !!isCurated;
         }
@@ -128,6 +143,11 @@ export async function PUT(
                 authorRole: note.authorRole,
                 isCurated: !!note.isCurated,
                 changeRequests: note.changeRequests || [],
+                icon: note.icon,
+                coverImage: note.coverImage,
+                isDeleted: note.isDeleted,
+                dueDate: note.dueDate ? new Date(note.dueDate).toISOString() : undefined,
+                revisions: note.revisions || [],
                 createdAt: new Date(note.createdAt).toISOString().split("T")[0],
                 updatedAt: new Date(note.updatedAt).toISOString().split("T")[0],
             },
@@ -168,9 +188,16 @@ export async function DELETE(
             return NextResponse.json({ error: "Forbidden: You do not have permission to delete this note" }, { status: 403 });
         }
 
-        await Note.findByIdAndDelete(id);
-
-        return NextResponse.json({ success: true, message: "Note deleted successfully" });
+        if (note.isDeleted) {
+            // Hard delete
+            await Note.findByIdAndDelete(id);
+            return NextResponse.json({ success: true, message: "Note permanently deleted" });
+        } else {
+            // Soft delete
+            note.isDeleted = true;
+            await note.save();
+            return NextResponse.json({ success: true, message: "Note moved to trash" });
+        }
     } catch (error: any) {
         return NextResponse.json({ error: error.message || "Failed to delete note" }, { status: 500 });
     }

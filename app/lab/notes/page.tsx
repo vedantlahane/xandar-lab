@@ -23,7 +23,7 @@ export default function NotesPage() {
             }))
         )
     );
-    const [activeTab, setActiveTab] = useState<"all" | "my" | "community">("all");
+    const [activeTab, setActiveTab] = useState<"all" | "my" | "community" | "trash">("all");
     const [isCreating, setIsCreating] = useState(false);
 
     // Fetch notes whenever tab changes or auth changes

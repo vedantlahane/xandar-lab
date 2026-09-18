@@ -6,7 +6,7 @@ import { NOTES as DEFAULT_STATIC_NOTES, NoteCategory } from "../data/notes";
 import {
     StickyNote, Pin, Calendar, Tag,
     Layers, BookOpen, Lightbulb, ListTodo, BookMarked, User, Briefcase,
-    Plus, Lock, Globe, Users, AlertCircle, Star
+    Plus, Lock, Globe, Users, AlertCircle, Star, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,8 @@ import { RoleBadge } from "@/components/shared/RoleBadge";
 
 interface NoteCanvasProps {
     notes?: any[];
-    activeTab?: "all" | "my" | "community";
-    onTabChange?: (tab: "all" | "my" | "community") => void;
+    activeTab?: "all" | "my" | "community" | "trash";
+    onTabChange?: (tab: "all" | "my" | "community" | "trash") => void;
     onNewNote?: () => void;
     activeNoteId: string | null;
     onNoteSelect: (id: string, event: React.MouseEvent) => void;
@@ -241,6 +241,24 @@ export default function NoteCanvas({
                             <Users className="h-4 w-4 opacity-70" />
                             Public
                         </button>
+                        <button
+                            onClick={() => {
+                                if (!isAuthenticated) {
+                                    openLoginModal();
+                                    return;
+                                }
+                                onTabChange?.("trash");
+                            }}
+                            className={cn(
+                                "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all text-destructive/80 hover:text-destructive",
+                                activeTab === "trash"
+                                    ? "bg-destructive/10 text-destructive font-medium"
+                                    : "hover:bg-destructive/10"
+                            )}
+                        >
+                            <Trash2 className="h-4 w-4 opacity-70" />
+                            Trash
+                        </button>
                     </div>
 
                     {/* Quick filter: Pinned */}
@@ -392,7 +410,11 @@ export default function NoteCanvas({
                                         title={note.title}
                                         titleIcon={
                                             <>
-                                                <StickyNote className={cn("h-3.5 w-3.5 shrink-0", getCategoryColor(note.category))} />
+                                                {note.icon ? (
+                                                    <span className="text-sm shrink-0 leading-none">{note.icon}</span>
+                                                ) : (
+                                                    <StickyNote className={cn("h-3.5 w-3.5 shrink-0", getCategoryColor(note.category))} />
+                                                )}
                                                 {note.isPinned && <Pin className="h-3 w-3 text-amber-500 fill-current" />}
                                                 {note.isCurated && <Star className="h-3 w-3 text-amber-400 fill-current" />}
                                             </>

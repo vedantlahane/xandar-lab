@@ -34,6 +34,11 @@ export interface INote {
     changeRequests?: IChangeRequest[];
     upvotes: number;
     upvotedBy: string[];
+    icon?: string;
+    coverImage?: string;
+    isDeleted: boolean;
+    dueDate?: Date;
+    revisions?: { content: string; updatedAt: Date }[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -66,6 +71,29 @@ const NoteSchema = new Schema<INote>(
             required: true,
             default: '',
         },
+        icon: {
+            type: String,
+            trim: true,
+        },
+        coverImage: {
+            type: String,
+            trim: true,
+        },
+        isDeleted: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        dueDate: {
+            type: Date,
+            index: true,
+        },
+        revisions: [
+            {
+                content: { type: String, required: true },
+                updatedAt: { type: Date, default: Date.now },
+            }
+        ],
         category: {
             type: String,
             enum: ['Learning', 'Ideas', 'Todo', 'Reference', 'Personal', 'Work'],

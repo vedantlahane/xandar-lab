@@ -30,6 +30,7 @@ export function NoteDrawer({
 }) {
     const [currentNote, setCurrentNote] = useState(note);
     const [copied, setCopied] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [showRequestForm, setShowRequestForm] = useState(false);
     const [requestMessage, setRequestMessage] = useState("");
@@ -379,6 +380,36 @@ export function NoteDrawer({
         </div>
     );
 
+    const handleRestore = async () => {
+        try {
+            const res = await fetch(`/api/notes/${currentNote.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isDeleted: false }),
+            });
+            const data = await res.json();
+            if (res.ok && data.note) {
+                setCurrentNote(data.note);
+                if (onNoteUpdated) onNoteUpdated(data.note);
+            }
+        } catch (error) {
+            console.error("Failed to restore note", error);
+        }
+    };
+
+    const handleHardDelete = async () => {
+        if (!confirm("Are you sure you want to permanently delete this note? This action cannot be undone.")) return;
+        try {
+            const res = await fetch(`/api/notes/${currentNote.id}`, { method: "DELETE" });
+            if (res.ok) {
+                if (onNoteDeleted) onNoteDeleted(currentNote.id);
+                onClose();
+            }
+        } catch (error) {
+            console.error("Failed to hard delete note", error);
+        }
+    };
+
     return (
         <BaseDrawer
             onClose={onClose}
@@ -391,6 +422,24 @@ export function NoteDrawer({
         >
             <div className="p-6">
                 <div className="space-y-5">
+                    {/* Trash Banner */}
+                    {currentNote.isDeleted && (
+                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3.5 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 text-destructive font-medium">
+                                <Trash2 className="h-4 w-4" />
+                                This note is in the trash.
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" className="h-7 text-xs border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleRestore}>
+                                    Restore Note
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground hover:text-destructive" onClick={handleHardDelete}>
+                                    Delete Forever
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Inline Change Request Form (Mod / Admin) */}
                     {showRequestForm && (
                         <form
@@ -480,7 +529,8 @@ export function NoteDrawer({
                     {/* Title & Author header */}
                     <div className="space-y-2">
                         <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                                {currentNote.icon && <span>{currentNote.icon}</span>}
                                 {currentNote.title}
                             </h2>
                             {currentNote.authorUsername && (
@@ -516,16 +566,45 @@ export function NoteDrawer({
                     </div>
 
                     {/* Footer Timestamps */}
-                    <div className="flex items-center justify-between text-xs text-muted-foreground/60 pt-2 border-t border-border/30">
-                        <span className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Created {currentNote.createdAt}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5" />
-                            Updated {currentNote.updatedAt}
-                        </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted-foreground/60 pt-2 border-t border-border/30 gap-2">
+                        <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Created {currentNote.createdAt}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5" />
+                                Updated {currentNote.updatedAt}
+                            </span>
+                        </div>
+                        {currentNote.revisions && currentNote.revisions.length > 0 && (
+                            <button
+                                onClick={() => setShowHistory(!showHistory)}
+                                className="text-primary hover:underline font-medium text-xs self-start sm:self-auto"
+                            >
+                                {showHistory ? "Hide History" : `View History (${currentNote.revisions.length})`}
+                            </button>
+                        )}
                     </div>
+
+                    {/* Version History */}
+                    {showHistory && currentNote.revisions && (
+                        <div className="mt-4 space-y-3 p-4 rounded-xl border border-border/40 bg-muted/10">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Version History</h4>
+                            <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                                {currentNote.revisions.map((rev: any, idx: number) => (
+                                    <div key={idx} className="space-y-1.5 border-b border-border/20 pb-3 last:border-0 last:pb-0">
+                                        <div className="text-[10px] text-muted-foreground/70">
+                                            Revision from {new Date(rev.updatedAt).toLocaleString()}
+                                        </div>
+                                        <div className="text-xs text-foreground/80 font-mono whitespace-pre-wrap bg-muted/20 p-2 rounded-md">
+                                            {rev.content}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </BaseDrawer>

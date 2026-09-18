@@ -44,6 +44,7 @@ export function NoteEditorDrawer({
     const isEdit = !!note?.id && (!note.isCurated || isAdmin || isModerator);
 
     const [title, setTitle] = useState(note?.title || "");
+    const [icon, setIcon] = useState(note?.icon || "");
     const [content, setContent] = useState(note?.content || "");
     const [category, setCategory] = useState<NoteCategory>(note?.category || "Learning");
     const [color, setColor] = useState<NoteColor>(note?.color || "default");
@@ -86,6 +87,7 @@ export function NoteEditorDrawer({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     title: title.trim(),
+                    icon: icon.trim(),
                     content,
                     category,
                     color,
@@ -172,14 +174,22 @@ export function NoteEditorDrawer({
                     </div>
                 )}
 
-                {/* Title Input */}
-                <div>
+                {/* Title & Icon Input */}
+                <div className="flex gap-2 items-end border-b border-border/40 pb-2 focus-within:border-primary transition-colors">
+                    <input
+                        type="text"
+                        placeholder="😀"
+                        value={icon}
+                        onChange={(e) => setIcon(e.target.value)}
+                        maxLength={2}
+                        className="w-12 text-xl sm:text-2xl font-bold bg-transparent focus:outline-none text-center placeholder:text-muted-foreground/40"
+                    />
                     <input
                         type="text"
                         placeholder="Note title..."
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full text-xl sm:text-2xl font-bold bg-transparent border-b border-border/40 pb-2 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40 transition-colors"
+                        className="flex-1 text-xl sm:text-2xl font-bold bg-transparent focus:outline-none placeholder:text-muted-foreground/40"
                         autoFocus
                     />
                 </div>

@@ -25,8 +25,15 @@ export async function GET(request: Request) {
                 return NextResponse.json({ notes: [], total: 0 });
             }
             conditions.push({ authorId: currentUserId });
+            conditions.push({ isDeleted: { $ne: true } });
+        } else if (tab === "trash") {
+            if (!currentUserId) {
+                return NextResponse.json({ notes: [], total: 0 });
+            }
+            conditions.push({ authorId: currentUserId });
+            conditions.push({ isDeleted: true });
         } else if (tab === "community") {
-            conditions.push({ visibility: "public", status: "published" });
+            conditions.push({ visibility: "public", status: "published", isDeleted: { $ne: true } });
         } else {
             // "all": community notes + user's private notes if logged in
             if (currentUserId) {
@@ -39,6 +46,7 @@ export async function GET(request: Request) {
             } else {
                 conditions.push({ visibility: "public", status: "published" });
             }
+            conditions.push({ isDeleted: { $ne: true } });
         }
 
         if (category && category !== "All") {
@@ -76,6 +84,11 @@ export async function GET(request: Request) {
             upvotes: n.upvotes || 0,
             isCurated: !!n.isCurated,
             changeRequests: n.changeRequests || [],
+            icon: n.icon || undefined,
+            coverImage: n.coverImage || undefined,
+            isDeleted: !!n.isDeleted,
+            dueDate: n.dueDate ? new Date(n.dueDate).toISOString() : undefined,
+            revisions: n.revisions || [],
             createdAt: n.createdAt ? new Date(n.createdAt).toISOString().split("T")[0] : "Recently",
             updatedAt: n.updatedAt ? new Date(n.updatedAt).toISOString().split("T")[0] : "Recently",
         }));
@@ -132,7 +145,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { title, content, category, color, tags, isPinned, visibility } = body;
+        const { title, content, category, color, tags, isPinned, visibility, icon, coverImage } = body;
 
         if (!title || typeof title !== "string" || !title.trim()) {
             return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -152,6 +165,9 @@ export async function POST(request: Request) {
             isPinned: !!isPinned,
             visibility: visibility === "public" ? "public" : "private",
             status: "published",
+            icon: icon || undefined,
+            coverImage: coverImage || undefined,
+            isDeleted: false,
         });
 
         return NextResponse.json({
