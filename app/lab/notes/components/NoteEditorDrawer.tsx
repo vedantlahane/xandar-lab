@@ -11,6 +11,7 @@ import {
     Save, Trash2, Eye, Edit3, Globe, Lock,
     Tag, X, Loader2, Sparkles, Check
 } from "lucide-react";
+import { usePermissions } from "@/components/auth/hooks/usePermissions";
 
 interface NoteEditorDrawerProps {
     note?: any | null;
@@ -39,7 +40,8 @@ export function NoteEditorDrawer({
     onSaved,
     onDeleted,
 }: NoteEditorDrawerProps) {
-    const isEdit = !!note?.id && !note.isCurated;
+    const { isAdmin, isModerator } = usePermissions();
+    const isEdit = !!note?.id && (!note.isCurated || isAdmin || isModerator);
 
     const [title, setTitle] = useState(note?.title || "");
     const [content, setContent] = useState(note?.content || "");

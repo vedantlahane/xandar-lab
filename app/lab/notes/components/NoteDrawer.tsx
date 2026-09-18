@@ -26,9 +26,9 @@ export function NoteDrawer({
 }) {
     const [copied, setCopied] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const { canEdit, isAuthenticated } = usePermissions();
+    const { canEdit, isAuthenticated, isAdmin, isModerator } = usePermissions();
 
-    const canModify = !note.isCurated && canEdit(note.authorId);
+    const canModify = (isAdmin || isModerator || !note.isCurated) && canEdit(note.authorId);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(note.content);
@@ -103,6 +103,14 @@ export function NoteDrawer({
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border/40">
                     {note.visibility === "public" ? <Globe className="h-2.5 w-2.5 text-emerald-500" /> : <Lock className="h-2.5 w-2.5" />}
                     {note.visibility === "public" ? "Community" : "Private"}
+                </span>
+            )}
+            {note.authorUsername && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    @{note.authorUsername}
+                    {note.authorRole && (
+                        <RoleBadge role={note.authorRole} size="sm" showMember={true} />
+                    )}
                 </span>
             )}
         </div>

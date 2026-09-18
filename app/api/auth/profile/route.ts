@@ -25,6 +25,19 @@ export async function GET() {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        const DEFAULT_ADMIN_USERNAMES = ['vedant', 'vedantlahane', 'val', 'admin'];
+        const DEFAULT_ADMIN_EMAILS = [
+            'vedantanillahane@gmail.com',
+            'vedantlahane38591@gmail.com',
+        ];
+        const isDefaultAdmin = (user.username && DEFAULT_ADMIN_USERNAMES.includes(user.username.toLowerCase().trim())) ||
+                               (user.email && DEFAULT_ADMIN_EMAILS.includes(user.email.toLowerCase().trim()));
+
+        if (isDefaultAdmin && user.role !== 'admin') {
+            user.role = 'admin';
+            await user.save();
+        }
+
         // Fetch contribution counts in parallel
         const [notesCount, experimentsCount, ideasCount] = await Promise.all([
             Note.countDocuments({ authorId: user._id }),

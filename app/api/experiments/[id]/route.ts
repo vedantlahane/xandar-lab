@@ -1,5 +1,5 @@
-// app/api/experiments/[id]/route.ts
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectDB from "@/lib/db";
 import Experiment from "@/models/Experiment";
 import { getSession } from "@/lib/auth";
@@ -17,14 +17,55 @@ export async function PUT(
         }
 
         const { id } = await params;
+        const userRole = session.role as UserRole | undefined;
+
         await connectDB();
+
+        if (!mongoose.isValidObjectId(id)) {
+            if (userRole === "admin" || userRole === "moderator") {
+                const body = await request.json();
+                const createdExp = await Experiment.create({
+                    authorId: session.userId,
+                    authorUsername: session.username || "Admin",
+                    authorRole: session.role || "admin",
+                    title: body.title?.trim() || "Untitled Experiment",
+                    description: body.description || "",
+                    status: body.status || "Active",
+                    type: body.type || "Full Stack",
+                    tags: Array.isArray(body.tags) ? body.tags : [],
+                    githubUrl: body.githubUrl?.trim() || undefined,
+                    liveUrl: body.liveUrl?.trim() || undefined,
+                    techStack: Array.isArray(body.techStack) ? body.techStack : [],
+                    highlights: Array.isArray(body.highlights) ? body.highlights : [],
+                    visibility: body.visibility === "private" ? "private" : "public",
+                });
+                return NextResponse.json({
+                    success: true,
+                    experiment: {
+                        id: createdExp._id.toString(),
+                        title: createdExp.title,
+                        description: createdExp.description,
+                        status: createdExp.status,
+                        type: createdExp.type,
+                        technologies: createdExp.techStack,
+                        githubUrl: createdExp.githubUrl,
+                        demoUrl: createdExp.liveUrl,
+                        learnings: createdExp.highlights,
+                        authorId: createdExp.authorId.toString(),
+                        authorUsername: createdExp.authorUsername,
+                        authorRole: createdExp.authorRole,
+                        isCurated: false,
+                    },
+                });
+            }
+            return NextResponse.json({ error: "Invalid experiment ID" }, { status: 400 });
+        }
 
         const experiment = await Experiment.findById(id);
         if (!experiment) {
             return NextResponse.json({ error: "Experiment not found" }, { status: 404 });
         }
 
-        const userRole = session.role as UserRole | undefined;
         if (!canManageResource(session.userId, userRole, experiment.authorId.toString())) {
             return NextResponse.json({ error: "Forbidden: You do not have permission to edit this experiment" }, { status: 403 });
         }
@@ -78,6 +119,15 @@ export async function DELETE(
         }
 
         const { id } = await params;
+        const userRole = session.role as UserRole | undefined;
+
+        if (!mongoose.isValidObjectId(id)) {
+            if (userRole === "admin" || userRole === "moderator") {
+                return NextResponse.json({ success: true, message: "Curated experiment dismissed" });
+            }
+            return NextResponse.json({ error: "Invalid experiment ID" }, { status: 400 });
+        }
+
         await connectDB();
 
         const experiment = await Experiment.findById(id);
@@ -85,7 +135,6 @@ export async function DELETE(
             return NextResponse.json({ error: "Experiment not found" }, { status: 404 });
         }
 
-        const userRole = session.role as UserRole | undefined;
         if (!canManageResource(session.userId, userRole, experiment.authorId.toString())) {
             return NextResponse.json({ error: "Forbidden: You do not have permission to delete this experiment" }, { status: 403 });
         }

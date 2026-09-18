@@ -11,6 +11,7 @@ import {
     Save, Trash2, Github, ExternalLink, Globe, Lock,
     Plus, X, Loader2, Sparkles, Beaker, Tag, Lightbulb
 } from "lucide-react";
+import { usePermissions } from "@/components/auth/hooks/usePermissions";
 
 interface ExperimentEditorDrawerProps {
     experiment?: any | null;
@@ -33,7 +34,8 @@ export function ExperimentEditorDrawer({
     onSaved,
     onDeleted,
 }: ExperimentEditorDrawerProps) {
-    const isEdit = !!experiment?.id && !experiment.isCurated;
+    const { isAdmin, isModerator } = usePermissions();
+    const isEdit = !!experiment?.id && (!experiment.isCurated || isAdmin || isModerator);
 
     const [title, setTitle] = useState(experiment?.title || "");
     const [description, setDescription] = useState(experiment?.description || "");

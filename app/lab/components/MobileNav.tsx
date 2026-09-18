@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, X, Sun, Moon, User, ChevronUp, LogOut } from "lucide-react";
+import { Compass, X, Sun, Moon, User, ChevronUp, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { getAvatarGradientClass, getDefaultAvatarGradient } from "@/components/auth/AvatarCustomizer";
+import { RoleBadge } from "@/components/shared/RoleBadge";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -192,29 +193,47 @@ export function MobileNav() {
               <div className="pt-2 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
                 {isAuthenticated && user ? (
                   <>
-                    <div className="flex items-center gap-2 truncate">
+                    <Link
+                      href="/lab/profile"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 truncate hover:opacity-80 transition-opacity"
+                    >
                       <div
                         className={cn(
-                          "h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white uppercase bg-gradient-to-br shrink-0",
+                          "h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white uppercase bg-gradient-to-br shrink-0",
                           avatarGradient
                         )}
                       >
                         {user.username?.charAt(0)}
                       </div>
-                      <span className="truncate font-medium text-foreground">
+                      <span className="truncate font-medium text-foreground text-xs">
                         {user.username}
                       </span>
+                      <RoleBadge role={user.role} size="sm" showMember={true} />
+                    </Link>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {user.role === "admin" && (
+                        <Link
+                          href="/lab/profile?tab=admin"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-1 text-[11px] font-semibold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                          title="Admin Console"
+                        >
+                          <Shield className="h-3 w-3" />
+                          <span>Admin</span>
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => {
+                          setIsOpen(false);
+                          logout();
+                        }}
+                        className="flex items-center gap-1 text-red-500 hover:text-red-600 px-2 py-1 rounded-md transition-colors"
+                      >
+                        <LogOut className="h-3 w-3" />
+                        <span>Sign out</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setIsOpen(false);
-                        logout();
-                      }}
-                      className="flex items-center gap-1 text-red-500 hover:text-red-600 px-2 py-1 rounded-md transition-colors"
-                    >
-                      <LogOut className="h-3 w-3" />
-                      <span>Sign out</span>
-                    </button>
                   </>
                 ) : (
                   <button

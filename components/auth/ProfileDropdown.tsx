@@ -4,11 +4,12 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
-import { User, Settings, LogOut, ChevronUp, Activity, Shield, Layers, AlertTriangle } from "lucide-react";
+import { User, Settings, LogOut, ChevronUp, Activity, Shield, Layers, AlertTriangle, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthContext";
 import { getAvatarGradientClass, getDefaultAvatarGradient } from "@/components/auth/AvatarCustomizer";
 import { useClickOutside } from "@/components/auth/hooks/useClickOutside";
+import { RoleBadge } from "@/components/shared/RoleBadge";
 
 const smoothSpring = {
     type: "spring" as const,
@@ -16,15 +17,6 @@ const smoothSpring = {
     damping: 25,
     mass: 0.8,
 };
-
-// Static â€” defined outside component so the array reference is stable
-const MENU_ITEMS = [
-    { icon: Activity, label: "Statistics", path: "/lab/profile?tab=stats" },
-    { icon: User, label: "Profile", path: "/lab/profile?tab=profile" },
-    { icon: Layers, label: "Sessions", path: "/lab/profile?tab=sessions" },
-    { icon: Shield, label: "Password", path: "/lab/profile?tab=password" },
-    { icon: AlertTriangle, label: "Danger Zone", path: "/lab/profile?tab=danger" },
-] as const;
 
 interface ProfileDropdownProps {
     isExpanded: boolean;
@@ -65,6 +57,17 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
     const avatarGradient = user
         ? getAvatarGradientClass(user.avatarGradient || getDefaultAvatarGradient(user.username))
         : "";
+
+    const isAdmin = user?.role === "admin";
+
+    const menuItems = [
+        { icon: Layers, label: "Contributions", path: "/lab/profile?tab=contributions" },
+        { icon: Activity, label: "Analytics & Streaks", path: "/lab/profile?tab=stats" },
+        { icon: User, label: "Edit Profile", path: "/lab/profile?tab=profile" },
+        { icon: KeyRound, label: "Security & Sessions", path: "/lab/profile?tab=security" },
+        ...(isAdmin ? [{ icon: Shield, label: "Admin & Roles", path: "/lab/profile?tab=admin", highlight: true }] : []),
+        { icon: AlertTriangle, label: "Danger Zone", path: "/lab/profile?tab=danger" },
+    ];
 
     return (
         <div ref={dropdownRef} className="relative">
@@ -109,10 +112,15 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                             transition={smoothSpring}
                             className="flex flex-1 items-center justify-between overflow-hidden"
                         >
-                            <div className="text-left">
-                                <p className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate max-w-32 group-hover:text-primary transition-colors">
-                                    {isAuthenticated && user ? user.username : "Sign In"}
-                                </p>
+                            <div className="text-left flex-1 min-w-0 pr-1">
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate max-w-24 group-hover:text-primary transition-colors">
+                                        {isAuthenticated && user ? user.username : "Sign In"}
+                                    </p>
+                                    {isAuthenticated && user && (
+                                        <RoleBadge role={user.role} size="sm" showMember={false} />
+                                    )}
+                                </div>
                             </div>
                             {isAuthenticated && (
                                 <ChevronUp
@@ -145,30 +153,11 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                         {/* User info header */}
                         <div className="px-4 py-3 border-b border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
-                            <div className="flex items-center gap-2 relative z-10 w-full mb-1">
+                            <div className="flex items-center justify-between gap-2 relative z-10 w-full mb-1">
                                 <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate flex-1">
                                     {user?.username}
                                 </p>
-                                {user?.role === 'admin' && (
-                                    <span className="shrink-0 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                        Admin
-                                    </span>
-                                )}
-                                {user?.role === 'moderator' && (
-                                    <span className="shrink-0 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                        Mod
-                                    </span>
-                                )}
-                                {user?.role === 'pro' && (
-                                    <span className="shrink-0 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                        Pro
-                                    </span>
-                                )}
-                                {user?.role === 'contributor' && (
-                                    <span className="shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                        Creator
-                                    </span>
-                                )}
+                                <RoleBadge role={user?.role} size="sm" showMember={true} />
                             </div>
                             {user?.email && (
                                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate relative z-10">
@@ -179,10 +168,10 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
 
                         {/* Nav items */}
                         <div className="p-1 space-y-0.5">
-                            {MENU_ITEMS.map((item, index) => {
+                            {menuItems.map((item, index) => {
                                 const currentTab = typeof window !== "undefined"
-                                    ? new URLSearchParams(window.location.search).get("tab") || "stats"
-                                    : "stats";
+                                    ? new URLSearchParams(window.location.search).get("tab") || "contributions"
+                                    : "contributions";
                                 const isProfilePath = pathname === "/lab/profile";
                                 const itemTabMatch = item.path.match(/tab=([^&]+)/);
                                 const itemTab = itemTabMatch ? itemTabMatch[1] : null;
@@ -193,17 +182,29 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                                         key={item.label}
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.05 }}
+                                        transition={{ delay: index * 0.04 }}
                                         onClick={() => handleNavigate(item.path)}
                                         className={cn(
                                             "group/item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all rounded-xl",
                                             isActive
                                                 ? "text-zinc-900 bg-black/5 dark:bg-white/10 dark:text-zinc-100"
+                                                : (item as any).highlight
+                                                ? "text-red-500 hover:text-red-600 dark:text-red-400 hover:bg-red-500/10 font-semibold"
                                                 : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/5 dark:hover:bg-white/10"
                                         )}
                                     >
-                                        <item.icon className={cn("h-4 w-4 transition-transform", !isActive && "group-hover/item:scale-110 group-hover/item:text-primary", isActive && "text-primary")} />
-                                        {item.label}
+                                        <item.icon className={cn(
+                                            "h-4 w-4 transition-transform",
+                                            !isActive && "group-hover/item:scale-110",
+                                            isActive && "text-primary",
+                                            (item as any).highlight && "text-red-500"
+                                        )} />
+                                        <span className="flex-1 text-left">{item.label}</span>
+                                        {(item as any).highlight && (
+                                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-red-500/10 text-red-500 font-bold uppercase tracking-wider">
+                                                Staff
+                                            </span>
+                                        )}
                                     </motion.button>
                                 );
                             })}
@@ -214,7 +215,7 @@ export function ProfileDropdown({ isExpanded }: ProfileDropdownProps) {
                             <motion.button
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: MENU_ITEMS.length * 0.05 }}
+                                transition={{ delay: menuItems.length * 0.04 }}
                                 onClick={handleLogout}
                                 className="group/logout w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all rounded-xl"
                             >

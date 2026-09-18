@@ -1,5 +1,5 @@
 // components/shared/RoleBadge.tsx
-import { Shield, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { Shield, ShieldCheck, Sparkles, Zap, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RoleBadgeProps {
@@ -7,15 +7,17 @@ interface RoleBadgeProps {
     className?: string;
     showIcon?: boolean;
     size?: "sm" | "md";
+    showMember?: boolean;
 }
 
 export function RoleBadge({
     role,
     className,
     showIcon = true,
-    size = "md"
+    size = "md",
+    showMember = false,
 }: RoleBadgeProps) {
-    if (!role || role === "user") return null;
+    if (!role) return null;
 
     const sizeClasses = size === "sm"
         ? "text-[9px] px-1.5 py-0 tracking-tight"
@@ -78,6 +80,21 @@ export function RoleBadge({
                 >
                     {showIcon && <Zap className={iconSize} />}
                     Pro
+                </span>
+            );
+        case "user":
+            if (!showMember) return null;
+            return (
+                <span
+                    className={cn(
+                        "inline-flex items-center gap-1 rounded-full font-semibold uppercase bg-muted/60 text-muted-foreground border border-border",
+                        sizeClasses,
+                        className
+                    )}
+                    title="Community Member"
+                >
+                    {showIcon && <User className={iconSize} />}
+                    Member
                 </span>
             );
         default:

@@ -24,9 +24,9 @@ export function ExperimentDrawer({
     onExperimentDeleted?: (id: string) => void;
 }) {
     const [isEditing, setIsEditing] = useState(false);
-    const { canEdit } = usePermissions();
+    const { canEdit, isAdmin, isModerator } = usePermissions();
 
-    const canModify = !experiment.isCurated && canEdit(experiment.authorId);
+    const canModify = (isAdmin || isModerator || !experiment.isCurated) && canEdit(experiment.authorId);
 
     if (isEditing) {
         return (
@@ -86,6 +86,14 @@ export function ExperimentDrawer({
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
                     <Lock className="h-3 w-3" />
                     Private
+                </span>
+            )}
+            {experiment.authorUsername && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    @{experiment.authorUsername}
+                    {experiment.authorRole && (
+                        <RoleBadge role={experiment.authorRole} size="sm" showMember={true} />
+                    )}
                 </span>
             )}
         </div>

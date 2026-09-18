@@ -343,12 +343,14 @@ export default function ProfilePage() {
         });
     };
 
+    const isAdmin = profile.role === "admin" || user?.role === "admin";
+
     const tabs: { id: TabType; label: string; icon: any; badge?: number | string; adminOnly?: boolean }[] = [
         { id: "contributions", label: "Contributions", icon: Layers, badge: (profile.contributions?.notes || 0) + (profile.contributions?.experiments || 0) + (profile.contributions?.ideas || 0) },
         { id: "stats", label: "Analytics & Streaks", icon: Activity },
         { id: "profile", label: "Edit Profile", icon: Edit3 },
         { id: "security", label: "Security & Sessions", icon: KeyRound },
-        ...(profile.role === "admin" ? [{ id: "admin" as TabType, label: "Admin & Roles", icon: Shield, adminOnly: true }] : []),
+        ...(isAdmin ? [{ id: "admin" as TabType, label: "Admin & Roles", icon: Shield, adminOnly: true }] : []),
         { id: "danger", label: "Danger Zone", icon: Trash2 },
     ];
 
@@ -410,7 +412,7 @@ export default function ProfilePage() {
                                             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                                                 @{profile.username}
                                             </h1>
-                                            <RoleBadge role={profile.role} size="md" />
+                                            <RoleBadge role={profile.role || user?.role} size="md" showMember={true} />
 
                                             {profile.isProfilePublic ? (
                                                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
@@ -807,6 +809,44 @@ export default function ProfilePage() {
                                             Save Profile Changes
                                         </Button>
                                     </form>
+
+                                    {/* Role & System Access Card */}
+                                    <div className="rounded-2xl border border-border/60 bg-muted/20 backdrop-blur-sm p-5 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Shield className="h-4 w-4 text-primary" />
+                                                <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                                                    Role & System Access
+                                                </h3>
+                                            </div>
+                                            <RoleBadge role={profile.role || user?.role} size="md" showMember={true} />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                            {isAdmin ? (
+                                                <span>You hold <strong>Administrator</strong> privileges across Xandar Lab. You can manage users, assign community roles, curate seed content, and edit or moderate any note, experiment, or community submission.</span>
+                                            ) : profile.role === "moderator" ? (
+                                                <span>You hold <strong>Moderator</strong> privileges. You can edit community tags, review flagged submissions, curate content, and moderate community discussions.</span>
+                                            ) : profile.role === "contributor" ? (
+                                                <span>You are a <strong>Verified Contributor</strong>. You can publish public notes, create experiments, and participate in community research projects.</span>
+                                            ) : (
+                                                <span>You are a registered <strong>Community Member</strong>. You have full access to solve problems, save personal notes, run lab experiments, and propose new ideas.</span>
+                                            )}
+                                        </p>
+                                        {isAdmin && (
+                                            <div className="pt-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setActiveTab("admin")}
+                                                    className="text-xs font-semibold border-red-500/30 text-red-500 hover:bg-red-500/10 gap-1.5 h-8"
+                                                >
+                                                    <Shield className="h-3.5 w-3.5 text-red-500" />
+                                                    Open Admin & Roles Management
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </motion.div>
                             )}
 
@@ -926,7 +966,7 @@ export default function ProfilePage() {
                             )}
 
                             {/* 5. Admin Panel */}
-                            {activeTab === "admin" && profile.role === "admin" && (
+                            {activeTab === "admin" && isAdmin && (
                                 <motion.div
                                     key="admin"
                                     initial={{ opacity: 0, y: 10 }}
