@@ -195,54 +195,52 @@ export default function NoteCanvas({
                     />
 
                     {/* Feed Selector (All / My / Community) */}
-                    <div className="space-y-1.5">
-                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5 flex items-center justify-between">
                             <span>Feed</span>
                         </h3>
-                        <div className="grid grid-cols-3 p-1 bg-muted/40 rounded-lg border border-border/40 gap-1 text-xs">
-                            <button
-                                onClick={() => onTabChange?.("all")}
-                                className={cn(
-                                    "py-1 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1",
-                                    activeTab === "all"
-                                        ? "bg-background text-foreground shadow-sm font-semibold"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                <Globe className="h-3 w-3" />
-                                All
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (!isAuthenticated) {
-                                        openLoginModal();
-                                        return;
-                                    }
-                                    onTabChange?.("my");
-                                }}
-                                className={cn(
-                                    "py-1 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1",
-                                    activeTab === "my"
-                                        ? "bg-background text-foreground shadow-sm font-semibold"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                <User className="h-3 w-3" />
-                                Mine
-                            </button>
-                            <button
-                                onClick={() => onTabChange?.("community")}
-                                className={cn(
-                                    "py-1 rounded-md font-medium transition-all text-center flex items-center justify-center gap-1",
-                                    activeTab === "community"
-                                        ? "bg-background text-foreground shadow-sm font-semibold"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                <Users className="h-3 w-3" />
-                                Public
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => onTabChange?.("all")}
+                            className={cn(
+                                "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                activeTab === "all"
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            )}
+                        >
+                            <Globe className="h-4 w-4 opacity-70" />
+                            All
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (!isAuthenticated) {
+                                    openLoginModal();
+                                    return;
+                                }
+                                onTabChange?.("my");
+                            }}
+                            className={cn(
+                                "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                activeTab === "my"
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            )}
+                        >
+                            <User className="h-4 w-4 opacity-70" />
+                            Mine
+                        </button>
+                        <button
+                            onClick={() => onTabChange?.("community")}
+                            className={cn(
+                                "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                activeTab === "community"
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            )}
+                        >
+                            <Users className="h-4 w-4 opacity-70" />
+                            Public
+                        </button>
                     </div>
 
                     {/* Quick filter: Pinned */}
