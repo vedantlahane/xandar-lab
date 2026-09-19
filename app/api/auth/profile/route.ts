@@ -4,6 +4,7 @@ import User from '@/models/User';
 import Note from '@/models/Note';
 import Experiment from '@/models/Experiment';
 import Idea from '@/models/Idea';
+import Document from '@/models/Document';
 import { getValidatedSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -39,10 +40,11 @@ export async function GET() {
         }
 
         // Fetch contribution counts in parallel
-        const [notesCount, experimentsCount, ideasCount] = await Promise.all([
+        const [notesCount, experimentsCount, ideasCount, docsCount] = await Promise.all([
             Note.countDocuments({ authorId: user._id }),
             Experiment.countDocuments({ authorId: user._id }),
             Idea.countDocuments({ authorId: user._id }),
+            Document.countDocuments({ authorId: user._id }),
         ]);
 
         const userObj = user.toObject();
@@ -56,6 +58,7 @@ export async function GET() {
                     notes: notesCount,
                     experiments: experimentsCount,
                     ideas: ideasCount,
+                    docs: docsCount,
                 },
             }
         });
@@ -146,10 +149,11 @@ export async function PUT(req: Request) {
         await user.save();
 
         // Fetch refreshed contribution counts
-        const [notesCount, experimentsCount, ideasCount] = await Promise.all([
+        const [notesCount, experimentsCount, ideasCount, docsCount] = await Promise.all([
             Note.countDocuments({ authorId: user._id }),
             Experiment.countDocuments({ authorId: user._id }),
             Idea.countDocuments({ authorId: user._id }),
+            Document.countDocuments({ authorId: user._id }),
         ]);
 
         const updatedUserObj = user.toObject();
@@ -164,6 +168,7 @@ export async function PUT(req: Request) {
                     notes: notesCount,
                     experiments: experimentsCount,
                     ideas: ideasCount,
+                    docs: docsCount,
                 },
             }
         });

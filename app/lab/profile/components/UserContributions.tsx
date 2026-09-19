@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     StickyNote, Beaker, Lightbulb, ExternalLink,
-    Lock, Globe, Plus, Calendar, Tag, Loader2, ArrowRight
+    Lock, Globe, Plus, Calendar, Tag, Loader2, ArrowRight, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,14 +16,16 @@ interface UserContributionsProps {
         notes?: number;
         experiments?: number;
         ideas?: number;
+        docs?: number;
     };
 }
 
 export function UserContributions({ initialCounts }: UserContributionsProps) {
-    const [activeSection, setActiveSection] = useState<"notes" | "experiments" | "ideas">("notes");
+    const [activeSection, setActiveSection] = useState<"notes" | "experiments" | "ideas" | "docs">("notes");
     const [notes, setNotes] = useState<any[]>([]);
     const [experiments, setExperiments] = useState<any[]>([]);
     const [ideas, setIdeas] = useState<any[]>([]);
+    const [docs, setDocs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,10 +33,11 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
         async function fetchContributions() {
             setLoading(true);
             try {
-                const [notesRes, expRes, ideasRes] = await Promise.all([
+                const [notesRes, expRes, ideasRes, docsRes] = await Promise.all([
                     fetch("/api/notes?tab=my"),
                     fetch("/api/experiments?tab=my"),
                     fetch("/api/ideas?tab=my&limit=100"),
+                    fetch("/api/docs"), // docs API currently returns all permitted docs for the user
                 ]);
 
                 if (isMounted) {
@@ -48,8 +51,12 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
                     }
                     if (ideasRes.ok) {
                         const data = await ideasRes.json();
-                        // Backend returns ideas
                         setIdeas(data.ideas || []);
+                    }
+                    if (docsRes.ok) {
+                        const data = await docsRes.json();
+                        // docs is flat array, filter by authorId or just use as is since it's the user's
+                        setDocs(data.documents || []);
                     }
                 }
             } catch (err) {
@@ -66,6 +73,7 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
     const notesCount = notes.length || initialCounts?.notes || 0;
     const experimentsCount = experiments.length || initialCounts?.experiments || 0;
     const ideasCount = ideas.length || initialCounts?.ideas || 0;
+    const docsCount = docs.length || initialCounts?.docs || 0;
 
     return (
         <div className="space-y-6">
@@ -115,7 +123,23 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
                     <Lightbulb className={cn("h-3.5 w-3.5", activeSection === "ideas" ? "text-primary" : "text-muted-foreground")} />
                     <span>Project Ideas</span>
                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-muted font-bold text-muted-foreground">
-                        {ideasCount}
+                        {initialCounts?.ideas || ideas.length}
+                    </span>
+                </button>
+
+                <button
+                    onClick={() => setActiveSection("docs")}
+                    className={cn(
+                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all",
+                        activeSection === "docs"
+                            ? "bg-background text-foreground shadow-sm font-semibold"
+                            : "text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    <FileText className={cn("h-3.5 w-3.5", activeSection === "docs" ? "text-primary" : "text-muted-foreground")} />
+                    <span>Documents</span>
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-muted font-bold text-muted-foreground">
+                        {initialCounts?.docs || docs.length}
                     </span>
                 </button>
             </div>
@@ -341,6 +365,71 @@ export function UserContributions({ initialCounts }: UserContributionsProps) {
                                                     </span>
                                                     <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
                                                 </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+
+                    {/* Docs List */}
+                    {activeSection === "docs" && (
+                        <motion.div
+                            key="docs"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            className="space-y-3"
+                        >
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Authored Documents ({docsCount})
+                                </h3>
+                                <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-1.5">
+                                    <Link href="/lab/docs">
+                                        <Plus className="h-3.5 w-3.5" /> New Document
+                                    </Link>
+                                </Button>
+                            </div>
+
+                            {docs.length === 0 ? (
+                                <div className="text-center py-12 border border-dashed border-border/60 rounded-xl bg-card/30">
+                                    <FileText className="h-10 w-10 mx-auto mb-2 text-muted-foreground/40" />
+                                    <p className="text-sm font-medium text-foreground">No documents found</p>
+                                    <p className="text-xs text-muted-foreground mt-1 mb-4">
+                                        You haven't authored any documents yet.
+                                    </p>
+                                    <Button asChild size="sm" className="gap-1.5">
+                                        <Link href="/lab/docs">
+                                            <Plus className="h-3.5 w-3.5" /> New Document
+                                        </Link>
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {docs.slice(0, 10).map((doc) => (
+                                        <Link
+                                            key={doc._id || doc.id}
+                                            href={`/lab/docs?id=${doc._id || doc.id}`}
+                                            className="group flex flex-col justify-between p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all shadow-sm"
+                                        >
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                                                        {doc.title}
+                                                    </h4>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                                    {doc.content?.replace(/<[^>]*>?/gm, '') || "Empty document"}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-4">
+                                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                    <Calendar className="h-3.5 w-3.5" />
+                                                    {new Date(doc.updatedAt || doc.createdAt).toLocaleDateString()}
+                                                </div>
+                                                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                                             </div>
                                         </Link>
                                     ))}

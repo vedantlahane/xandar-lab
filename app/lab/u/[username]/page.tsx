@@ -215,7 +215,7 @@ export default function PublicProfilePage() {
                             </div>
 
                             {profile.isProfilePublic && (
-                                <div className="mt-6 pt-6 border-t border-border/40 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="mt-6 pt-6 border-t border-border/40 grid grid-cols-2 sm:grid-cols-5 gap-3">
                                     <div className="rounded-xl border border-border/40 p-3 text-center">
                                         <p className="text-lg sm:text-xl font-bold text-foreground">{profile.reputationScore || 0}</p>
                                         <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Reputation</p>
@@ -231,6 +231,10 @@ export default function PublicProfilePage() {
                                     <div className="rounded-xl border border-border/40 p-3 text-center">
                                         <p className="text-lg sm:text-xl font-bold text-foreground">{contributions?.ideas?.length || 0}</p>
                                         <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Ideas</p>
+                                    </div>
+                                    <div className="rounded-xl border border-border/40 p-3 text-center">
+                                        <p className="text-lg sm:text-xl font-bold text-foreground">{contributions?.docs?.length || 0}</p>
+                                        <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Documents</p>
                                     </div>
                                 </div>
                             )}
@@ -250,7 +254,7 @@ export default function PublicProfilePage() {
                                     <Sparkles className="h-5 w-5 text-primary" /> Recent Public Contributions
                                 </h2>
                                 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {/* Notes */}
                                     <div className="space-y-3">
                                         <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground">
@@ -283,6 +287,25 @@ export default function PublicProfilePage() {
                                                     <Link key={exp._id} href={`/lab/experiments?id=${exp._id}`} className="group block p-3.5 rounded-xl border border-border/50 bg-card/40 hover:bg-card hover:border-primary/30 transition-all">
                                                         <p className="font-semibold text-sm group-hover:text-primary transition-colors">{exp.title}</p>
                                                         <p className="text-[11px] text-muted-foreground mt-1 capitalize">{exp.status}</p>
+                                                    </Link>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Documents */}
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground">
+                                            <FileText className="h-4 w-4" /> Documents
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {contributions?.docs?.length === 0 ? (
+                                                <div className="p-4 rounded-xl border border-border/40 bg-card/20 text-xs text-muted-foreground text-center italic">No public documents yet.</div>
+                                            ) : (
+                                                contributions?.docs?.map((doc: any) => (
+                                                    <Link key={doc._id} href={`/lab/docs?id=${doc._id}`} className="group block p-3.5 rounded-xl border border-border/50 bg-card/40 hover:bg-card hover:border-primary/30 transition-all">
+                                                        <p className="font-semibold text-sm group-hover:text-primary transition-colors">{doc.title}</p>
+                                                        <p className="text-[11px] text-muted-foreground mt-1 capitalize">{doc.category || "General"}</p>
                                                     </Link>
                                                 ))
                                             )}

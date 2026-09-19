@@ -4,6 +4,7 @@ import User from "@/models/User";
 import Note from "@/models/Note";
 import Experiment from "@/models/Experiment";
 import Idea from "@/models/Idea";
+import Document from "@/models/Document";
 import { getSession } from "@/lib/auth";
 
 export async function GET(
@@ -50,7 +51,7 @@ export async function GET(
         }
 
         // 3. Fetch public contributions
-        const [notes, experiments, ideas] = await Promise.all([
+        const [notes, experiments, ideas, docs] = await Promise.all([
             Note.find({ 
                 authorId: user._id, 
                 visibility: "public",
@@ -79,6 +80,15 @@ export async function GET(
             .select("title phase upvotes slug isCurated createdAt updatedAt")
             .sort({ createdAt: -1 })
             .limit(10)
+            .lean(),
+
+            Document.find({
+                authorId: user._id,
+                visibility: "public",
+            })
+            .select("title category tags createdAt updatedAt")
+            .sort({ createdAt: -1 })
+            .limit(10)
             .lean()
         ]);
 
@@ -101,7 +111,8 @@ export async function GET(
             contributions: {
                 notes: notes.map((n: any) => ({ ...n, _id: n._id.toString() })),
                 experiments: experiments.map((e: any) => ({ ...e, _id: e._id.toString() })),
-                ideas: ideas.map((i: any) => ({ ...i, _id: i._id.toString() }))
+                ideas: ideas.map((i: any) => ({ ...i, _id: i._id.toString() })),
+                docs: docs.map((d: any) => ({ ...d, _id: d._id.toString() }))
             },
             isFollowing: session?.userId ? user.followers.some((id: any) => id.toString() === session.userId) : false
         });
