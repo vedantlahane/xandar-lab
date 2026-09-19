@@ -18,12 +18,14 @@ import { MarkdownContent } from "./MarkdownContent";
 
 export function NoteDrawer({
     note,
+    notebooks = [],
     onClose,
     position,
     onNoteUpdated,
     onNoteDeleted,
 }: {
     note: any;
+    notebooks?: any[];
     onClose: () => void;
     position?: { x: number; y: number };
     onNoteUpdated?: (updated: any) => void;
@@ -188,6 +190,7 @@ export function NoteDrawer({
         return (
             <NoteEditorDrawer
                 note={currentNote}
+                notebooks={notebooks}
                 onClose={() => setIsEditing(false)}
                 onSaved={(updated) => {
                     setIsEditing(false);

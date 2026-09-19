@@ -20,8 +20,12 @@ import { RoleBadge } from "@/components/shared/RoleBadge";
 
 interface NoteCanvasProps {
     notes?: any[];
+    notebooks?: any[];
     activeTab?: "all" | "my" | "community" | "trash";
     onTabChange?: (tab: "all" | "my" | "community" | "trash") => void;
+    activeNotebookId?: string | null;
+    onNotebookSelect?: (id: string | null) => void;
+    onCreateNotebook?: (name: string) => void;
     onNewNote?: () => void;
     activeNoteId: string | null;
     onNoteSelect: (id: string, event: React.MouseEvent) => void;
@@ -55,8 +59,12 @@ const CATEGORY_ORDER: NoteCategory[] = [
 
 export default function NoteCanvas({
     notes: propNotes,
+    notebooks = [],
     activeTab = "all",
     onTabChange,
+    activeNotebookId,
+    onNotebookSelect,
+    onCreateNotebook,
     onNewNote,
     activeNoteId,
     onNoteSelect,
@@ -275,18 +283,42 @@ export default function NoteCanvas({
                         Pinned Only
                     </button>
 
-                    {/* ── Category ── */}
+                    {/* 📂 Notebooks 📂 */}
                     <div className="space-y-0.5">
-                        <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                            Category
-                        </h3>
-                        {CATEGORY_ITEMS.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = categoryFilter === item.value;
+                        <div className="flex items-center justify-between px-2 mb-1.5">
+                            <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest">
+                                Notebooks
+                            </h3>
+                            <button 
+                                onClick={() => {
+                                    const name = prompt("Enter notebook name:");
+                                    if (name && name.trim()) {
+                                        onCreateNotebook?.(name.trim());
+                                    }
+                                }}
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                <Plus className="h-3 w-3" />
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => onNotebookSelect?.(null)}
+                            className={cn(
+                                "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                                !activeNotebookId
+                                    ? "bg-primary/10 text-primary font-medium"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
+                            )}
+                        >
+                            <BookOpen className={cn("h-4 w-4", !activeNotebookId ? "opacity-100" : "opacity-70")} />
+                            All Notes
+                        </button>
+                        {notebooks.map((nb) => {
+                            const isActive = activeNotebookId === nb.id;
                             return (
                                 <button
-                                    key={item.value}
-                                    onClick={() => setCategoryFilter(item.value)}
+                                    key={nb.id}
+                                    onClick={() => onNotebookSelect?.(nb.id)}
                                     className={cn(
                                         "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
                                         isActive
@@ -294,13 +326,12 @@ export default function NoteCanvas({
                                             : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
                                     )}
                                 >
-                                    <Icon
-                                        className={cn(
-                                            "h-3.5 w-3.5 shrink-0",
-                                            isActive ? "text-primary" : "text-muted-foreground/50",
-                                        )}
-                                    />
-                                    <span className="truncate">{item.label}</span>
+                                    {nb.icon ? (
+                                        <span className={cn("h-4 w-4 text-sm flex items-center justify-center leading-none", isActive ? "opacity-100" : "opacity-70")}>{nb.icon}</span>
+                                    ) : (
+                                        <BookOpen className={cn("h-4 w-4", isActive ? "opacity-100" : "opacity-70")} />
+                                    )}
+                                    <span className="truncate">{nb.name}</span>
                                 </button>
                             );
                         })}

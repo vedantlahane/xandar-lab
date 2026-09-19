@@ -24,7 +24,8 @@ export interface INote {
     authorRole?: string;
     title: string;
     content: string;
-    category: NoteCategory;
+    category?: string;
+    notebookId?: mongoose.Types.ObjectId;
     color: NoteColor;
     tags: string[];
     isPinned: boolean;
@@ -96,8 +97,12 @@ const NoteSchema = new Schema<INote>(
         ],
         category: {
             type: String,
-            enum: ['Learning', 'Ideas', 'Todo', 'Reference', 'Personal', 'Work'],
             default: 'Learning',
+            index: true,
+        },
+        notebookId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Notebook',
             index: true,
         },
         color: {

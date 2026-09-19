@@ -10,6 +10,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const tab = searchParams.get("tab") || "all"; // 'all' | 'my' | 'community'
         const category = searchParams.get("category");
+        const notebookId = searchParams.get("notebookId");
         const q = searchParams.get("q");
 
         const session = await getSession();
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
 
         await connectDB();
 
-        // Build mongo query
+        // 1. Fetch from DB
         const conditions: any[] = [];
 
         if (tab === "my") {
@@ -49,7 +50,9 @@ export async function GET(request: Request) {
             conditions.push({ isDeleted: { $ne: true } });
         }
 
-        if (category && category !== "All") {
+        if (notebookId) {
+            conditions.push({ notebookId });
+        } else if (category && category !== "All") {
             conditions.push({ category });
         }
 
@@ -73,6 +76,7 @@ export async function GET(request: Request) {
             title: n.title,
             content: n.content,
             category: n.category,
+            notebookId: n.notebookId?.toString(),
             color: n.color,
             tags: n.tags || [],
             isPinned: !!n.isPinned,
@@ -145,7 +149,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { title, content, category, color, tags, isPinned, visibility, icon, coverImage } = body;
+        const { title, content, category, notebookId, color, tags, isPinned, visibility, icon, coverImage } = body;
 
         if (!title || typeof title !== "string" || !title.trim()) {
             return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -160,6 +164,7 @@ export async function POST(request: Request) {
             title: title.trim(),
             content: content || "",
             category: category || "Learning",
+            notebookId: notebookId || undefined,
             color: color || "default",
             tags: Array.isArray(tags) ? tags.map((t: string) => t.trim()).filter(Boolean) : [],
             isPinned: !!isPinned,
@@ -177,6 +182,7 @@ export async function POST(request: Request) {
                 title: note.title,
                 content: note.content,
                 category: note.category,
+                notebookId: note.notebookId?.toString(),
                 color: note.color,
                 tags: note.tags,
                 isPinned: note.isPinned,

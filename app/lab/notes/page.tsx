@@ -23,13 +23,18 @@ export default function NotesPage() {
             }))
         )
     );
+    const [notebooks, setNotebooks] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<"all" | "my" | "community" | "trash">("all");
+    const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
     // Fetch notes whenever tab changes or auth changes
     const fetchNotes = useCallback(async () => {
         try {
-            const res = await fetch(`/api/notes?tab=${activeTab}`);
+            const params = new URLSearchParams({ tab: activeTab });
+            if (activeNotebookId) params.append("notebookId", activeNotebookId);
+
+            const res = await fetch(`/api/notes?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.notes) {
@@ -39,11 +44,40 @@ export default function NotesPage() {
         } catch (err) {
             console.error("Failed to load dynamic notes:", err);
         }
-    }, [activeTab]);
+    }, [activeTab, activeNotebookId]);
+
+    const fetchNotebooks = useCallback(async () => {
+        if (!isAuthenticated) return;
+        try {
+            const res = await fetch("/api/notebooks");
+            if (res.ok) {
+                const data = await res.json();
+                if (data.notebooks) setNotebooks(data.notebooks);
+            }
+        } catch (err) {
+            console.error("Failed to fetch notebooks", err);
+        }
+    }, [isAuthenticated]);
 
     useEffect(() => {
         fetchNotes();
-    }, [fetchNotes, isAuthenticated]);
+        fetchNotebooks();
+    }, [fetchNotes, fetchNotebooks, isAuthenticated]);
+
+    const handleCreateNotebook = async (name: string) => {
+        try {
+            const res = await fetch("/api/notebooks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            });
+            if (res.ok) {
+                await fetchNotebooks();
+            }
+        } catch (err) {
+            console.error("Failed to create notebook", err);
+        }
+    };
 
     const handleNoteUpdated = (updated: any) => {
         setNotes((prev) =>
@@ -66,20 +100,27 @@ export default function NotesPage() {
                 items={notes}
                 getItemId={(note) => note.id}
                 renderCanvas={({ activeId, onSelect }) => (
-                    <NoteCanvas
-                        notes={notes}
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
-                        onNewNote={() => setIsCreating(true)}
-                        activeNoteId={activeId}
-                        onNoteSelect={onSelect}
-                    />
+                    <div className="flex-1 min-w-0 bg-background h-full">
+                        <NoteCanvas
+                            notes={notes}
+                            notebooks={notebooks}
+                            activeTab={activeTab}
+                            onTabChange={setActiveTab}
+                            activeNotebookId={activeNotebookId}
+                            onNotebookSelect={setActiveNotebookId}
+                            onCreateNotebook={handleCreateNotebook}
+                            onNewNote={() => setIsCreating(true)}
+                            activeNoteId={activeId}
+                            onNoteSelect={onSelect}
+                        />
+                    </div>
                 )}
                 renderSidebar={() => <GroupSidebar />}
                 renderDrawer={({ item, position, onClose }) => (
                     <NoteDrawer
                         key={item.id}
                         note={item}
+                        notebooks={notebooks}
                         position={position}
                         onClose={onClose}
                         onNoteUpdated={handleNoteUpdated}
@@ -93,6 +134,7 @@ export default function NotesPage() {
                 <div className="fixed inset-0 pointer-events-none z-50">
                     <div className="pointer-events-auto h-full w-full">
                         <NoteEditorDrawer
+                            notebooks={notebooks}
                             onClose={() => setIsCreating(false)}
                             onSaved={handleNoteCreated}
                         />

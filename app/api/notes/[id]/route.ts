@@ -97,7 +97,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { title, content, category, color, tags, isPinned, visibility, isCurated, icon, coverImage, isDeleted, dueDate } = body;
+        const { title, content, category, notebookId, color, tags, isPinned, visibility, isCurated, icon, coverImage, isDeleted, dueDate } = body;
 
         if (title !== undefined) note.title = title.trim();
         
@@ -112,6 +112,7 @@ export async function PUT(
         }
         
         if (category !== undefined) note.category = category;
+        if (notebookId !== undefined) note.notebookId = notebookId;
         if (color !== undefined) note.color = color;
         if (tags !== undefined) note.tags = Array.isArray(tags) ? tags : [];
         if (isPinned !== undefined) note.isPinned = !!isPinned;
@@ -134,6 +135,7 @@ export async function PUT(
                 title: note.title,
                 content: note.content,
                 category: note.category,
+                notebookId: note.notebookId?.toString(),
                 color: note.color,
                 tags: note.tags,
                 isPinned: note.isPinned,

@@ -16,6 +16,7 @@ import { MarkdownContent } from "./MarkdownContent";
 
 interface NoteEditorDrawerProps {
     note?: any | null;
+    notebooks?: any[];
     onClose: () => void;
     onSaved: (note: any) => void;
     onDeleted?: (noteId: string) => void;
@@ -37,6 +38,7 @@ const COLORS: { id: NoteColor; label: string; bgClass: string }[] = [
 
 export function NoteEditorDrawer({
     note,
+    notebooks = [],
     onClose,
     onSaved,
     onDeleted,
@@ -48,6 +50,7 @@ export function NoteEditorDrawer({
     const [icon, setIcon] = useState(note?.icon || "");
     const [content, setContent] = useState(note?.content || "");
     const [category, setCategory] = useState<NoteCategory>(note?.category || "Learning");
+    const [notebookId, setNotebookId] = useState<string>(note?.notebookId || "");
     const [color, setColor] = useState<NoteColor>(note?.color || "default");
     const [visibility, setVisibility] = useState<"private" | "public">(note?.visibility || "private");
     const [tags, setTags] = useState<string[]>(note?.tags || []);
@@ -91,6 +94,7 @@ export function NoteEditorDrawer({
                     icon: icon.trim(),
                     content,
                     category,
+                    notebookId: notebookId || undefined,
                     color,
                     tags,
                     visibility,
@@ -197,21 +201,25 @@ export function NoteEditorDrawer({
 
                 {/* Category & Color selectors */}
                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                    {/* Category pills */}
+                    {/* Notebook pills */}
                     <div className="flex items-center gap-1.5 flex-wrap">
-                        {CATEGORIES.map((cat) => (
+                        {notebooks.length === 0 && (
+                            <span className="text-muted-foreground italic text-[11px] px-1">No notebooks created</span>
+                        )}
+                        {notebooks.map((nb) => (
                             <button
-                                key={cat}
+                                key={nb.id}
                                 type="button"
-                                onClick={() => setCategory(cat)}
+                                onClick={() => setNotebookId(nb.id)}
                                 className={cn(
-                                    "px-2.5 py-1 rounded-md font-medium text-[11px] border transition-colors",
-                                    category === cat
+                                    "px-2.5 py-1 rounded-md font-medium text-[11px] border transition-colors flex items-center gap-1.5",
+                                    notebookId === nb.id
                                         ? "bg-primary text-primary-foreground border-primary"
                                         : "bg-muted/30 text-muted-foreground border-border/40 hover:bg-muted/60"
                                 )}
                             >
-                                {cat}
+                                {nb.icon && <span>{nb.icon}</span>}
+                                {nb.name}
                             </button>
                         ))}
                     </div>
