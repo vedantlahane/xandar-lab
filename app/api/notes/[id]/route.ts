@@ -97,7 +97,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { title, content, category, notebookId, color, tags, isPinned, visibility, isCurated, icon, coverImage, isDeleted, dueDate } = body;
+        const { title, content, category, notebookId, color, tags, isPinned, visibility, sharedWith, isCurated, icon, coverImage, isDeleted, dueDate } = body;
 
         if (title !== undefined) note.title = title.trim();
         
@@ -117,6 +117,7 @@ export async function PUT(
         if (tags !== undefined) note.tags = Array.isArray(tags) ? tags : [];
         if (isPinned !== undefined) note.isPinned = !!isPinned;
         if (visibility !== undefined) note.visibility = visibility;
+        if (sharedWith !== undefined) note.sharedWith = Array.isArray(sharedWith) ? sharedWith : [];
         if (icon !== undefined) note.icon = icon;
         if (coverImage !== undefined) note.coverImage = coverImage;
         if (isDeleted !== undefined) note.isDeleted = !!isDeleted;
@@ -140,6 +141,10 @@ export async function PUT(
                 tags: note.tags,
                 isPinned: note.isPinned,
                 visibility: note.visibility,
+                sharedWith: note.sharedWith?.map((s: any) => ({
+                    userId: s.userId?.toString(),
+                    permission: s.permission,
+                })) || [],
                 authorId: note.authorId.toString(),
                 authorUsername: note.authorUsername,
                 authorRole: note.authorRole,

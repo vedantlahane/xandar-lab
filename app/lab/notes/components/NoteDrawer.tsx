@@ -15,6 +15,7 @@ import { usePermissions } from "@/components/auth/hooks/usePermissions";
 import { RoleBadge } from "@/components/shared/RoleBadge";
 import { NoteEditorDrawer } from "./NoteEditorDrawer";
 import { MarkdownContent } from "./MarkdownContent";
+import { BlockEditor } from "./BlockEditor";
 
 export function NoteDrawer({
     note,
@@ -597,10 +598,14 @@ export function NoteDrawer({
 
                     {/* Note Content */}
                     <div className="rounded-lg border border-border/50 bg-muted/20 p-4 sm:p-5">
-                        <MarkdownContent 
-                            content={currentNote.content} 
-                            onToggleCheckbox={canEdit(currentNote.authorId) ? handleToggleCheckbox : undefined} 
-                        />
+                        {/<[a-z][\s\S]*>/i.test(currentNote.content) ? (
+                            <BlockEditor content={currentNote.content} readOnly={true} />
+                        ) : (
+                            <MarkdownContent 
+                                content={currentNote.content} 
+                                onToggleCheckbox={canEdit(currentNote.authorId) ? handleToggleCheckbox : undefined} 
+                            />
+                        )}
                     </div>
 
                     {/* Footer Timestamps */}

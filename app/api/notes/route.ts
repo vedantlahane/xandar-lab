@@ -36,12 +36,13 @@ export async function GET(request: Request) {
         } else if (tab === "community") {
             conditions.push({ visibility: "public", status: "published", isDeleted: { $ne: true } });
         } else {
-            // "all": community notes + user's private notes if logged in
+            // "all": community notes + user's private notes if logged in + notes shared with user
             if (currentUserId) {
                 conditions.push({
                     $or: [
                         { visibility: "public", status: "published" },
                         { authorId: currentUserId },
+                        { "sharedWith.userId": currentUserId }
                     ],
                 });
             } else {
@@ -81,6 +82,10 @@ export async function GET(request: Request) {
             tags: n.tags || [],
             isPinned: !!n.isPinned,
             visibility: n.visibility || "private",
+            sharedWith: n.sharedWith?.map((s: any) => ({
+                userId: s.userId?.toString(),
+                permission: s.permission,
+            })) || [],
             status: n.status || "published",
             authorId: n.authorId?.toString(),
             authorUsername: n.authorUsername || "Anonymous",
@@ -149,7 +154,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { title, content, category, notebookId, color, tags, isPinned, visibility, icon, coverImage } = body;
+        const { title, content, category, notebookId, color, tags, isPinned, visibility, sharedWith, icon, coverImage } = body;
 
         if (!title || typeof title !== "string" || !title.trim()) {
             return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -168,7 +173,8 @@ export async function POST(request: Request) {
             color: color || "default",
             tags: Array.isArray(tags) ? tags.map((t: string) => t.trim()).filter(Boolean) : [],
             isPinned: !!isPinned,
-            visibility: visibility === "public" ? "public" : "private",
+            visibility: visibility === "public" ? "public" : visibility === "shared" ? "shared" : "private",
+            sharedWith: Array.isArray(sharedWith) ? sharedWith : [],
             status: "published",
             icon: icon || undefined,
             coverImage: coverImage || undefined,
@@ -187,6 +193,10 @@ export async function POST(request: Request) {
                 tags: note.tags,
                 isPinned: note.isPinned,
                 visibility: note.visibility,
+                sharedWith: note.sharedWith?.map((s: any) => ({
+                    userId: s.userId?.toString(),
+                    permission: s.permission,
+                })) || [],
                 authorId: note.authorId.toString(),
                 authorUsername: note.authorUsername,
                 authorRole: note.authorRole,

@@ -1,9 +1,9 @@
 // models/Note.ts
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model, models, Document } from "mongoose";
 
 export type NoteColor = 'default' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'orange';
 export type NoteCategory = 'Learning' | 'Ideas' | 'Todo' | 'Reference' | 'Personal' | 'Work';
-export type NoteVisibility = 'private' | 'public';
+export type NoteVisibility = 'private' | 'public' | 'shared';
 export type NoteStatus = 'draft' | 'published';
 
 export interface IChangeRequest {
@@ -17,8 +17,7 @@ export interface IChangeRequest {
     resolvedAt?: Date;
 }
 
-export interface INote {
-    _id: string;
+export interface INote extends Document {
     authorId: mongoose.Types.ObjectId;
     authorUsername: string;
     authorRole?: string;
@@ -30,6 +29,7 @@ export interface INote {
     tags: string[];
     isPinned: boolean;
     visibility: NoteVisibility;
+    sharedWith?: { userId: mongoose.Types.ObjectId; permission: 'viewer' | 'editor' }[];
     status: NoteStatus;
     isCurated?: boolean;
     changeRequests?: IChangeRequest[];
@@ -121,10 +121,16 @@ const NoteSchema = new Schema<INote>(
         },
         visibility: {
             type: String,
-            enum: ['private', 'public'],
+            enum: ['private', 'public', 'shared'],
             default: 'private',
             index: true,
         },
+        sharedWith: [
+            {
+                userId: { type: Schema.Types.ObjectId, ref: 'User' },
+                permission: { type: String, enum: ['viewer', 'editor'], default: 'viewer' }
+            }
+        ],
         status: {
             type: String,
             enum: ['draft', 'published'],

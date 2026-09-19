@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { usePermissions } from "@/components/auth/hooks/usePermissions";
 import { MarkdownContent } from "./MarkdownContent";
+import { BlockEditor } from "./BlockEditor";
 
 interface NoteEditorDrawerProps {
     note?: any | null;
@@ -55,7 +56,6 @@ export function NoteEditorDrawer({
     const [visibility, setVisibility] = useState<"private" | "public">(note?.visibility || "private");
     const [tags, setTags] = useState<string[]>(note?.tags || []);
     const [tagInput, setTagInput] = useState("");
-    const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
 
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -277,58 +277,12 @@ export function NoteEditorDrawer({
                     ))}
                 </div>
 
-                {/* Editor / Preview Tabs */}
-                <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                    <div className="flex items-center gap-1">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab("write")}
-                            className={cn(
-                                "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                                activeTab === "write"
-                                    ? "bg-muted text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            <Edit3 className="h-3 w-3" /> Write
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab("preview")}
-                            className={cn(
-                                "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                                activeTab === "preview"
-                                    ? "bg-muted text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            <Eye className="h-3 w-3" /> Preview
-                        </button>
-                    </div>
-
-                    <span className="text-[11px] text-muted-foreground/60 hidden sm:inline">
-                        Markdown & code formatting supported
-                    </span>
-                </div>
-
-                {/* Editor Content Area */}
-                <div className="flex-1 min-h-[220px] overflow-y-auto">
-                    {activeTab === "write" ? (
-                        <textarea
-                            placeholder="Write your note in Markdown... You can use headings, lists, and code blocks."
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            className="w-full h-full min-h-[220px] p-3 rounded-lg bg-muted/10 border border-border/40 text-sm font-mono leading-relaxed focus:outline-none focus:border-primary/50 resize-none"
-                        />
-                    ) : (
-                        <div className="p-4 rounded-lg bg-muted/10 border border-border/40 min-h-[220px]">
-                            {content ? (
-                                <MarkdownContent content={content} />
-                            ) : (
-                                <span className="text-muted-foreground italic text-sm">Nothing to preview yet.</span>
-                            )}
-                        </div>
-                    )}
+                {/* Content Editor */}
+                <div className="flex-1 min-h-0 flex flex-col pt-4">
+                    <BlockEditor 
+                        content={content} 
+                        onChange={(html) => setContent(html)} 
+                    />
                 </div>
 
                 {/* Footer Controls */}
