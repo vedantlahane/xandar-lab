@@ -1,309 +1,212 @@
 // app/lab/docs/components/DocumentCanvas.tsx
 "use client";
 
-import { useState, useMemo } from "react";
-import { DOCUMENTS, DocCategory, DocTechnology } from "../data/documents";
-import {
-    FileText, Star, Clock, Tag,
-    Layers, BookOpen, FileCode, BookMarked, GraduationCap, Notebook,
-    Code, Braces, Box, Server as ServerIcon, Binary, Ruler, GitBranch, Container, Palette, HardDrive,
-} from "lucide-react";
+import { useState } from "react";
+import { FileText, Plus, Pin, Star, Lock, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/app/lab/practice/components/browse/SearchBar";
 import { BaseCanvas } from "@/app/lab/components/shared/BaseCanvas";
 import { CanvasSortSelect } from "@/app/lab/components/shared/CanvasSortSelect";
 import { CanvasStatsCard } from "@/app/lab/components/shared/CanvasStatsCard";
+import { Button } from "@/components/ui/button";
+import { LabItemRow } from "@/app/lab/components/shared/LabItemRow";
+import { DocumentEditorDrawer } from "./DocumentEditorDrawer";
 
-interface DocumentCanvasProps {
-    activeDocId: string | null;
-    onDocSelect: (id: string, event: React.MouseEvent) => void;
-}
-
-type FilterCategory = "All" | DocCategory;
-type FilterTech = "All" | DocTechnology;
-type FilterFavorite = "All" | "Favorites";
 type SortOption = "Updated" | "Created" | "Title";
 
-// ── Category filter config ──────────────────────────────────────────────
-const CATEGORY_ITEMS: { value: FilterCategory; label: string; icon: typeof Layers; dotColor: string }[] = [
-    { value: "All", label: "All Categories", icon: Layers, dotColor: "bg-muted-foreground" },
-    { value: "Cheatsheet", label: "Cheatsheet", icon: FileCode, dotColor: "bg-blue-500" },
-    { value: "Guide", label: "Guide", icon: BookOpen, dotColor: "bg-green-500" },
-    { value: "Reference", label: "Reference", icon: BookMarked, dotColor: "bg-purple-500" },
-    { value: "Tutorial", label: "Tutorial", icon: GraduationCap, dotColor: "bg-orange-500" },
-    { value: "Notes", label: "Notes", icon: Notebook, dotColor: "bg-yellow-500" },
-];
-
-// ── Technology filter config ────────────────────────────────────────────
-const TECH_ITEMS: { value: DocTechnology; label: string; dotColor: string }[] = [
-    { value: "JavaScript", label: "JS", dotColor: "bg-yellow-500" },
-    { value: "TypeScript", label: "TS", dotColor: "bg-blue-500" },
-    { value: "React", label: "React", dotColor: "bg-cyan-500" },
-    { value: "Node.js", label: "Node", dotColor: "bg-green-500" },
-    { value: "Python", label: "Python", dotColor: "bg-emerald-500" },
-    { value: "DSA", label: "DSA", dotColor: "bg-red-500" },
-    { value: "System Design", label: "SysDes", dotColor: "bg-purple-500" },
-    { value: "Git", label: "Git", dotColor: "bg-orange-500" },
-    { value: "Docker", label: "Docker", dotColor: "bg-sky-500" },
-    { value: "CSS", label: "CSS", dotColor: "bg-pink-500" },
-];
-
-// ── Sort config ─────────────────────────────────────────────────────────
 const SORT_ITEMS: { value: SortOption; label: string }[] = [
     { value: "Updated", label: "Updated" },
     { value: "Created", label: "Created" },
     { value: "Title", label: "Title" },
 ];
 
+interface DocumentCanvasProps {
+    activeDocId: string | null;
+    onDocSelect: (id: string, event: React.MouseEvent) => void;
+    documents: any[];
+    loading: boolean;
+    tab: string;
+    onTabChange: (tab: string) => void;
+    searchQuery: string;
+    onSearchChange: (q: string) => void;
+}
+
 export default function DocumentCanvas({
     activeDocId,
     onDocSelect,
+    documents,
+    loading,
+    tab,
+    onTabChange,
+    searchQuery,
+    onSearchChange,
 }: DocumentCanvasProps) {
-    const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("All");
-    const [techFilter, setTechFilter] = useState<FilterTech>("All");
-    const [favoriteFilter, setFavoriteFilter] = useState<FilterFavorite>("All");
     const [sortOption, setSortOption] = useState<SortOption>("Updated");
     const [sortDesc, setSortDesc] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
 
-    const filteredDocuments = useMemo(() => {
-        return DOCUMENTS.map((section) => {
-            const filteredItems = section.documents.filter((doc) => {
-                if (searchQuery) {
-                    const q = searchQuery.toLowerCase();
-                    if (
-                        !doc.title.toLowerCase().includes(q) &&
-                        !doc.description.toLowerCase().includes(q) &&
-                        !doc.tags?.some(t => t.toLowerCase().includes(q))
-                    ) return false;
-                }
-                if (categoryFilter !== "All" && doc.category !== categoryFilter) return false;
-                if (techFilter !== "All" && doc.technology !== techFilter) return false;
-                if (favoriteFilter === "Favorites" && !doc.isFavorite) return false;
-                return true;
-            });
+    // Filter and Sort
+    const filteredDocs = [...documents].sort((a, b) => {
+        let cmp = 0;
+        if (sortOption === "Updated") cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+        else if (sortOption === "Created") cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        else if (sortOption === "Title") cmp = a.title.localeCompare(b.title);
+        return sortDesc ? -cmp : cmp;
+    });
 
-            const sorted = [...filteredItems].sort((a, b) => {
-                let cmp = 0;
-                if (sortOption === "Updated") cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-                else if (sortOption === "Created") cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                else if (sortOption === "Title") cmp = a.title.localeCompare(b.title);
-                return sortDesc ? -cmp : cmp;
-            });
-
-            return { ...section, documents: sorted };
-        }).filter((section) => section.documents.length > 0);
-    }, [categoryFilter, techFilter, favoriteFilter, searchQuery, sortOption, sortDesc]);
-
-    // Stats
-    const allDocs = DOCUMENTS.flatMap(s => s.documents);
-    const totalCount = allDocs.length;
-    const favCount = allDocs.filter(d => d.isFavorite).length;
-    const sectionCount = DOCUMENTS.length;
-
-    const getCategoryColor = (cat: string) => {
-        switch (cat) {
-            case 'Cheatsheet': return 'text-blue-500';
-            case 'Guide': return 'text-green-500';
-            case 'Reference': return 'text-purple-500';
-            case 'Tutorial': return 'text-orange-500';
-            case 'Notes': return 'text-yellow-500';
-            default: return 'text-muted-foreground';
-        }
-    };
-
-    const getTechColor = (tech: string) => {
-        const item = TECH_ITEMS.find(t => t.value === tech);
-        return item ? item.dotColor.replace("bg-", "text-") : "text-muted-foreground";
-    };
+    const totalCount = documents.length;
 
     const sidebarContent = (
         <>
+            <CanvasStatsCard
+                title="Documents"
+                icon={FileText}
+                stats={[
+                    { label: "total", value: totalCount }
+                ]}
+            />
 
-                                {/* Stats card */}
-                                <CanvasStatsCard
-                                    icon={FileText}
-                                    iconColor="text-blue-500"
-                                    stats={[
-                                        { label: "Total", value: totalCount },
-                                        { label: "Favorites", value: favCount, color: "text-amber-500" },
-                                        { label: "Sections", value: sectionCount, color: "text-blue-500" },
-                                    ]}
-                                />
+            <div className="space-y-4 pt-2">
+                <div className="flex flex-col gap-1">
+                    <button
+                        onClick={() => onTabChange("my")}
+                        className={cn(
+                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-left",
+                            tab === "my"
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        )}
+                    >
+                        My Docs
+                    </button>
+                    <button
+                        onClick={() => onTabChange("community")}
+                        className={cn(
+                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-left",
+                            tab === "community"
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        )}
+                    >
+                        Community Docs
+                    </button>
+                    <button
+                        onClick={() => onTabChange("trash")}
+                        className={cn(
+                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-left text-red-500/70 hover:text-red-500 hover:bg-red-500/10",
+                            tab === "trash" && "bg-red-500/10 text-red-500"
+                        )}
+                    >
+                        Trash
+                    </button>
+                </div>
+            </div>
 
-                                {/* Quick filter: Favorites */}
-                                <button
-                                    onClick={() => setFavoriteFilter(favoriteFilter === "Favorites" ? "All" : "Favorites")}
-                                    className={cn(
-                                        "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                                        favoriteFilter === "Favorites"
-                                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
-                                    )}
-                                >
-                                    <Star className={cn("h-3.5 w-3.5", favoriteFilter === "Favorites" ? "text-amber-500 fill-amber-500" : "text-muted-foreground/50")} />
-                                    Favorites Only
-                                </button>
-
-                                {/* ── Category ── */}
-                                <div className="space-y-0.5">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                                        Category
-                                    </h3>
-                                    {CATEGORY_ITEMS.map((item) => {
-                                        const Icon = item.icon;
-                                        const isActive = categoryFilter === item.value;
-                                        return (
-                                            <button
-                                                key={item.value}
-                                                onClick={() => setCategoryFilter(item.value)}
-                                                className={cn(
-                                                    "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                                                    isActive
-                                                        ? "bg-primary/10 text-primary font-medium"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
-                                                )}
-                                            >
-                                                <Icon
-                                                    className={cn(
-                                                        "h-3.5 w-3.5 shrink-0",
-                                                        isActive ? "text-primary" : "text-muted-foreground/50",
-                                                    )}
-                                                />
-                                                <span className="truncate">{item.label}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* ── Technology ── */}
-                                <div className="space-y-1">
-                                    <h3 className="text-[10px] uppercase font-semibold text-muted-foreground/60 tracking-widest px-2 mb-1.5">
-                                        Technology
-                                    </h3>
-                                    <div className="flex gap-1.5 flex-wrap">
-                                        {TECH_ITEMS.map((item) => {
-                                            const isActive = techFilter === item.value;
-                                            return (
-                                                <button
-                                                    key={item.value}
-                                                    onClick={() => setTechFilter(isActive ? "All" : item.value)}
-                                                    className={cn(
-                                                        "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
-                                                        isActive
-                                                            ? "bg-primary/10 text-primary border-primary/30"
-                                                            : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground",
-                                                    )}
-                                                >
-                                                    <div className={cn("h-1.5 w-1.5 rounded-full", item.dotColor)} />
-                                                    {item.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* ── Sort ── */}
-                                <CanvasSortSelect
-                                    items={SORT_ITEMS}
-                                    currentSort={sortOption}
-                                    sortDesc={sortDesc}
-                                    onSortChange={setSortOption}
-                                    onSortDescChange={setSortDesc}
-                                />
+            <CanvasSortSelect
+                items={SORT_ITEMS}
+                currentSort={sortOption}
+                sortDesc={sortDesc}
+                onSortChange={setSortOption}
+                onSortDescChange={setSortDesc}
+            />
         </>
     );
 
     return (
         <BaseCanvas scrollId="docs-scroll-container" sidebarContent={sidebarContent}>
-                            {/* Sticky search bar */}
-                            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-2.5 sm:py-4">
-                                <SearchBar
-                                    query={searchQuery}
-                                    onQueryChange={setSearchQuery}
-                                    placeholder="Search docs, topics..."
-                                />
-                            </div>
+            {/* Sticky search bar + New Doc button */}
+            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-2.5 sm:py-4 flex items-center gap-2.5">
+                <div className="flex-1">
+                    <SearchBar
+                        query={searchQuery}
+                        onQueryChange={onSearchChange}
+                        placeholder="Search docs..."
+                    />
+                </div>
+                <Button
+                    onClick={() => setIsCreating(true)}
+                    className="shrink-0 h-10 px-3.5 gap-1.5 rounded-xl bg-primary text-primary-foreground font-medium shadow-sm hover:opacity-95 transition-all text-xs sm:text-sm"
+                >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">New Doc</span>
+                </Button>
+            </div>
 
-                            {filteredDocuments.length === 0 ? (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                                    <p className="text-lg font-medium">No documents match your filters</p>
-                                    <p className="text-sm mt-1">Try adjusting your filters to see more documents</p>
-                                </div>
-                            ) : (
-                                filteredDocuments.map((section) => (
-                                    <section
-                                        key={section.sectionName}
-                                        id={section.sectionName}
-                                        data-category
-                                        data-category-title={section.sectionName}
-                                        className="space-y-5"
-                                    >
-                                        <div className="sticky top-16 z-10 bg-background/95 py-4 backdrop-blur">
-                                            <h2 className="text-lg font-semibold">{section.sectionName}</h2>
-                                            <p className="text-sm text-muted-foreground">
-                                                {section.documents.length} documents
-                                            </p>
-                                        </div>
+            {loading ? (
+                <div className="text-center py-16 text-muted-foreground">Loading...</div>
+            ) : filteredDocs.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                    <p className="text-lg font-medium text-foreground">No documents found</p>
+                    <p className="text-sm mt-1 mb-5">
+                        {tab === "my"
+                            ? "You haven't created any docs yet. Click below to add one!"
+                            : "Try adjusting your search to see more docs."}
+                    </p>
+                    {tab === "my" && (
+                        <Button onClick={() => setIsCreating(true)} size="sm" className="gap-1.5">
+                            <Plus className="h-4 w-4" /> Create First Doc
+                        </Button>
+                    )}
+                </div>
+            ) : (
+                <div className="space-y-0 pt-4">
+                    {filteredDocs.map((doc: any) => {
+                        const isActive = activeDocId === doc.id;
+                        return (
+                            <LabItemRow
+                                key={doc.id}
+                                id={doc.id}
+                                isActive={isActive}
+                                onClick={onDocSelect}
+                                title={doc.title}
+                                titleIcon={
+                                    <>
+                                        {doc.icon ? (
+                                            <span className="text-sm shrink-0 leading-none">{doc.icon}</span>
+                                        ) : (
+                                            <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                        )}
+                                        {doc.isCurated && <Star className="h-3 w-3 text-amber-400 fill-current" />}
+                                    </>
+                                }
+                                subtitle={`${doc.content.replace(/<[^>]*>?/gm, '').substring(0, 100)}...`}
+                                tags={
+                                    <>
+                                        {doc.authorUsername && tab !== "my" && (
+                                            <span className="inline-flex items-center gap-1 text-muted-foreground/60">
+                                                ? @{doc.authorUsername}
+                                            </span>
+                                        )}
+                                        {doc.visibility === "private" && (
+                                            <span className="inline-flex items-center gap-0.5 text-muted-foreground/60">
+                                                ? <Lock className="h-2.5 w-2.5" /> Private
+                                            </span>
+                                        )}
+                                    </>
+                                }
+                                hoverContent={
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground/50">
+                                        <Calendar className="h-3 w-3" />
+                                        {doc.updatedAt}
+                                    </div>
+                                }
+                            />
+                        );
+                    })}
+                </div>
+            )}
 
-                                        <div className="space-y-0">
-                                            {section.documents.map((doc) => {
-                                                const isActive = activeDocId === doc.id;
-                                                return (
-                                                    <button
-                                                        key={doc.id}
-                                                        onClick={(e) => onDocSelect(doc.id, e)}
-                                                        className={cn(
-                                                            "group relative w-full border-b border-border/40 px-4 py-3 text-left",
-                                                            "transition-colors hover:bg-white/5 dark:hover:bg-white/5",
-                                                            isActive && "bg-white/10 dark:bg-white/10"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="space-y-2">
-                                                                <div className="flex items-center gap-2">
-                                                                    <FileText className={`h-4 w-4 ${getCategoryColor(doc.category)}`} />
-                                                                    {doc.isFavorite && (
-                                                                        <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-                                                                    )}
-                                                                    <span className={`text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
-                                                                        {doc.title}
-                                                                    </span>
-                                                                </div>
-                                                                <p className="text-xs text-muted-foreground/70 line-clamp-1 pl-6">
-                                                                    {doc.description}
-                                                                </p>
-                                                                <div className="flex flex-wrap gap-2 text-[11px] font-medium text-muted-foreground pl-6">
-                                                                    <span className={getCategoryColor(doc.category)}>
-                                                                        {doc.category}
-                                                                    </span>
-                                                                    <span className={getTechColor(doc.technology)}>
-                                                                        • {doc.technology}
-                                                                    </span>
-                                                                    {doc.tags?.slice(0, 2).map((tag) => (
-                                                                        <span key={tag} className="text-muted-foreground/50">
-                                                                            • {tag}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Hover info */}
-                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3 opacity-0 transition-opacity group-hover:opacity-100">
-                                                                <div className="flex items-center gap-1 text-xs text-muted-foreground/50">
-                                                                    <Clock className="h-3 w-3" />
-                                                                    {doc.updatedAt}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </section>
-                                ))
-                            )}
+            {isCreating && (
+                <DocumentEditorDrawer
+                    documents={documents}
+                    onClose={() => setIsCreating(false)}
+                    onSaved={() => {
+                        setIsCreating(false);
+                        onTabChange(tab); // Trigger refetch
+                    }}
+                />
+            )}
         </BaseCanvas>
     );
 }
