@@ -12,6 +12,7 @@ import {
     Tag, X, Loader2, Sparkles, Check
 } from "lucide-react";
 import { usePermissions } from "@/components/auth/hooks/usePermissions";
+import { MarkdownContent } from "./MarkdownContent";
 
 interface NoteEditorDrawerProps {
     note?: any | null;
@@ -312,8 +313,12 @@ export function NoteEditorDrawer({
                             className="w-full h-full min-h-[220px] p-3 rounded-lg bg-muted/10 border border-border/40 text-sm font-mono leading-relaxed focus:outline-none focus:border-primary/50 resize-none"
                         />
                     ) : (
-                        <div className="p-4 rounded-lg bg-muted/10 border border-border/40 text-sm leading-relaxed whitespace-pre-wrap font-sans text-foreground/90">
-                            {content ? content : <span className="text-muted-foreground italic">Nothing to preview yet.</span>}
+                        <div className="p-4 rounded-lg bg-muted/10 border border-border/40 min-h-[220px]">
+                            {content ? (
+                                <MarkdownContent content={content} />
+                            ) : (
+                                <span className="text-muted-foreground italic text-sm">Nothing to preview yet.</span>
+                            )}
                         </div>
                     )}
                 </div>

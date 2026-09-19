@@ -14,6 +14,7 @@ import { useAuth } from "@/components/auth/AuthContext";
 import { usePermissions } from "@/components/auth/hooks/usePermissions";
 import { RoleBadge } from "@/components/shared/RoleBadge";
 import { NoteEditorDrawer } from "./NoteEditorDrawer";
+import { MarkdownContent } from "./MarkdownContent";
 
 export function NoteDrawer({
     note,
@@ -410,6 +411,39 @@ export function NoteDrawer({
         }
     };
 
+    const handleToggleCheckbox = async (checkboxIndex: number, checked: boolean) => {
+        const lines = currentNote.content.split('\n');
+        let currentIdx = 0;
+        const newLines = lines.map((line: string) => {
+            const isCheckbox = line.match(/^(\s*)-\s*\[[xX ]\]\s+(.*)/);
+            if (isCheckbox) {
+                if (currentIdx === checkboxIndex) {
+                    currentIdx++;
+                    return line.replace(/^(\s*)-\s*\[[xX ]\]/, checked ? "$1- [x]" : "$1- [ ]");
+                }
+                currentIdx++;
+            }
+            return line;
+        });
+        
+        const newContent = newLines.join('\n');
+        setCurrentNote({ ...currentNote, content: newContent });
+
+        try {
+            const res = await fetch(`/api/notes/${currentNote.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: newContent }),
+            });
+            const data = await res.json();
+            if (res.ok && data.note) {
+                if (onNoteUpdated) onNoteUpdated(data.note);
+            }
+        } catch (err) {
+            console.error("Failed to toggle checkbox", err);
+        }
+    };
+
     return (
         <BaseDrawer
             onClose={onClose}
@@ -560,9 +594,10 @@ export function NoteDrawer({
 
                     {/* Note Content */}
                     <div className="rounded-lg border border-border/50 bg-muted/20 p-4 sm:p-5">
-                        <div className="text-sm text-foreground/90 whitespace-pre-wrap font-sans leading-relaxed select-text">
-                            {currentNote.content}
-                        </div>
+                        <MarkdownContent 
+                            content={currentNote.content} 
+                            onToggleCheckbox={canEdit(currentNote.authorId) ? handleToggleCheckbox : undefined} 
+                        />
                     </div>
 
                     {/* Footer Timestamps */}
