@@ -150,7 +150,7 @@ export function BaseDrawer({
         if (target.closest("button, a, input, select, textarea, [role='button'], [data-no-drag]")) {
             return;
         }
-        dragControls.start(e);
+        dragControls.start(e, { snapToCursor: false });
     };
 
     return (
@@ -212,7 +212,7 @@ export function BaseDrawer({
                 {/* Mobile Drag Indicator Handle */}
                 {isMobile && (
                     <div
-                        onPointerDown={(e) => dragControls.start(e)}
+                        onPointerDown={(e) => dragControls.start(e, { snapToCursor: false })}
                         className="flex justify-center pt-2.5 pb-2 bg-muted/30 cursor-grab active:cursor-grabbing border-b border-border/20 touch-none select-none"
                     >
                         <div className="h-1.5 w-12 rounded-full bg-muted-foreground/30" />
