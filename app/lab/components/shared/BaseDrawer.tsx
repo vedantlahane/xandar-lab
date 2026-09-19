@@ -28,11 +28,21 @@ function calculateSafePos(
         return { x: 50, y: 50 };
     }
 
-    const widthNum = typeof defaultWidth === "number" ? defaultWidth : parseInt(defaultWidth as string, 10) || 700;
-    const heightNum = typeof defaultHeight === "number" ? defaultHeight : parseInt(defaultHeight as string, 10) || 600;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const margin = 20;
+
+    let widthNum = typeof defaultWidth === "number" ? defaultWidth : 700;
+    if (typeof defaultWidth === "string") {
+        if (defaultWidth.endsWith("vw")) widthNum = (parseFloat(defaultWidth) / 100) * vw;
+        else widthNum = parseInt(defaultWidth, 10) || 700;
+    }
+
+    let heightNum = typeof defaultHeight === "number" ? defaultHeight : 600;
+    if (typeof defaultHeight === "string") {
+        if (defaultHeight.endsWith("vh")) heightNum = (parseFloat(defaultHeight) / 100) * vh;
+        else heightNum = parseInt(defaultHeight, 10) || 600;
+    }
 
     const effectiveWidth = Math.min(widthNum, vw - margin * 2);
     const effectiveHeight = Math.min(heightNum, vh - margin * 2);
@@ -91,8 +101,16 @@ export function BaseDrawer({
     useEffect(() => {
         const handleResize = () => {
             if (isMaximized || isMobile) return;
-            const widthNum = typeof defaultWidth === "number" ? defaultWidth : parseInt(defaultWidth as string, 10) || 700;
-            const heightNum = typeof defaultHeight === "number" ? defaultHeight : parseInt(defaultHeight as string, 10) || 600;
+            let widthNum = typeof defaultWidth === "number" ? defaultWidth : 700;
+            if (typeof defaultWidth === "string") {
+                if (defaultWidth.endsWith("vw")) widthNum = (parseFloat(defaultWidth) / 100) * window.innerWidth;
+                else widthNum = parseInt(defaultWidth, 10) || 700;
+            }
+            let heightNum = typeof defaultHeight === "number" ? defaultHeight : 600;
+            if (typeof defaultHeight === "string") {
+                if (defaultHeight.endsWith("vh")) heightNum = (parseFloat(defaultHeight) / 100) * window.innerHeight;
+                else heightNum = parseInt(defaultHeight, 10) || 600;
+            }
             const maxX = Math.max(16, window.innerWidth - widthNum - 16);
             const maxY = Math.max(16, window.innerHeight - heightNum - 16);
             if (x.get() > maxX) x.set(maxX);
