@@ -1,18 +1,37 @@
 // app/lab/experiments/components/ExperimentDrawer.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-    ExternalLink, Github, Calendar, Lightbulb, Edit3, Globe, Lock,
-    Pin, Star, MessageSquare, Trash2, AlertCircle, CheckCircle2, Loader2, Send
+    Activity, ArrowUpCircle, BookOpen, Calendar, Clock, Code,
+    ExternalLink, FileCode, Github, Layout, Server, Sparkles,
+    Star, Target, Smartphone, Terminal, Cpu, Database, Edit3, Trash2, ShieldAlert, Check, Copy, Sliders
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 import { useAuth } from "@/components/auth/AuthContext";
 import { usePermissions } from "@/components/auth/hooks/usePermissions";
 import { RoleBadge } from "@/components/shared/RoleBadge";
 import { ExperimentEditorDrawer } from "./ExperimentEditorDrawer";
+import { BlockEditor } from "@/app/lab/notes/components/BlockEditor";
+
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+    "Frontend": <Layout className="h-3.5 w-3.5 text-blue-500" />,
+    "Backend": <Server className="h-3.5 w-3.5 text-green-500" />,
+    "Full Stack": <Code className="h-3.5 w-3.5 text-purple-500" />,
+    "AI/ML": <Cpu className="h-3.5 w-3.5 text-amber-500" />,
+    "Mobile": <Smartphone className="h-3.5 w-3.5 text-pink-500" />,
+    "DevOps": <Terminal className="h-3.5 w-3.5 text-cyan-500" />,
+};
+
+const STATUS_COLORS: Record<string, string> = {
+    "Active": "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    "Completed": "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    "Planning": "bg-amber-500/10 text-amber-500 border-amber-500/20",
+    "Archived": "bg-muted text-muted-foreground border-border",
+};
 
 export function ExperimentDrawer({
     experiment,
@@ -24,474 +43,158 @@ export function ExperimentDrawer({
     experiment: any;
     onClose: () => void;
     position?: { x: number; y: number };
-    onExperimentUpdated?: (updated: any) => void;
+    onExperimentUpdated?: (updated?: any) => void;
     onExperimentDeleted?: (id: string) => void;
 }) {
-    const [currentExp, setCurrentExp] = useState(experiment);
-    const [isEditing, setIsEditing] = useState(false);
-    const [showRequestForm, setShowRequestForm] = useState(false);
-    const [requestMessage, setRequestMessage] = useState("");
-    const [submittingRequest, setSubmittingRequest] = useState(false);
-    const [resolvingId, setResolvingId] = useState<string | null>(null);
-
     const { user } = useAuth();
-    const {
-        canPin,
-        canCurate,
-        canChangeVisibility,
-        canRequestChanges,
-        canEdit,
-        canDelete,
-        isAdmin,
-        isModerator,
-    } = usePermissions();
+    const { isAdmin, isModerator } = usePermissions();
+    const [isEditing, setIsEditing] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [copied, setCopied] = useState(false);
 
-    useEffect(() => {
-        setCurrentExp(experiment);
-    }, [experiment]);
-
-    const isAuthor = !!(
-        user?._id &&
-        currentExp?.authorId &&
-        user._id.toString() === currentExp.authorId.toString()
-    );
-
-    const canResolve = isAuthor || isAdmin || isModerator;
-
-    const handleTogglePin = async () => {
-        const newPinned = !currentExp.isPinned;
-        try {
-            const res = await fetch(`/api/experiments/${currentExp.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ isPinned: newPinned }),
-            });
-            const data = await res.json();
-            if (res.ok && data.experiment) {
-                setCurrentExp(data.experiment);
-                if (onExperimentUpdated) onExperimentUpdated(data.experiment);
-            }
-        } catch (err) {
-            console.error("Failed to toggle pin", err);
-        }
-    };
-
-    const handleToggleCurated = async () => {
-        const newCurated = !currentExp.isCurated;
-        try {
-            const res = await fetch(`/api/experiments/${currentExp.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ isCurated: newCurated }),
-            });
-            const data = await res.json();
-            if (res.ok && data.experiment) {
-                setCurrentExp(data.experiment);
-                if (onExperimentUpdated) onExperimentUpdated(data.experiment);
-            }
-        } catch (err) {
-            console.error("Failed to toggle curated", err);
-        }
-    };
-
-    const handleToggleVisibility = async () => {
-        const newVisibility = currentExp.visibility === "public" ? "private" : "public";
-        try {
-            const res = await fetch(`/api/experiments/${currentExp.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ visibility: newVisibility }),
-            });
-            const data = await res.json();
-            if (res.ok && data.experiment) {
-                setCurrentExp(data.experiment);
-                if (onExperimentUpdated) onExperimentUpdated(data.experiment);
-            }
-        } catch (err) {
-            console.error("Failed to toggle visibility", err);
-        }
+    const canEdit = () => {
+        if (isAdmin || isModerator) return true;
+        return String(experiment.authorId) === String(user?._id) || 
+               experiment.sharedWith?.some((s: any) => s.userId === user?._id && s.permission === "editor");
     };
 
     const handleDelete = async () => {
         if (!confirm("Are you sure you want to delete this experiment?")) return;
+        setDeleting(true);
         try {
-            const res = await fetch(`/api/experiments/${currentExp.id}`, {
-                method: "DELETE",
-            });
+            const res = await fetch(`/api/experiments/${experiment.id}`, { method: 'DELETE' });
             if (res.ok) {
-                if (onExperimentDeleted) onExperimentDeleted(currentExp.id);
+                onExperimentDeleted?.(experiment.id);
                 onClose();
             }
-        } catch (err) {
-            console.error("Failed to delete experiment", err);
+        } catch (error) {
+            console.error("Failed to delete", error);
+        } finally {
+            setDeleting(false);
         }
     };
 
-    const handleSubmitChangeRequest = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!requestMessage.trim()) return;
-
-        setSubmittingRequest(true);
-        try {
-            const res = await fetch(`/api/experiments/${currentExp.id}/change-request`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: requestMessage.trim() }),
-            });
-            const data = await res.json();
-            if (res.ok && data.changeRequests) {
-                const updated = { ...currentExp, changeRequests: data.changeRequests };
-                setCurrentExp(updated);
-                if (onExperimentUpdated) onExperimentUpdated(updated);
-                setRequestMessage("");
-                setShowRequestForm(false);
-            }
-        } catch (err) {
-            console.error("Failed to submit change request", err);
-        } finally {
-            setSubmittingRequest(false);
-        }
-    };
-
-    const handleResolveRequest = async (requestId?: string) => {
-        setResolvingId(requestId || "latest");
-        try {
-            const res = await fetch(`/api/experiments/${currentExp.id}/change-request`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId }),
-            });
-            const data = await res.json();
-            if (res.ok && data.changeRequests) {
-                const updated = { ...currentExp, changeRequests: data.changeRequests };
-                setCurrentExp(updated);
-                if (onExperimentUpdated) onExperimentUpdated(updated);
-            }
-        } catch (err) {
-            console.error("Failed to resolve change request", err);
-        } finally {
-            setResolvingId(null);
-        }
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(experiment.description);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     if (isEditing) {
         return (
             <ExperimentEditorDrawer
-                experiment={currentExp}
+                experiment={experiment}
                 onClose={() => setIsEditing(false)}
                 onSaved={(updated) => {
                     setIsEditing(false);
-                    setCurrentExp(updated);
-                    if (onExperimentUpdated) onExperimentUpdated(updated);
-                }}
-                onDeleted={(id) => {
-                    setIsEditing(false);
-                    if (onExperimentDeleted) onExperimentDeleted(id);
-                    onClose();
+                    onExperimentUpdated?.();
                 }}
             />
         );
     }
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Active": return "bg-green-500/20 text-green-400 border-green-500/30";
-            case "Completed": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-            case "Archived": return "bg-gray-500/20 text-gray-400 border-gray-500/30";
-            case "Planning": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-            default: return "bg-muted text-muted-foreground";
-        }
-    };
-
-    const getTypeColor = (type: string) => {
-        switch (type) {
-            case "Frontend": return "bg-purple-500/20 text-purple-400";
-            case "Backend": return "bg-orange-500/20 text-orange-400";
-            case "Full Stack": return "bg-cyan-500/20 text-cyan-400";
-            case "AI/ML": return "bg-pink-500/20 text-pink-400";
-            case "Mobile": return "bg-indigo-500/20 text-indigo-400";
-            case "DevOps": return "bg-emerald-500/20 text-emerald-400";
-            default: return "bg-muted text-muted-foreground";
-        }
-    };
-
-    const pendingRequests = (currentExp.changeRequests || []).filter((r: any) => r.status === "pending");
+    const isHTML = /<[a-z][\s\S]*>/i.test(experiment.description);
 
     const headerLeft = (
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-            <span className={cn(
-                "px-2 py-0.5 rounded text-[10px] font-semibold border",
-                getStatusColor(currentExp.status)
-            )}>
-                {currentExp.status}
+        <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground/70 flex items-center gap-1.5">
+                {TYPE_ICONS[experiment.type] || <Sparkles className="h-3.5 w-3.5" />}
+                {experiment.type}
             </span>
-            <span className={cn(
-                "px-2 py-0.5 rounded text-[10px] font-semibold",
-                getTypeColor(currentExp.type)
-            )}>
-                {currentExp.type}
+            <div className="h-3.5 w-px bg-border/50" />
+            <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold border", STATUS_COLORS[experiment.status])}>
+                {experiment.status}
             </span>
-            {currentExp.isCurated && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/25">
-                    <Star className="h-2.5 w-2.5" />
-                    Curated
-                </span>
-            )}
-            {currentExp.isPinned && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/25">
-                    <Pin className="h-2.5 w-2.5 fill-current" />
-                    Pinned
-                </span>
-            )}
-            {currentExp.visibility && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/60 text-muted-foreground border border-border/40">
-                    {currentExp.visibility === "public" ? <Globe className="h-2.5 w-2.5 text-emerald-500" /> : <Lock className="h-2.5 w-2.5" />}
-                    {currentExp.visibility === "public" ? "Community" : "Private"}
+            {experiment.isCurated && (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20 ml-1">
+                    <Star className="h-2.5 w-2.5 fill-current" /> Curated
                 </span>
             )}
         </div>
     );
 
     const headerIconTools = (
-        <div className="flex items-center gap-0.5">
-            {/* Curate (Admin) */}
-            {canCurate && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                        "h-6 w-6 rounded-md transition-colors",
-                        currentExp.isCurated
-                            ? "text-amber-500 bg-amber-500/15 hover:bg-amber-500/25"
-                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+        <>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}>
+                {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />}
+            </Button>
+            {canEdit() && (
+                <>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => setIsEditing(true)}>
+                        <Edit3 className="h-3.5 w-3.5" />
+                    </Button>
+                    {isAdmin && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500/70 hover:text-red-500 hover:bg-red-500/10" onClick={handleDelete} disabled={deleting}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                     )}
-                    onClick={handleToggleCurated}
-                    title={currentExp.isCurated ? "Certified Curated (Click to uncurate)" : "Mark as Official Curated Content"}
-                >
-                    <Star className={cn("h-3.5 w-3.5", currentExp.isCurated && "fill-current")} />
-                </Button>
+                </>
             )}
-
-            {/* Pin (Mod & Admin) */}
-            {canPin && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                        "h-6 w-6 rounded-md transition-colors",
-                        currentExp.isPinned
-                            ? "text-amber-500 bg-amber-500/15 hover:bg-amber-500/25"
-                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
-                    )}
-                    onClick={handleTogglePin}
-                    title={currentExp.isPinned ? "Pinned to Top (Click to unpin)" : "Pin Experiment to Top"}
-                >
-                    <Pin className={cn("h-3.5 w-3.5", currentExp.isPinned && "fill-current")} />
-                </Button>
-            )}
-
-            {/* Visibility Toggle */}
-            {canChangeVisibility(currentExp.authorId) && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
-                    onClick={handleToggleVisibility}
-                    title={`Currently ${currentExp.visibility || "public"}. Click to switch.`}
-                >
-                    {currentExp.visibility === "public" ? (
-                        <Globe className="h-3.5 w-3.5 text-emerald-500" />
-                    ) : (
-                        <Lock className="h-3.5 w-3.5" />
-                    )}
-                </Button>
-            )}
-
-            {/* Request Changes (Mod & Admin) */}
-            {canRequestChanges && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                        "h-6 w-6 rounded-md transition-colors",
-                        showRequestForm
-                            ? "text-amber-500 bg-amber-500/15"
-                            : "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
-                    )}
-                    onClick={() => setShowRequestForm(!showRequestForm)}
-                    title="Request Revision from Author"
-                >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                </Button>
-            )}
-
-            {/* Edit (Author / Mod / Admin) */}
-            {canEdit(currentExp.authorId) && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
-                    onClick={() => setIsEditing(true)}
-                    title="Edit Experiment"
-                >
-                    <Edit3 className="h-3.5 w-3.5" />
-                </Button>
-            )}
-
-            {/* Delete (Author / Admin) */}
-            {canDelete(currentExp.authorId) && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    onClick={handleDelete}
-                    title="Delete Experiment"
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-            )}
-        </div>
+        </>
     );
-
-    const technologies = currentExp.technologies || currentExp.techStack || [];
-    const learnings = currentExp.learnings || currentExp.highlights || [];
-    const demoUrl = currentExp.demoUrl || currentExp.liveUrl;
-    const githubUrl = currentExp.githubUrl;
 
     return (
         <BaseDrawer
             onClose={onClose}
             position={position}
-            defaultWidth="720px"
-            defaultHeight="580px"
+            defaultWidth="900px"
+            defaultHeight="85vh"
             headerLeft={headerLeft}
             headerIconTools={headerIconTools}
         >
-            <div className="p-6">
-                <div className="space-y-5">
-                    {/* Inline Change Request Form (Mod / Admin) */}
-                    {showRequestForm && (
-                        <form
-                            onSubmit={handleSubmitChangeRequest}
-                            className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-2.5 text-xs"
-                        >
-                            <div className="flex items-center justify-between text-amber-500 font-medium">
-                                <span className="flex items-center gap-1.5">
-                                    <MessageSquare className="h-3.5 w-3.5" /> Request changes from author
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowRequestForm(false)}
-                                    className="text-muted-foreground hover:text-foreground text-[11px]"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                            <textarea
-                                value={requestMessage}
-                                onChange={(e) => setRequestMessage(e.target.value)}
-                                placeholder="Specify what needs to be improved or corrected before approval..."
-                                rows={2}
-                                className="w-full text-xs p-2.5 rounded-md border border-border/60 bg-background focus:outline-none focus:border-amber-500/50 resize-none font-sans"
-                                required
-                            />
-                            <div className="flex justify-end gap-2">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowRequestForm(false)}
-                                    className="h-7 text-xs"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    size="sm"
-                                    disabled={submittingRequest || !requestMessage.trim()}
-                                    className="h-7 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium gap-1.5"
-                                >
-                                    {submittingRequest ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                                    Send Request
-                                </Button>
-                            </div>
-                        </form>
-                    )}
-
-                    {/* Pending Change Requests Banner */}
-                    {pendingRequests.map((req: any, idx: number) => (
-                        <div
-                            key={req._id || idx}
-                            className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-xs space-y-1.5"
-                        >
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-1.5 text-amber-500 font-medium text-xs">
-                                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                                    <span>Revision requested by @{req.requestedBy}</span>
-                                    {req.requestedByRole && req.requestedByRole !== "user" && (
-                                        <RoleBadge role={req.requestedByRole} size="sm" />
+            <div className="p-4 sm:p-6 flex flex-col h-full overflow-y-auto">
+                <div className="space-y-6">
+                    {/* Header */}
+                    <div className="space-y-4">
+                        <div className="flex flex-col gap-2">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-tight">
+                                {experiment.title}
+                            </h1>
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1.5 font-medium">
+                                    <span className="opacity-70">By</span>
+                                    <span className="text-foreground">@{experiment.authorUsername}</span>
+                                    {experiment.authorRole && (
+                                        <RoleBadge role={experiment.authorRole} className="scale-90 origin-left" />
                                     )}
                                 </div>
-                                {canResolve && (
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleResolveRequest(req._id)}
-                                        disabled={resolvingId === (req._id || "latest")}
-                                        className="h-6 px-2 text-[11px] font-medium text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 gap-1"
-                                    >
-                                        {resolvingId === (req._id || "latest") ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                            <CheckCircle2 className="h-3 w-3" />
-                                        )}
-                                        Mark Resolved
-                                    </Button>
-                                )}
+                                <div className="h-1 w-1 rounded-full bg-border" />
+                                <div className="flex items-center gap-1.5 opacity-80">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    {experiment.startDate}
+                                    {experiment.endDate && ` - ${experiment.endDate}`}
+                                </div>
                             </div>
-                            <p className="text-foreground/90 font-mono text-[11px] pl-5 border-l border-amber-500/30 leading-relaxed">
-                                "{req.message}"
-                            </p>
                         </div>
-                    ))}
 
-                    {/* Title & Author row */}
-                    <div className="space-y-2">
-                        <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{currentExp.title}</h2>
-                            {currentExp.authorUsername && (
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-                                    <span>Built by <strong className="text-foreground font-medium">@{currentExp.authorUsername}</strong></span>
-                                    {currentExp.authorRole && currentExp.authorRole !== "user" && String(currentExp.authorId) !== String(user?._id) && (
-                                        <RoleBadge role={currentExp.authorRole} size="sm" />
-                                    )}
-                                </div>
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap gap-2">
+                            {experiment.githubUrl && (
+                                <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 font-medium">
+                                    <a href={experiment.githubUrl} target="_blank" rel="noopener noreferrer">
+                                        <Github className="h-3.5 w-3.5" /> Source Code
+                                    </a>
+                                </Button>
                             )}
-                        </div>
-
-                        <p className="text-sm text-muted-foreground leading-relaxed">{currentExp.description}</p>
-
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground/70 pt-0.5">
-                            <span className="flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5" />
-                                Started: {currentExp.startDate || "Recently"}
-                            </span>
-                            {currentExp.endDate && (
-                                <span>Ended: {currentExp.endDate}</span>
+                            {experiment.demoUrl && (
+                                <Button asChild size="sm" className="h-8 gap-1.5 font-medium bg-primary text-primary-foreground hover:opacity-90">
+                                    <a href={experiment.demoUrl} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="h-3.5 w-3.5" /> Live Demo
+                                    </a>
+                                </Button>
                             )}
                         </div>
                     </div>
 
-                    {/* Technologies */}
-                    {technologies.length > 0 && (
-                        <div className="space-y-1.5">
-                            <h3 className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">Technologies</h3>
+                    {/* Tech Stack */}
+                    {experiment.technologies && experiment.technologies.length > 0 && (
+                        <div className="space-y-2">
+                            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                <FileCode className="h-3.5 w-3.5" /> Technologies
+                            </h3>
                             <div className="flex flex-wrap gap-1.5">
-                                {technologies.map((tech: string) => (
-                                    <span
-                                        key={tech}
-                                        className="inline-flex items-center rounded px-2.5 py-0.5 text-[11px] font-semibold border border-border/60 bg-muted/40"
-                                    >
+                                {experiment.technologies.map((tech: string) => (
+                                    <span key={tech} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted/50 border border-border/50 text-foreground">
                                         {tech}
                                     </span>
                                 ))}
@@ -499,43 +202,78 @@ export function ExperimentDrawer({
                         </div>
                     )}
 
-                    {/* Learnings / Highlights */}
-                    {learnings.length > 0 && (
-                        <div className="space-y-1.5">
-                            <h3 className="text-xs font-semibold tracking-wider uppercase text-muted-foreground flex items-center gap-1.5">
-                                <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-                                Key Learnings & Breakthroughs
-                            </h3>
-                            <ul className="space-y-1.5 rounded-lg border border-border/40 bg-muted/15 p-3.5">
-                                {learnings.map((learning: string, index: number) => (
-                                    <li key={index} className="text-xs text-foreground/85 flex items-start gap-2 leading-relaxed">
-                                        <span className="text-primary mt-0.5">•</span>
-                                        <span>{learning}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                    {/* Metrics and Parameters Grid */}
+                    {(Object.keys(experiment.parameters || {}).length > 0 || Object.keys(experiment.metrics || {}).length > 0) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {Object.keys(experiment.parameters || {}).length > 0 && (
+                                <div className="space-y-2 p-4 rounded-xl border border-border/40 bg-muted/10">
+                                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-3">
+                                        <Sliders className="h-3.5 w-3.5 text-blue-500" /> Parameters
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-2 gap-y-3">
+                                        {Object.entries(experiment.parameters).map(([k, v]) => (
+                                            <div key={k} className="flex flex-col">
+                                                <span className="text-[10px] text-muted-foreground uppercase">{k}</span>
+                                                <span className="text-sm font-mono font-medium">{String(v)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {Object.keys(experiment.metrics || {}).length > 0 && (
+                                <div className="space-y-2 p-4 rounded-xl border border-border/40 bg-muted/10">
+                                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-3">
+                                        <Activity className="h-3.5 w-3.5 text-emerald-500" /> Metrics
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-2 gap-y-3">
+                                        {Object.entries(experiment.metrics).map(([k, v]) => (
+                                            <div key={k} className="flex flex-col">
+                                                <span className="text-[10px] text-muted-foreground uppercase">{k}</span>
+                                                <span className="text-sm font-mono font-medium text-emerald-600 dark:text-emerald-400">{String(v)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Links */}
-                    <div className="flex gap-2.5 pt-1">
-                        {githubUrl && (
-                            <Button variant="outline" size="sm" asChild className="h-8 text-xs font-medium">
-                                <a href={githubUrl} target="_blank" rel="noopener noreferrer">
-                                    <Github className="h-3.5 w-3.5 mr-1.5" />
-                                    View Code
-                                </a>
-                            </Button>
-                        )}
-                        {demoUrl && (
-                            <Button size="sm" asChild className="h-8 text-xs font-medium">
-                                <a href={demoUrl} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                                    Live Demo
-                                </a>
-                            </Button>
-                        )}
+                    {/* Description (BlockEditor) */}
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                            Lab Notes & Overview
+                        </h3>
+                        <div className="rounded-xl border border-border/40 bg-muted/10 p-4 sm:p-5">
+                            {isHTML ? (
+                                <BlockEditor content={experiment.description} readOnly={true} />
+                            ) : (
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <p className="whitespace-pre-wrap">{experiment.description}</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Learnings */}
+                    {experiment.learnings && experiment.learnings.length > 0 && (
+                        <div className="space-y-3">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Target className="h-5 w-5 text-amber-500" />
+                                Key Findings & Highlights
+                            </h3>
+                            <div className="grid gap-2">
+                                {experiment.learnings.map((learning: string, i: number) => (
+                                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/40">
+                                        <div className="mt-0.5 p-1 rounded-full bg-amber-500/10 text-amber-500">
+                                            <Star className="h-3 w-3 fill-current" />
+                                        </div>
+                                        <span className="text-sm text-foreground leading-relaxed">{learning}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </BaseDrawer>

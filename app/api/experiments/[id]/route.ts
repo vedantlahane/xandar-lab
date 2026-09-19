@@ -66,12 +66,16 @@ export async function PUT(
             return NextResponse.json({ error: "Experiment not found" }, { status: 404 });
         }
 
-        if (!canManageResource(session.userId, userRole, experiment.authorId.toString())) {
+        const canEdit =
+            canManageResource(session.userId, userRole, experiment.authorId.toString()) ||
+            experiment.sharedWith?.some((s: any) => s.userId.toString() === session.userId && s.permission === "editor");
+
+        if (!canEdit) {
             return NextResponse.json({ error: "Forbidden: You do not have permission to edit this experiment" }, { status: 403 });
         }
 
         const body = await request.json();
-        const { title, description, status, type, githubUrl, liveUrl, techStack, highlights, visibility, isCurated, isPinned } = body;
+        const { title, description, status, type, githubUrl, liveUrl, techStack, highlights, visibility, isCurated, isPinned, parameters, metrics, sharedWith } = body;
 
         if (title !== undefined) experiment.title = title.trim();
         if (description !== undefined) experiment.description = description;
@@ -81,7 +85,10 @@ export async function PUT(
         if (liveUrl !== undefined) experiment.liveUrl = liveUrl?.trim() || undefined;
         if (techStack !== undefined) experiment.techStack = Array.isArray(techStack) ? techStack : [];
         if (highlights !== undefined) experiment.highlights = Array.isArray(highlights) ? highlights : [];
-        if (visibility !== undefined) experiment.visibility = visibility;
+        if (visibility !== undefined) experiment.visibility = visibility === "public" ? "public" : visibility === "shared" ? "shared" : "private";
+        if (parameters !== undefined) experiment.parameters = parameters;
+        if (metrics !== undefined) experiment.metrics = metrics;
+        if (sharedWith !== undefined) experiment.sharedWith = Array.isArray(sharedWith) ? sharedWith : [];
         if (isPinned !== undefined) experiment.isPinned = !!isPinned;
         if (isCurated !== undefined && userRole === "admin") {
             experiment.isCurated = !!isCurated;
@@ -98,6 +105,12 @@ export async function PUT(
                 status: experiment.status,
                 type: experiment.type,
                 technologies: experiment.techStack,
+                parameters: experiment.parameters,
+                metrics: experiment.metrics,
+                sharedWith: experiment.sharedWith?.map((s: any) => ({
+                    userId: s.userId?.toString(),
+                    permission: s.permission,
+                })) || [],
                 githubUrl: experiment.githubUrl,
                 demoUrl: experiment.liveUrl,
                 learnings: experiment.highlights,
@@ -106,6 +119,7 @@ export async function PUT(
                 authorRole: experiment.authorRole,
                 isPinned: !!experiment.isPinned,
                 isCurated: !!experiment.isCurated,
+                visibility: experiment.visibility,
                 changeRequests: experiment.changeRequests || [],
             },
         });

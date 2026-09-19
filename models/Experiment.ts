@@ -31,7 +31,10 @@ export interface IExperiment {
     completedDate?: string;
     techStack: string[];
     highlights: string[];
-    visibility: 'private' | 'public';
+    parameters?: Record<string, string>;
+    metrics?: Record<string, string>;
+    visibility: 'private' | 'public' | 'shared';
+    sharedWith?: { userId: mongoose.Types.ObjectId; permission: 'viewer' | 'editor' }[];
     isPinned?: boolean;
     isCurated?: boolean;
     changeRequests?: IChangeRequest[];
@@ -108,12 +111,28 @@ const ExperimentSchema = new Schema<IExperiment>(
             type: [String],
             default: [],
         },
+        parameters: {
+            type: Map,
+            of: String,
+            default: {},
+        },
+        metrics: {
+            type: Map,
+            of: String,
+            default: {},
+        },
         visibility: {
             type: String,
-            enum: ['private', 'public'],
+            enum: ['private', 'public', 'shared'],
             default: 'public',
             index: true,
         },
+        sharedWith: [
+            {
+                userId: { type: Schema.Types.ObjectId, ref: 'User' },
+                permission: { type: String, enum: ['viewer', 'editor'], default: 'viewer' }
+            }
+        ],
         upvotes: {
             type: Number,
             default: 0,

@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ExperimentStatus, ExperimentType } from "../data/experiments";
 import {
-    Save, Trash2, Github, ExternalLink, Globe, Lock,
-    Plus, X, Loader2, Sparkles, Beaker, Tag, Lightbulb
+    Save, Trash2, Github, ExternalLink, Globe, Lock, Users,
+    Plus, X, Loader2, Tag, Lightbulb, Activity, Sliders
 } from "lucide-react";
 import { usePermissions } from "@/components/auth/hooks/usePermissions";
+import { BlockEditor } from "@/app/lab/notes/components/BlockEditor";
 
 interface ExperimentEditorDrawerProps {
     experiment?: any | null;
@@ -34,66 +35,37 @@ export function ExperimentEditorDrawer({
     onSaved,
     onDeleted,
 }: ExperimentEditorDrawerProps) {
-    const { isAdmin, isModerator } = usePermissions();
-    const isEdit = !!experiment?.id && (!experiment.isCurated || isAdmin || isModerator);
+    const { isAdmin } = usePermissions();
+    const isEdit = !!experiment?.id;
 
     const [title, setTitle] = useState(experiment?.title || "");
     const [description, setDescription] = useState(experiment?.description || "");
-    const [type, setType] = useState<ExperimentType>(experiment?.type || "Full Stack");
     const [status, setStatus] = useState<ExperimentStatus>(experiment?.status || "Active");
+    const [type, setType] = useState<ExperimentType>(experiment?.type || "Full Stack");
     const [githubUrl, setGithubUrl] = useState(experiment?.githubUrl || "");
-    const [liveUrl, setLiveUrl] = useState(experiment?.demoUrl || experiment?.liveUrl || "");
-    const [visibility, setVisibility] = useState<"private" | "public">(
-        experiment?.visibility || "public"
-    );
+    const [liveUrl, setLiveUrl] = useState(experiment?.liveUrl || "");
+    const [techStack, setTechStack] = useState<string[]>(experiment?.technologies || []);
+    const [highlights, setHighlights] = useState<string[]>(experiment?.learnings || []);
+    const [visibility, setVisibility] = useState<"private" | "public" | "shared">(experiment?.visibility || "public");
 
-    // Tech stack tags
-    const [techStack, setTechStack] = useState<string[]>(
-        experiment?.technologies || experiment?.techStack || []
-    );
+    // Phase 2: Metrics and Parameters
+    const [parameters, setParameters] = useState<Record<string, string>>(experiment?.parameters || {});
+    const [metrics, setMetrics] = useState<Record<string, string>>(experiment?.metrics || {});
+    const [newParamKey, setNewParamKey] = useState("");
+    const [newParamVal, setNewParamVal] = useState("");
+    const [newMetricKey, setNewMetricKey] = useState("");
+    const [newMetricVal, setNewMetricVal] = useState("");
+
     const [techInput, setTechInput] = useState("");
-
-    // Highlights / Key Learnings
-    const [highlights, setHighlights] = useState<string[]>(
-        experiment?.learnings || experiment?.highlights || []
-    );
     const [highlightInput, setHighlightInput] = useState("");
 
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleAddTech = () => {
-        const trimmed = techInput.trim();
-        if (trimmed && !techStack.includes(trimmed)) {
-            setTechStack([...techStack, trimmed]);
-            setTechInput("");
-        }
-    };
-
-    const handleRemoveTech = (t: string) => {
-        setTechStack(techStack.filter((item) => item !== t));
-    };
-
-    const handleAddHighlight = () => {
-        const trimmed = highlightInput.trim();
-        if (trimmed && !highlights.includes(trimmed)) {
-            setHighlights([...highlights, trimmed]);
-            setHighlightInput("");
-        }
-    };
-
-    const handleRemoveHighlight = (idx: number) => {
-        setHighlights(highlights.filter((_, i) => i !== idx));
-    };
-
     const handleSave = async () => {
         if (!title.trim()) {
             setError("Title is required");
-            return;
-        }
-        if (!description.trim()) {
-            setError("Description is required");
             return;
         }
 
@@ -101,103 +73,141 @@ export function ExperimentEditorDrawer({
         setError(null);
 
         try {
-            const endpoint = isEdit ? `/api/experiments/${experiment.id}` : "/api/experiments";
+            const payload = {
+                title,
+                description,
+                status,
+                type,
+                githubUrl,
+                liveUrl,
+                techStack,
+                highlights,
+                visibility,
+                parameters,
+                metrics,
+            };
+
+            const url = isEdit ? `/api/experiments/${experiment.id}` : "/api/experiments";
             const method = isEdit ? "PUT" : "POST";
 
-            const res = await fetch(endpoint, {
+            const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: title.trim(),
-                    description: description.trim(),
-                    type,
-                    status,
-                    githubUrl: githubUrl.trim(),
-                    liveUrl: liveUrl.trim(),
-                    techStack,
-                    highlights,
-                    visibility,
-                }),
+                body: JSON.stringify(payload),
             });
 
-            const data = await res.json();
             if (!res.ok) {
+                const data = await res.json();
                 throw new Error(data.error || "Failed to save experiment");
             }
 
-            onSaved(data.experiment);
+            const { experiment: savedExp } = await res.json();
+            onSaved(savedExp);
+            onClose();
         } catch (err: any) {
-            setError(err.message || "Something went wrong saving the experiment");
+            setError(err.message);
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!isEdit || !experiment?.id) return;
-        if (!confirm("Are you sure you want to delete this experiment?")) return;
-
+        if (!isEdit) return;
         setDeleting(true);
-        setError(null);
-
         try {
-            const res = await fetch(`/api/experiments/${experiment.id}`, {
-                method: "DELETE",
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to delete experiment");
+            const res = await fetch(`/api/experiments/${experiment.id}`, { method: "DELETE" });
+            if (res.ok) {
+                onDeleted?.(experiment.id);
+                onClose();
             }
-            if (onDeleted) onDeleted(experiment.id);
-            onClose();
-        } catch (err: any) {
-            setError(err.message || "Failed to delete experiment");
+        } catch (err) {
+            console.error(err);
+        } finally {
             setDeleting(false);
         }
     };
 
+    const handleAddParam = () => {
+        if (newParamKey.trim() && newParamVal.trim()) {
+            setParameters(prev => ({ ...prev, [newParamKey.trim()]: newParamVal.trim() }));
+            setNewParamKey("");
+            setNewParamVal("");
+        }
+    };
+
+    const handleAddMetric = () => {
+        if (newMetricKey.trim() && newMetricVal.trim()) {
+            setMetrics(prev => ({ ...prev, [newMetricKey.trim()]: newMetricVal.trim() }));
+            setNewMetricKey("");
+            setNewMetricVal("");
+        }
+    };
+
     const headerLeft = (
-        <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-primary">
-                <Beaker className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2.5">
+            <span className="text-xs font-semibold text-foreground">
                 {isEdit ? "Edit Experiment" : "New Experiment"}
             </span>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="text-[11px] text-muted-foreground">
-                {visibility === "public" ? "Community Feed" : "Private Only"}
-            </span>
+            <div className="h-3.5 w-px bg-border" />
+            <div className="flex items-center rounded-md border border-border/50 bg-muted/20 p-0.5">
+                <button
+                    onClick={() => setVisibility("public")}
+                    className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] uppercase tracking-wider transition-colors",
+                        visibility === "public"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold shadow-sm"
+                            : "bg-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    <Globe className="h-3 w-3" /> Public
+                </button>
+                <button
+                    onClick={() => setVisibility("shared")}
+                    className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] uppercase tracking-wider transition-colors",
+                        visibility === "shared"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 font-semibold shadow-sm"
+                            : "bg-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    <Users className="h-3 w-3" /> Shared
+                </button>
+                <button
+                    onClick={() => setVisibility("private")}
+                    className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] uppercase tracking-wider transition-colors",
+                        visibility === "private"
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold shadow-sm"
+                            : "bg-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    <Lock className="h-3 w-3" /> Private
+                </button>
+            </div>
         </div>
     );
 
-    const headerRight = (
-        <div className="flex items-center gap-2 mr-2">
-            {isEdit && onDeleted && (
+    const headerIconTools = (
+        <div className="flex items-center gap-2">
+            {isEdit && (
                 <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={handleDelete}
-                    disabled={deleting || saving}
-                    className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={deleting}
+                    className="h-8 w-8 text-red-500/70 hover:text-red-500 hover:bg-red-500/10"
                 >
-                    {deleting ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                    )}
+                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </Button>
             )}
             <Button
                 size="sm"
                 onClick={handleSave}
-                disabled={saving || deleting}
-                className="h-7 px-3 text-xs gap-1.5 font-medium shadow-sm"
+                disabled={saving || !title.trim()}
+                className="gap-1.5 h-8 px-3 rounded-md"
             >
-                {saving ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                    <Save className="h-3.5 w-3.5" />
-                )}
-                {isEdit ? "Update" : "Publish"}
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                <span className="hidden sm:inline">{isEdit ? "Save Changes" : "Create"}</span>
             </Button>
         </div>
     );
@@ -205,230 +215,129 @@ export function ExperimentEditorDrawer({
     return (
         <BaseDrawer
             onClose={onClose}
-            defaultWidth="720px"
-            defaultHeight="680px"
+            defaultWidth="900px"
+            defaultHeight="85vh"
             headerLeft={headerLeft}
-            headerRight={headerRight}
+            headerIconTools={headerIconTools}
         >
-            <div className="p-5 sm:p-6 space-y-5">
+            <div className="p-4 flex flex-col gap-6 h-full overflow-y-auto">
                 {error && (
-                    <div className="px-3.5 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
                         {error}
                     </div>
                 )}
 
-                {/* Title */}
-                <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Title
-                    </label>
-                    <Input
+                {/* Title & Metadata */}
+                <div className="space-y-4">
+                    <input
+                        type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="e.g. Distributed Task Scheduler in Go"
-                        className="text-base font-semibold h-10"
+                        placeholder="Experiment Title..."
+                        className="w-full bg-transparent text-3xl font-bold placeholder:text-muted-foreground/30 border-b border-transparent focus:border-border focus:outline-none transition-colors pb-2"
+                        autoFocus
                     />
-                </div>
 
-                {/* Type and Status */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Domain Type
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {EXPERIMENT_TYPES.map((t) => (
-                                <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => setType(t)}
-                                    className={cn(
-                                        "px-2.5 py-1 rounded-md text-xs font-medium border transition-all",
-                                        type === t
-                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                            : "bg-muted/40 text-muted-foreground border-border/60 hover:text-foreground"
-                                    )}
-                                >
-                                    {t}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Status
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {EXPERIMENT_STATUSES.map((s) => (
-                                <button
-                                    key={s}
-                                    type="button"
-                                    onClick={() => setStatus(s)}
-                                    className={cn(
-                                        "px-2.5 py-1 rounded-md text-xs font-medium border transition-all",
-                                        status === s
-                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                            : "bg-muted/40 text-muted-foreground border-border/60 hover:text-foreground"
-                                    )}
-                                >
-                                    {s}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Visibility */}
-                <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Visibility
-                    </label>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setVisibility("public")}
-                            className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
-                                visibility === "public"
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-semibold"
-                                    : "bg-muted/40 text-muted-foreground border-border/60 hover:text-foreground"
-                            )}
+                    <div className="flex flex-wrap items-center gap-4">
+                        <select
+                            value={type}
+                            onChange={(e) => setType(e.target.value as ExperimentType)}
+                            className="bg-muted/30 border border-border/50 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 rounded-md px-3 py-1.5 cursor-pointer"
                         >
-                            <Globe className="h-3.5 w-3.5 text-emerald-500" />
-                            Community (Public)
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setVisibility("private")}
-                            className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
-                                visibility === "private"
-                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold"
-                                    : "bg-muted/40 text-muted-foreground border-border/60 hover:text-foreground"
-                            )}
+                            {EXPERIMENT_TYPES.map(t => (
+                                <option key={t} value={t}>{t}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value as ExperimentStatus)}
+                            className="bg-muted/30 border border-border/50 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 rounded-md px-3 py-1.5 cursor-pointer"
                         >
-                            <Lock className="h-3.5 w-3.5 text-amber-500" />
-                            Private (Only You)
-                        </button>
+                            {EXPERIMENT_STATUSES.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
-                {/* Description */}
-                <div className="space-y-1.5">
+                {/* Rich Text Description */}
+                <div className="space-y-1.5 flex-1 min-h-[400px]">
                     <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Description / Overview
+                        Description / Lab Notes
                     </label>
-                    <textarea
-                        rows={3}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Brief overview of what this experiment investigates or solves..."
-                        className="w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 leading-relaxed resize-none"
-                    />
-                </div>
-
-                {/* Tech Stack Tags */}
-                <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Tag className="h-3 w-3" /> Tech Stack
-                    </label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                        {techStack.map((tech) => (
-                            <span
-                                key={tech}
-                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted border border-border"
-                            >
-                                {tech}
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveTech(tech)}
-                                    className="hover:text-destructive transition-colors ml-0.5"
-                                >
-                                    <X className="h-3 w-3" />
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Input
-                            value={techInput}
-                            onChange={(e) => setTechInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleAddTech();
-                                }
-                            }}
-                            placeholder="Add technology (e.g. Next.js, Rust, Redis) and press Enter"
-                            className="h-8 text-xs flex-1"
+                    <div className="h-[350px] border border-border/50 rounded-lg overflow-hidden">
+                        <BlockEditor 
+                            content={description} 
+                            onChange={(html) => setDescription(html)} 
                         />
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleAddTech}
-                            className="h-8 px-2.5 text-xs gap-1"
-                        >
-                            <Plus className="h-3.5 w-3.5" /> Add
-                        </Button>
                     </div>
                 </div>
 
-                {/* Key Highlights / Learnings */}
-                <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Lightbulb className="h-3 w-3 text-amber-500" /> Key Learnings & Highlights
-                    </label>
-                    {highlights.length > 0 && (
-                        <div className="space-y-1.5 mb-2">
-                            {highlights.map((h, i) => (
-                                <div
-                                    key={i}
-                                    className="flex items-start justify-between gap-2 p-2 rounded-md bg-muted/30 border border-border/50 text-xs"
-                                >
-                                    <div className="flex items-start gap-1.5">
-                                        <span className="text-primary mt-0.5">•</span>
-                                        <span>{h}</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveHighlight(i)}
-                                        className="text-muted-foreground hover:text-destructive shrink-0 mt-0.5"
+                {/* Metrics and Parameters Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Parameters */}
+                    <div className="space-y-3">
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <Sliders className="h-3.5 w-3.5 text-blue-500" /> Parameters / Hyperparameters
+                        </label>
+                        <div className="space-y-2">
+                            {Object.entries(parameters).map(([k, v]) => (
+                                <div key={k} className="flex items-center gap-2 bg-muted/20 p-2 rounded border border-border/40 text-sm">
+                                    <span className="font-mono text-muted-foreground flex-1">{k}</span>
+                                    <span className="font-mono">{v}</span>
+                                    <button 
+                                        onClick={() => {
+                                            const newParams = { ...parameters };
+                                            delete newParams[k];
+                                            setParameters(newParams);
+                                        }}
+                                        className="text-red-500 hover:bg-red-500/10 p-1 rounded"
                                     >
                                         <X className="h-3 w-3" />
                                     </button>
                                 </div>
                             ))}
+                            <div className="flex gap-2">
+                                <Input value={newParamKey} onChange={e => setNewParamKey(e.target.value)} placeholder="Key (e.g. batch_size)" className="h-8 text-xs font-mono" />
+                                <Input value={newParamVal} onChange={e => setNewParamVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddParam()} placeholder="Value (e.g. 32)" className="h-8 text-xs font-mono" />
+                                <Button size="sm" onClick={handleAddParam} className="h-8 px-2"><Plus className="h-3.5 w-3.5" /></Button>
+                            </div>
                         </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                        <Input
-                            value={highlightInput}
-                            onChange={(e) => setHighlightInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleAddHighlight();
-                                }
-                            }}
-                            placeholder="Add a key learning or breakthrough and press Enter"
-                            className="h-8 text-xs flex-1"
-                        />
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleAddHighlight}
-                            className="h-8 px-2.5 text-xs gap-1"
-                        >
-                            <Plus className="h-3.5 w-3.5" /> Add
-                        </Button>
+                    </div>
+
+                    {/* Metrics */}
+                    <div className="space-y-3">
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <Activity className="h-3.5 w-3.5 text-emerald-500" /> Metrics / Results
+                        </label>
+                        <div className="space-y-2">
+                            {Object.entries(metrics).map(([k, v]) => (
+                                <div key={k} className="flex items-center gap-2 bg-muted/20 p-2 rounded border border-border/40 text-sm">
+                                    <span className="font-mono text-muted-foreground flex-1">{k}</span>
+                                    <span className="font-mono">{v}</span>
+                                    <button 
+                                        onClick={() => {
+                                            const newMetrics = { ...metrics };
+                                            delete newMetrics[k];
+                                            setMetrics(newMetrics);
+                                        }}
+                                        className="text-red-500 hover:bg-red-500/10 p-1 rounded"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            ))}
+                            <div className="flex gap-2">
+                                <Input value={newMetricKey} onChange={e => setNewMetricKey(e.target.value)} placeholder="Key (e.g. accuracy)" className="h-8 text-xs font-mono" />
+                                <Input value={newMetricVal} onChange={e => setNewMetricVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddMetric()} placeholder="Value (e.g. 0.95)" className="h-8 text-xs font-mono" />
+                                <Button size="sm" onClick={handleAddMetric} className="h-8 px-2"><Plus className="h-3.5 w-3.5" /></Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Code & Demo Links */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                             <Github className="h-3 w-3" /> GitHub Repository
@@ -452,6 +361,7 @@ export function ExperimentEditorDrawer({
                         />
                     </div>
                 </div>
+
             </div>
         </BaseDrawer>
     );

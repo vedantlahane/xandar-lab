@@ -8,7 +8,7 @@ import { EXPERIMENTS as STATIC_EXPERIMENTS } from "@/app/lab/experiments/data/ex
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const tab = searchParams.get("tab") || "all";
+        const tab = searchParams.get("tab") || "community";
         const type = searchParams.get("type");
         const status = searchParams.get("status");
         const q = searchParams.get("q");
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
                     $or: [
                         { visibility: "public" },
                         { authorId: currentUserId },
+                        { "sharedWith.userId": currentUserId },
                     ],
                 });
             } else {
@@ -60,15 +61,21 @@ export async function GET(request: Request) {
 
         const query = conditions.length > 0 ? { $and: conditions } : {};
 
-        const dbExperiments = await Experiment.find(query).sort({ createdAt: -1 }).lean();
+        const exps = await Experiment.find(query).sort({ createdAt: -1 }).lean();
 
-        const formattedDb = dbExperiments.map((e: any) => ({
+        const formattedExps = exps.map((e: any) => ({
             id: e._id.toString(),
             title: e.title,
             description: e.description,
             status: e.status,
             type: e.type,
             technologies: e.techStack || [],
+            parameters: e.parameters || {},
+            metrics: e.metrics || {},
+            sharedWith: e.sharedWith?.map((s: any) => ({
+                userId: s.userId?.toString(),
+                permission: s.permission,
+            })) || [],
             startDate: e.startDate || (e.createdAt ? new Date(e.createdAt).toISOString().split("T")[0] : "Recently"),
             endDate: e.completedDate,
             githubUrl: e.githubUrl,
@@ -101,7 +108,7 @@ export async function GET(request: Request) {
                 if (
                     !e.title.toLowerCase().includes(searchLow) &&
                     !e.description.toLowerCase().includes(searchLow) &&
-                    !e.technologies.some((t) => t.toLowerCase().includes(searchLow))
+                    !e.technologies?.some((t) => t.toLowerCase().includes(searchLow))
                 ) {
                     return false;
                 }
@@ -109,7 +116,7 @@ export async function GET(request: Request) {
             return true;
         });
 
-        const combined = [...formattedDb, ...filteredSeeds];
+        const combined = [...formattedExps, ...filteredSeeds];
 
         return NextResponse.json({ experiments: combined, total: combined.length });
     } catch (error: any) {
@@ -132,7 +139,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { title, description, status, type, tags, githubUrl, liveUrl, techStack, highlights, visibility } = body;
+        const { title, description, status, type, tags, githubUrl, liveUrl, techStack, highlights, visibility, parameters, metrics, sharedWith } = body;
 
         if (!title || typeof title !== "string" || !title.trim()) {
             return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -153,7 +160,10 @@ export async function POST(request: Request) {
             liveUrl: liveUrl?.trim() || undefined,
             techStack: Array.isArray(techStack) ? techStack : [],
             highlights: Array.isArray(highlights) ? highlights : [],
-            visibility: visibility === "private" ? "private" : "public",
+            parameters: parameters || {},
+            metrics: metrics || {},
+            sharedWith: Array.isArray(sharedWith) ? sharedWith : [],
+            visibility: visibility === "public" ? "public" : visibility === "shared" ? "shared" : "private",
         });
 
         return NextResponse.json({
@@ -165,6 +175,12 @@ export async function POST(request: Request) {
                 status: experiment.status,
                 type: experiment.type,
                 technologies: experiment.techStack,
+                parameters: experiment.parameters,
+                metrics: experiment.metrics,
+                sharedWith: experiment.sharedWith?.map((s: any) => ({
+                    userId: s.userId?.toString(),
+                    permission: s.permission,
+                })) || [],
                 startDate: new Date(experiment.createdAt).toISOString().split("T")[0],
                 githubUrl: experiment.githubUrl,
                 demoUrl: experiment.liveUrl,
@@ -173,6 +189,7 @@ export async function POST(request: Request) {
                 authorUsername: experiment.authorUsername,
                 authorRole: experiment.authorRole,
                 isCurated: false,
+                visibility: experiment.visibility,
             },
         }, { status: 201 });
     } catch (error: any) {
