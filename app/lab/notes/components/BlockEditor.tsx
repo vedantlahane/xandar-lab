@@ -2,7 +2,6 @@
 
 import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
-import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
@@ -355,6 +354,28 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     </div>
                 </div>
             </div>
+
+            {/* Contextual Hover Menu (Notion Style) */}
+            <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
+                {[
+                    { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold' },
+                    { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic' },
+                    { icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), active: 'underline', title: 'Underline' },
+                    { icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), active: 'strike', title: 'Strikethrough' },
+                    { icon: Highlighter, action: () => editor.chain().focus().toggleHighlight().run(), active: 'highlight', title: 'Highlight' },
+                    { icon: Code, action: () => editor.chain().focus().toggleCode().run(), active: 'code', title: 'Inline Code' },
+                ].map(({ icon: Icon, action, active, title }) => (
+                    <button key={active} onClick={action} title={title}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                        <Icon className="w-3.5 h-3.5" />
+                    </button>
+                ))}
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <button onClick={setLink} title="Link"
+                    className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                    <LinkIcon className="w-3.5 h-3.5" />
+                </button>
+            </BubbleMenu>
 
             <EditorContent editor={editor} className="flex-1 w-full outline-none" />
 
