@@ -194,8 +194,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
             )}
 
-            {/* Bubble Menu */}
-            <BubbleMenu editor={editor} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md flex-wrap max-w-[calc(100vw-2rem)] sm:max-w-sm">
+            {/* Static Toolbar */}
+            <div className="sticky top-0 z-20 flex items-center gap-0.5 p-1.5 mb-6 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg flex-wrap">
                 {/* Color picker */}
                 <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-border/50">
                     {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', 'inherit'].map((c) => (
@@ -211,15 +211,15 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 {/* Font Size */}
                 <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-border/50">
                     <button onClick={() => editor.chain().focus().setFontSize('0.875em').run()} title="Small Text"
-                        className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors', editor.isActive('textStyle', { fontSize: '0.875em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        className={cn('px-2 py-1 rounded text-[10px] font-medium transition-colors', editor.isActive('textStyle', { fontSize: '0.875em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         S
                     </button>
                     <button onClick={() => editor.chain().focus().unsetFontSize().run()} title="Normal Text"
-                        className={cn('px-1.5 py-0.5 rounded text-xs font-medium transition-colors', !editor.isActive('textStyle', { fontSize: '0.875em' }) && !editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        className={cn('px-2 py-1 rounded text-xs font-medium transition-colors', !editor.isActive('textStyle', { fontSize: '0.875em' }) && !editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         M
                     </button>
                     <button onClick={() => editor.chain().focus().setFontSize('1.25em').run()} title="Large Text"
-                        className={cn('px-1.5 py-0.5 rounded text-sm font-medium transition-colors', editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        className={cn('px-2 py-1 rounded text-sm font-medium transition-colors', editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         L
                     </button>
                 </div>
@@ -235,10 +235,10 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 ].map(({ icon: Icon, action, active, title }) => (
                     <button key={active} onClick={action} title={title}
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                        <Icon className="w-3.5 h-3.5" />
+                        <Icon className="w-4 h-4" />
                     </button>
                 ))}
-                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <div className="w-px h-5 bg-border/50 mx-0.5" />
                 {[
                     { icon: AlignLeft, action: () => editor.chain().focus().setTextAlign('left').run(), active: { textAlign: 'left' } },
                     { icon: AlignCenter, action: () => editor.chain().focus().setTextAlign('center').run(), active: { textAlign: 'center' } },
@@ -246,36 +246,36 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 ].map(({ icon: Icon, action, active }, i) => (
                     <button key={i} onClick={action}
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                        <Icon className="w-3.5 h-3.5" />
+                        <Icon className="w-4 h-4" />
                     </button>
                 ))}
-                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <div className="w-px h-5 bg-border/50 mx-0.5" />
                 <button onClick={setLink} title="Link (Ctrl+K)"
                     className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                    <LinkIcon className="w-3.5 h-3.5" />
+                    <LinkIcon className="w-4 h-4" />
                 </button>
                 <button onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Blockquote"
                     className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                    <Quote className="w-3.5 h-3.5" />
+                    <Quote className="w-4 h-4" />
                 </button>
                 <div className="relative">
                     <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} title="Emoji"
                         className={`p-1.5 rounded-md transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                        <Smile className="w-3.5 h-3.5" />
+                        <Smile className="w-4 h-4" />
                     </button>
                     {showEmojiPicker && (
-                        <div className="absolute top-full right-0 mt-2 z-50 shadow-2xl">
+                        <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 shadow-2xl rounded-xl overflow-hidden border border-border/50">
                             <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-                            <div className="relative z-50">
+                            <div className="relative z-50 bg-zinc-950">
                                 <Picker data={data} onEmojiSelect={(emoji: any) => {
                                     editor.chain().focus().insertContent(emoji.native).run()
                                     setShowEmojiPicker(false)
-                                }} theme="dark" />
+                                }} theme="auto" />
                             </div>
                         </div>
                     )}
                 </div>
-            </BubbleMenu>
+            </div>
 
             <EditorContent editor={editor} className="flex-1 w-full outline-none" />
 
