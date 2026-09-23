@@ -35,7 +35,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import {
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
     Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote,
-    Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Palette, Smile
+    Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Palette, Smile,
+    Table as TableIcon, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, Eraser, Type
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
@@ -194,22 +195,60 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
             )}
 
-            {/* Static Toolbar */}
-            <div className="sticky top-0 z-20 flex items-center gap-0.5 p-1.5 mb-6 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg flex-wrap">
-                {/* Color picker */}
-                <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-border/50">
-                    {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', 'inherit'].map((c) => (
-                        <button key={c} onClick={() => c === 'inherit' ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c).run()}
-                            className={cn('w-4 h-4 rounded-full transition-transform hover:scale-110', editor.isActive('textStyle', { color: c }) && 'ring-2 ring-primary ring-offset-1')}
-                            style={{ backgroundColor: c === 'inherit' ? 'transparent' : c }}
-                            title={c === 'inherit' ? 'Default Color' : c}
-                        >
-                            {c === 'inherit' && <span className="text-[10px] flex items-center justify-center h-full w-full">↺</span>}
-                        </button>
-                    ))}
+            {/* Static Toolbar (Advanced) */}
+            <div className="sticky top-0 z-20 flex items-center p-1.5 mb-6 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg flex-wrap gap-y-1.5 gap-x-1">
+                {/* History & Clear */}
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                    <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground disabled:opacity-50">
+                        <Undo className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (Ctrl+Y)"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground disabled:opacity-50">
+                        <Redo className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} title="Clear Formatting"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground ml-1">
+                        <Eraser className="w-4 h-4" />
+                    </button>
                 </div>
+
+                {/* Block Type Dropdown */}
+                <div className="flex items-center pr-2 border-r border-border/50">
+                    <select
+                        className="h-8 pl-2 pr-6 py-1 text-xs bg-transparent hover:bg-muted/50 border-none rounded-md focus:ring-0 text-foreground cursor-pointer outline-none appearance-none font-medium"
+                        value={
+                            editor.isActive('heading', { level: 1 }) ? 'h1' :
+                            editor.isActive('heading', { level: 2 }) ? 'h2' :
+                            editor.isActive('heading', { level: 3 }) ? 'h3' :
+                            editor.isActive('bulletList') ? 'bullet' :
+                            editor.isActive('orderedList') ? 'ordered' :
+                            editor.isActive('taskList') ? 'task' :
+                            'p'
+                        }
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === 'p') editor.chain().focus().setParagraph().run();
+                            if (v === 'h1') editor.chain().focus().toggleHeading({ level: 1 }).run();
+                            if (v === 'h2') editor.chain().focus().toggleHeading({ level: 2 }).run();
+                            if (v === 'h3') editor.chain().focus().toggleHeading({ level: 3 }).run();
+                            if (v === 'bullet') editor.chain().focus().toggleBulletList().run();
+                            if (v === 'ordered') editor.chain().focus().toggleOrderedList().run();
+                            if (v === 'task') editor.chain().focus().toggleTaskList().run();
+                        }}
+                    >
+                        <option value="p">Normal Text</option>
+                        <option value="h1">Heading 1</option>
+                        <option value="h2">Heading 2</option>
+                        <option value="h3">Heading 3</option>
+                        <option value="bullet">Bullet List</option>
+                        <option value="ordered">Numbered List</option>
+                        <option value="task">Task List</option>
+                    </select>
+                </div>
+
                 {/* Font Size */}
-                <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-border/50">
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
                     <button onClick={() => editor.chain().focus().setFontSize('0.875em').run()} title="Small Text"
                         className={cn('px-2 py-1 rounded text-[10px] font-medium transition-colors', editor.isActive('textStyle', { fontSize: '0.875em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         S
@@ -223,57 +262,86 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         L
                     </button>
                 </div>
-                {[
-                    { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold (Ctrl+B)' },
-                    { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic (Ctrl+I)' },
-                    { icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), active: 'underline', title: 'Underline (Ctrl+U)' },
-                    { icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), active: 'strike', title: 'Strikethrough' },
-                    { icon: Highlighter, action: () => editor.chain().focus().toggleHighlight().run(), active: 'highlight', title: 'Highlight' },
-                    { icon: Code, action: () => editor.chain().focus().toggleCode().run(), active: 'code', title: 'Inline Code' },
-                    { icon: SuperscriptIcon, action: () => editor.chain().focus().toggleSuperscript().run(), active: 'superscript', title: 'Superscript' },
-                    { icon: SubscriptIcon, action: () => editor.chain().focus().toggleSubscript().run(), active: 'subscript', title: 'Subscript' },
-                ].map(({ icon: Icon, action, active, title }) => (
-                    <button key={active} onClick={action} title={title}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                        <Icon className="w-4 h-4" />
+
+                {/* Text Styles */}
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                    {[
+                        { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold (Ctrl+B)' },
+                        { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic (Ctrl+I)' },
+                        { icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), active: 'underline', title: 'Underline (Ctrl+U)' },
+                        { icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), active: 'strike', title: 'Strikethrough' },
+                        { icon: Highlighter, action: () => editor.chain().focus().toggleHighlight().run(), active: 'highlight', title: 'Highlight' },
+                        { icon: Code, action: () => editor.chain().focus().toggleCode().run(), active: 'code', title: 'Inline Code' },
+                    ].map(({ icon: Icon, action, active, title }) => (
+                        <button key={active} onClick={action} title={title}
+                            className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                            <Icon className="w-4 h-4" />
+                        </button>
+                    ))}
+                </div>
+
+                {/* Color picker */}
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                    {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', 'inherit'].map((c) => (
+                        <button key={c} onClick={() => c === 'inherit' ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c).run()}
+                            className={cn('w-4 h-4 rounded-full transition-transform hover:scale-110', editor.isActive('textStyle', { color: c }) && 'ring-2 ring-primary ring-offset-1')}
+                            style={{ backgroundColor: c === 'inherit' ? 'transparent' : c }}
+                            title={c === 'inherit' ? 'Default Color' : c}
+                        >
+                            {c === 'inherit' && <span className="text-[10px] flex items-center justify-center h-full w-full">↺</span>}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Alignment */}
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                    {[
+                        { icon: AlignLeft, action: () => editor.chain().focus().setTextAlign('left').run(), active: { textAlign: 'left' }, title: 'Align Left' },
+                        { icon: AlignCenter, action: () => editor.chain().focus().setTextAlign('center').run(), active: { textAlign: 'center' }, title: 'Align Center' },
+                        { icon: AlignRight, action: () => editor.chain().focus().setTextAlign('right').run(), active: { textAlign: 'right' }, title: 'Align Right' },
+                    ].map(({ icon: Icon, action, active, title }, i) => (
+                        <button key={i} onClick={action} title={title}
+                            className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                            <Icon className="w-4 h-4" />
+                        </button>
+                    ))}
+                </div>
+
+                {/* Insert Menu */}
+                <div className="flex items-center gap-0.5">
+                    <button onClick={setLink} title="Link (Ctrl+K)"
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                        <LinkIcon className="w-4 h-4" />
                     </button>
-                ))}
-                <div className="w-px h-5 bg-border/50 mx-0.5" />
-                {[
-                    { icon: AlignLeft, action: () => editor.chain().focus().setTextAlign('left').run(), active: { textAlign: 'left' } },
-                    { icon: AlignCenter, action: () => editor.chain().focus().setTextAlign('center').run(), active: { textAlign: 'center' } },
-                    { icon: AlignRight, action: () => editor.chain().focus().setTextAlign('right').run(), active: { textAlign: 'right' } },
-                ].map(({ icon: Icon, action, active }, i) => (
-                    <button key={i} onClick={action}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                        <Icon className="w-4 h-4" />
+                    <button onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Blockquote"
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                        <Quote className="w-4 h-4" />
                     </button>
-                ))}
-                <div className="w-px h-5 bg-border/50 mx-0.5" />
-                <button onClick={setLink} title="Link (Ctrl+K)"
-                    className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                    <LinkIcon className="w-4 h-4" />
-                </button>
-                <button onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Blockquote"
-                    className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                    <Quote className="w-4 h-4" />
-                </button>
-                <div className="relative">
-                    <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} title="Emoji"
-                        className={`p-1.5 rounded-md transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                        <Smile className="w-4 h-4" />
+                    <button onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert Table"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <TableIcon className="w-4 h-4" />
                     </button>
-                    {showEmojiPicker && (
-                        <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 shadow-2xl rounded-xl overflow-hidden border border-border/50">
-                            <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-                            <div className="relative z-50 bg-zinc-950">
-                                <Picker data={data} onEmojiSelect={(emoji: any) => {
-                                    editor.chain().focus().insertContent(emoji.native).run()
-                                    setShowEmojiPicker(false)
-                                }} theme="auto" />
+                    <button onClick={() => fileInputRef.current?.click()} title="Insert Image"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <ImageIcon className="w-4 h-4" />
+                    </button>
+                    <div className="relative">
+                        <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} title="Emoji"
+                            className={`p-1.5 rounded-md transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                            <Smile className="w-4 h-4" />
+                        </button>
+                        {showEmojiPicker && (
+                            <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 shadow-2xl rounded-xl overflow-hidden border border-border/50">
+                                <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+                                <div className="relative z-50 bg-zinc-950">
+                                    <Picker data={data} onEmojiSelect={(emoji: any) => {
+                                        editor.chain().focus().insertContent(emoji.native).run()
+                                        setShowEmojiPicker(false)
+                                    }} theme="auto" />
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
 
