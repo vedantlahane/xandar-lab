@@ -3,191 +3,81 @@ import Suggestion from '@tiptap/suggestion'
 import { ReactRenderer } from '@tiptap/react'
 import tippy, { Instance as TippyInstance } from 'tippy.js'
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
-import { Heading1, Heading2, List, CheckSquare, Code, Image as ImageIcon, Quote, Minus, Table as TableIcon } from 'lucide-react'
+import {
+    Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, Code,
+    Image as ImageIcon, Quote, Minus, Table as TableIcon,
+    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle,
+} from 'lucide-react'
 
-// 1. Define the items available in the slash command menu
 export const getSuggestionItems = ({ query }: { query: string }) => {
     return [
-        {
-            title: 'Heading 1',
-            icon: <Heading1 className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run()
-            },
-        },
-        {
-            title: 'Heading 2',
-            icon: <Heading2 className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run()
-            },
-        },
-        {
-            title: 'Heading 3',
-            icon: <Heading2 className="w-4 h-4" />, // could use a separate icon
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run()
-            },
-        },
-        {
-            title: 'Bullet List',
-            icon: <List className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).toggleBulletList().run()
-            },
-        },
-        {
-            title: 'Task List',
-            icon: <CheckSquare className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).toggleTaskList().run()
-            },
-        },
-        {
-            title: 'Code Block',
-            icon: <Code className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
-            },
-        },
-        {
-            title: 'Quote',
-            icon: <Quote className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).toggleBlockquote().run()
-            },
-        },
-        {
-            title: 'Divider',
-            icon: <Minus className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).setHorizontalRule().run()
-            },
-        },
-        {
-            title: 'Table',
-            icon: <TableIcon className="w-4 h-4" />,
-            command: ({ editor, range }: any) => {
-                editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-            },
-        },
-        // We will pass an external trigger for Image upload
-    ].filter(item => item.title.toLowerCase().startsWith(query.toLowerCase())).slice(0, 10)
+        { title: 'Heading 1',      icon: <Heading1 className="w-4 h-4" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run() },
+        { title: 'Heading 2',      icon: <Heading2 className="w-4 h-4" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run() },
+        { title: 'Heading 3',      icon: <Heading3 className="w-4 h-4" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run() },
+        { title: 'Bullet List',    icon: <List className="w-4 h-4" />,           command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleBulletList().run() },
+        { title: 'Numbered List',  icon: <ListOrdered className="w-4 h-4" />,   command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleOrderedList().run() },
+        { title: 'Task List',      icon: <CheckSquare className="w-4 h-4" />,   command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleTaskList().run() },
+        { title: 'Code Block',     icon: <Code className="w-4 h-4" />,          command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run() },
+        { title: 'Quote',          icon: <Quote className="w-4 h-4" />,         command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleBlockquote().run() },
+        { title: 'Divider',        icon: <Minus className="w-4 h-4" />,         command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
+        { title: 'Table',          icon: <TableIcon className="w-4 h-4" />,     command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+        { title: 'Info Callout',   icon: <Info className="w-4 h-4 text-sky-500" />,     command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'info' },    content: [{ type: 'text', text: '' }] }).run() },
+        { title: 'Warning Callout',icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'warning' }, content: [{ type: 'text', text: '' }] }).run() },
+        { title: 'Tip Callout',    icon: <Lightbulb className="w-4 h-4 text-violet-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'tip' },     content: [{ type: 'text', text: '' }] }).run() },
+        { title: 'Danger Callout', icon: <XCircle className="w-4 h-4 text-red-500" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'danger' },  content: [{ type: 'text', text: '' }] }).run() },
+        { title: 'Success Callout',icon: <CheckCircle className="w-4 h-4 text-emerald-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'success' }, content: [{ type: 'text', text: '' }] }).run() },
+    ].filter(item => item.title.toLowerCase().includes(query.toLowerCase())).slice(0, 12)
 }
 
-// 2. React component for the dropdown menu
-export const CommandList = forwardRef((props: any, ref) => {
+// CommandList component
+export const CommandList = forwardRef(({ items, command }: any, ref: any) => {
     const [selectedIndex, setSelectedIndex] = useState(0)
 
     const selectItem = (index: number) => {
-        const item = props.items[index]
-        if (item) {
-            props.command(item)
-        }
+        const item = items[index]
+        if (item) command(item)
     }
 
-    const upHandler = () => {
-        setSelectedIndex((selectedIndex + props.items.length - 1) % props.items.length)
-    }
-
-    const downHandler = () => {
-        setSelectedIndex((selectedIndex + 1) % props.items.length)
-    }
-
-    const enterHandler = () => {
-        selectItem(selectedIndex)
-    }
-
-    useEffect(() => {
-        setSelectedIndex(0)
-    }, [props.items])
+    useEffect(() => setSelectedIndex(0), [items])
 
     useImperativeHandle(ref, () => ({
-        onKeyDown: ({ event }: any) => {
-            if (event.key === 'ArrowUp') {
-                upHandler()
-                return true
-            }
-            if (event.key === 'ArrowDown') {
-                downHandler()
-                return true
-            }
-            if (event.key === 'Enter') {
-                enterHandler()
-                return true
-            }
+        onKeyDown: ({ event }: { event: KeyboardEvent }) => {
+            if (event.key === 'ArrowUp') { setSelectedIndex(i => (i - 1 + items.length) % items.length); return true }
+            if (event.key === 'ArrowDown') { setSelectedIndex(i => (i + 1) % items.length); return true }
+            if (event.key === 'Enter') { selectItem(selectedIndex); return true }
             return false
         },
     }))
 
-    if (!props.items.length) {
-        return null
-    }
+    if (!items.length) return null
 
     return (
-        <div className="flex flex-col gap-1 p-1.5 bg-background border border-border/50 shadow-xl rounded-xl w-48 backdrop-blur-md z-50">
-            <div className="px-2 pb-1.5 pt-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Insert
+        <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-2xl backdrop-blur-md min-w-[220px]">
+            <div className="p-1 max-h-72 overflow-y-auto">
+                <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">Blocks</p>
+                {items.map((item: any, index: number) => (
+                    <button
+                        key={item.title}
+                        onClick={() => selectItem(index)}
+                        className={`flex items-center gap-2.5 w-full text-left px-2.5 py-2 rounded-lg text-sm transition-colors ${index === selectedIndex ? 'bg-primary/8 text-foreground' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}`}
+                    >
+                        <span className="w-5 h-5 flex items-center justify-center shrink-0">{item.icon}</span>
+                        <span className="font-medium">{item.title}</span>
+                    </button>
+                ))}
             </div>
-            {props.items.map((item: any, index: number) => (
-                <button
-                    className={`flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm transition-colors text-left ${index === selectedIndex ? 'bg-primary/10 text-primary' : 'text-foreground/80 hover:bg-muted/30 hover:text-foreground'}`}
-                    key={index}
-                    onClick={() => selectItem(index)}
-                >
-                    <div className="flex items-center justify-center w-6 h-6 rounded bg-muted/40 shrink-0">
-                        {item.icon}
-                    </div>
-                    {item.title}
-                </button>
-            ))}
         </div>
     )
 })
-
 CommandList.displayName = 'CommandList'
 
-// 3. Create the TipTap Extension
-export const SlashCommand = Extension.create({
-    name: 'slashCommand',
-
-    addOptions() {
-        return {
-            suggestion: {
-                char: '/',
-                command: ({ editor, range, props }: any) => {
-                    props.command({ editor, range })
-                },
-            },
-        }
-    },
-
-    addProseMirrorPlugins() {
-        return [
-            Suggestion({
-                editor: this.editor,
-                ...this.options.suggestion,
-            }),
-        ]
-    },
-})
-
-// 4. Create the tippy plugin renderer
 export const renderItems = () => {
-    let component: ReactRenderer<any>
-    let popup: TippyInstance[]
+    let component: ReactRenderer | null = null
+    let popup: TippyInstance[] | null = null
 
     return {
         onStart: (props: any) => {
-            component = new ReactRenderer(CommandList, {
-                props,
-                editor: props.editor,
-            })
-
-            if (!props.clientRect) {
-                return
-            }
-
+            component = new ReactRenderer(CommandList, { props, editor: props.editor })
             popup = tippy('body', {
                 getReferenceClientRect: props.clientRect,
                 appendTo: () => document.body,
@@ -196,33 +86,31 @@ export const renderItems = () => {
                 interactive: true,
                 trigger: 'manual',
                 placement: 'bottom-start',
+                theme: 'none',
+                animation: false,
             })
         },
-
-        onUpdate(props: any) {
-            component.updateProps(props)
-
-            if (!props.clientRect) {
-                return
-            }
-
-            popup[0].setProps({
-                getReferenceClientRect: props.clientRect,
-            })
+        onUpdate: (props: any) => {
+            component?.updateProps(props)
+            if (popup?.[0]) popup[0].setProps({ getReferenceClientRect: props.clientRect })
         },
-
-        onKeyDown(props: any) {
-            if (props.event.key === 'Escape') {
-                popup[0].hide()
-                return true
-            }
-
-            return component.ref?.onKeyDown(props)
+        onKeyDown: (props: any) => {
+            if (props.event.key === 'Escape') { popup?.[0]?.hide(); return true }
+            return (component?.ref as any)?.onKeyDown(props) ?? false
         },
-
-        onExit() {
-            popup[0].destroy()
-            component.destroy()
+        onExit: () => {
+            popup?.[0]?.destroy()
+            component?.destroy()
         },
     }
 }
+
+export const SlashCommand = Extension.create({
+    name: 'slashCommand',
+    addOptions() {
+        return { suggestion: { char: '/', command: ({ editor, range, props }: any) => { props.command({ editor, range }) } } }
+    },
+    addProseMirrorPlugins() {
+        return [Suggestion({ editor: this.editor, ...this.options.suggestion })]
+    },
+})

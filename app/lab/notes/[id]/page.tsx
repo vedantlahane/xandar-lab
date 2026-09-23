@@ -5,10 +5,12 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthContext'
 import { usePermissions } from '@/components/auth/hooks/usePermissions'
-import { BlockEditor } from '../components/BlockEditor'
+import { BlockEditor, TocEntry } from '../components/BlockEditor'
+import { TableOfContents } from '../components/TableOfContents'
 import {
     ArrowLeft, Globe, Lock, Star, Pin, Trash2, Tag, X,
-    Check, Loader2, MoreHorizontal, AlertCircle
+    Check, Loader2, MoreHorizontal, AlertCircle, Maximize2, Minimize2,
+    BookOpen, Download, Keyboard, Image as ImageIcon, ChevronLeft
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -18,15 +20,35 @@ type Category = typeof CATEGORIES[number]
 
 const COLORS = [
     { id: 'default', bg: 'bg-zinc-400' },
-    { id: 'yellow', bg: 'bg-amber-400' },
-    { id: 'green', bg: 'bg-emerald-400' },
-    { id: 'blue', bg: 'bg-sky-400' },
-    { id: 'purple', bg: 'bg-purple-400' },
-    { id: 'pink', bg: 'bg-pink-400' },
-    { id: 'orange', bg: 'bg-orange-400' },
+    { id: 'yellow',  bg: 'bg-amber-400' },
+    { id: 'green',   bg: 'bg-emerald-400' },
+    { id: 'blue',    bg: 'bg-sky-400' },
+    { id: 'purple',  bg: 'bg-purple-400' },
+    { id: 'pink',    bg: 'bg-pink-400' },
+    { id: 'orange',  bg: 'bg-orange-400' },
 ] as const
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+
+const SHORTCUTS = [
+    { keys: 'Ctrl + B', label: 'Bold' },
+    { keys: 'Ctrl + I', label: 'Italic' },
+    { keys: 'Ctrl + U', label: 'Underline' },
+    { keys: 'Ctrl + K', label: 'Insert Link' },
+    { keys: 'Ctrl + Z', label: 'Undo' },
+    { keys: 'Ctrl + Shift + Z', label: 'Redo' },
+    { keys: '/', label: 'Open block menu' },
+    { keys: '# Space', label: 'Heading 1' },
+    { keys: '## Space', label: 'Heading 2' },
+    { keys: '### Space', label: 'Heading 3' },
+    { keys: '- Space', label: 'Bullet list' },
+    { keys: '1. Space', label: 'Numbered list' },
+    { keys: '[] Space', label: 'Task list' },
+    { keys: '> Space', label: 'Blockquote' },
+    { keys: '``` Enter', label: 'Code block' },
+    { keys: '--- Enter', label: 'Divider' },
+    { keys: 'Ctrl+Shift+C', label: 'Callout block' },
+]
 
 export default function NoteEditorPage() {
     const params = useParams()
@@ -42,6 +64,7 @@ export default function NoteEditorPage() {
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
     const [icon, setIcon] = useState('')
+    const [coverImage, setCoverImage] = useState('')
     const [category, setCategory] = useState<Category>('Learning')
     const [visibility, setVisibility] = useState<'private' | 'public'>('private')
     const [color, setColor] = useState('default')
@@ -53,15 +76,20 @@ export default function NoteEditorPage() {
     // UI state
     const [saveState, setSaveState] = useState<SaveState>('idle')
     const [showMeta, setShowMeta] = useState(false)
+    const [showToc, setShowToc] = useState(false)
+    const [isFullscreen, setIsFullscreen] = useState(false)
+    const [showShortcuts, setShowShortcuts] = useState(false)
+    const [tocItems, setTocItems] = useState<TocEntry[]>([])
+    const [isUploadingCover, setIsUploadingCover] = useState(false)
+
     const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const isAuthor = !!(user?._id && note?.authorId && user._id.toString() === note.authorId.toString())
+    const coverInputRef = useRef<HTMLInputElement>(null)
     const canEditNote = note ? canEdit(note.authorId) : false
 
     // Load note
     useEffect(() => {
         const id = params.id as string
         if (!id) return
-
         fetch(`/api/notes/${id}`)
             .then(r => r.json())
             .then(data => {
@@ -71,6 +99,7 @@ export default function NoteEditorPage() {
                     setTitle(n.title || '')
                     setContent(n.content || '')
                     setIcon(n.icon || '')
+                    setCoverImage(n.coverImage || '')
                     setCategory(n.category || 'Learning')
                     setVisibility(n.visibility || 'private')
                     setColor(n.color || 'default')
@@ -85,7 +114,22 @@ export default function NoteEditorPage() {
             .finally(() => setLoading(false))
     }, [params.id])
 
-    // Debounced auto-save
+    // Fullscreen: hide top nav
+    useEffect(() => {
+        const nav = document.querySelector('nav') as HTMLElement | null
+        if (nav) nav.style.display = isFullscreen ? 'none' : ''
+        return () => { if (nav) nav.style.display = '' }
+    }, [isFullscreen])
+
+    // Esc to exit fullscreen
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false)
+        }
+        window.addEventListener('keydown', handler)
+        return () => window.removeEventListener('keydown', handler)
+    }, [isFullscreen])
+
     const save = useCallback(async (patch: Record<string, any>) => {
         if (!note?.id) return
         setSaveState('saving')
@@ -95,12 +139,8 @@ export default function NoteEditorPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(patch),
             })
-            if (res.ok) {
-                setSaveState('saved')
-                setTimeout(() => setSaveState('idle'), 2000)
-            } else {
-                setSaveState('error')
-            }
+            setSaveState(res.ok ? 'saved' : 'error')
+            if (res.ok) setTimeout(() => setSaveState('idle'), 2000)
         } catch {
             setSaveState('error')
         }
@@ -116,26 +156,40 @@ export default function NoteEditorPage() {
         scheduleAutoSave({ content: html })
     }
 
-    const handleTitleBlur = () => {
-        if (title !== note?.title) scheduleAutoSave({ title })
+    const handleTitleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+        const newTitle = e.currentTarget.innerText
+        if (newTitle !== note?.title) save({ title: newTitle })
     }
 
-    const toggleVisibility = () => {
-        const next = visibility === 'public' ? 'private' : 'public'
-        setVisibility(next)
-        save({ visibility: next })
+    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setIsUploadingCover(true)
+        const fd = new FormData()
+        fd.append('file', file)
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd })
+            if (res.ok) {
+                const data = await res.json()
+                setCoverImage(data.url)
+                save({ coverImage: data.url })
+            }
+        } finally {
+            setIsUploadingCover(false)
+            if (coverInputRef.current) coverInputRef.current.value = ''
+        }
     }
 
-    const togglePin = () => {
-        const next = !isPinned
-        setIsPinned(next)
-        save({ isPinned: next })
-    }
-
-    const toggleCurate = () => {
-        const next = !isCurated
-        setIsCurated(next)
-        save({ isCurated: next })
+    const handleExportMarkdown = () => {
+        // Simple HTML→Markdown using a DOM approach
+        const div = document.createElement('div')
+        div.innerHTML = content
+        const text = div.innerText
+        const blob = new Blob([text], { type: 'text/markdown' })
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = `${title || 'note'}.md`
+        a.click()
     }
 
     const handleDelete = async () => {
@@ -160,16 +214,6 @@ export default function NoteEditorPage() {
         save({ tags: next })
     }
 
-    const handleColorChange = (c: string) => {
-        setColor(c)
-        save({ color: c })
-    }
-
-    const handleCategoryChange = (c: Category) => {
-        setCategory(c)
-        save({ category: c })
-    }
-
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen bg-background">
@@ -191,66 +235,83 @@ export default function NoteEditorPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
+        <div className={cn('min-h-screen bg-background flex flex-col', isFullscreen && 'fixed inset-0 z-[100]')}>
             {/* Top Bar */}
-            <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-2 border-b border-border/40 bg-background/80 backdrop-blur-md">
-                {/* Left: back + breadcrumb */}
-                <div className="flex items-center gap-3">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push('/lab/notes')}
-                        className="h-7 px-2 text-muted-foreground hover:text-foreground gap-1.5"
-                    >
-                        <ArrowLeft className="w-3.5 h-3.5" />
+            <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-2 border-b border-border/40 bg-background/90 backdrop-blur-md">
+                <div className="flex items-center gap-3 min-w-0">
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/lab/notes')}
+                        className="h-7 px-2 text-muted-foreground hover:text-foreground gap-1.5 shrink-0">
+                        <ChevronLeft className="w-3.5 h-3.5" />
                         Notes
                     </Button>
-                    <span className="text-border/60">·</span>
-                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">{title || 'Untitled'}</span>
+                    <span className="text-border/60 shrink-0">·</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[160px] hidden sm:block">{title || 'Untitled'}</span>
                 </div>
 
-                {/* Right: save indicator + actions */}
-                <div className="flex items-center gap-1.5">
-                    {/* Auto-save indicator */}
-                    <span className={cn(
-                        'text-xs transition-all duration-300 mr-2',
+                <div className="flex items-center gap-0.5">
+                    {/* Save indicator */}
+                    <span className={cn('text-xs transition-all mr-2',
                         saveState === 'saving' && 'text-muted-foreground',
-                        saveState === 'saved' && 'text-emerald-500',
-                        saveState === 'error' && 'text-destructive',
-                        saveState === 'idle' && 'opacity-0',
+                        saveState === 'saved'  && 'text-emerald-500',
+                        saveState === 'error'  && 'text-destructive',
+                        saveState === 'idle'   && 'opacity-0 pointer-events-none',
                     )}>
                         {saveState === 'saving' && 'Saving...'}
-                        {saveState === 'saved' && '✓ Saved'}
-                        {saveState === 'error' && 'Failed to save'}
+                        {saveState === 'saved'  && '✓ Saved'}
+                        {saveState === 'error'  && 'Save failed'}
                     </span>
+
+                    {/* TOC toggle */}
+                    <Button variant="ghost" size="icon" className={cn('h-7 w-7', showToc ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground')}
+                        onClick={() => setShowToc(p => !p)} title="Table of Contents">
+                        <BookOpen className="w-3.5 h-3.5" />
+                    </Button>
+
+                    {/* Fullscreen */}
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => setIsFullscreen(p => !p)} title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen'}>
+                        {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                    </Button>
+
+                    {/* Export */}
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={handleExportMarkdown} title="Export as Markdown">
+                        <Download className="w-3.5 h-3.5" />
+                    </Button>
+
+                    {/* Shortcuts */}
+                    <Button variant="ghost" size="icon" className={cn('h-7 w-7', showShortcuts ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground')}
+                        onClick={() => setShowShortcuts(p => !p)} title="Keyboard shortcuts">
+                        <Keyboard className="w-3.5 h-3.5" />
+                    </Button>
 
                     {canEditNote && (
                         <>
-                            {/* Visibility */}
                             {canChangeVisibility(note.authorId) && (
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={toggleVisibility} title={visibility === 'public' ? 'Public' : 'Private'}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    onClick={() => { const n = visibility === 'public' ? 'private' : 'public'; setVisibility(n); save({ visibility: n }) }}>
                                     {visibility === 'public' ? <Globe className="w-3.5 h-3.5 text-emerald-500" /> : <Lock className="w-3.5 h-3.5" />}
                                 </Button>
                             )}
-                            {/* Pin */}
                             {canPin && (
-                                <Button variant="ghost" size="icon" className={cn('h-7 w-7', isPinned ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground')} onClick={togglePin}>
+                                <Button variant="ghost" size="icon" className={cn('h-7 w-7', isPinned ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground')}
+                                    onClick={() => { const n = !isPinned; setIsPinned(n); save({ isPinned: n }) }}>
                                     <Pin className={cn('w-3.5 h-3.5', isPinned && 'fill-current')} />
                                 </Button>
                             )}
-                            {/* Curate */}
                             {canCurate && (
-                                <Button variant="ghost" size="icon" className={cn('h-7 w-7', isCurated ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground')} onClick={toggleCurate}>
+                                <Button variant="ghost" size="icon" className={cn('h-7 w-7', isCurated ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground')}
+                                    onClick={() => { const n = !isCurated; setIsCurated(n); save({ isCurated: n }) }}>
                                     <Star className={cn('w-3.5 h-3.5', isCurated && 'fill-current')} />
                                 </Button>
                             )}
-                            {/* More options */}
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setShowMeta(p => !p)}>
+                            <Button variant="ghost" size="icon" className={cn('h-7 w-7', showMeta ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground')}
+                                onClick={() => setShowMeta(p => !p)} title="Properties">
                                 <MoreHorizontal className="w-3.5 h-3.5" />
                             </Button>
-                            {/* Delete */}
                             {canDelete(note.authorId) && (
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    onClick={handleDelete}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                             )}
@@ -259,24 +320,49 @@ export default function NoteEditorPage() {
                 </div>
             </header>
 
-            {/* Metadata bar (toggleable) */}
+            {/* Shortcut Cheatsheet Panel */}
+            {showShortcuts && (
+                <div className="border-b border-border/40 bg-muted/10 px-8 py-4">
+                    <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1.5">
+                        {SHORTCUTS.map(s => (
+                            <div key={s.keys} className="flex items-center justify-between gap-2 text-xs">
+                                <span className="text-muted-foreground">{s.label}</span>
+                                <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/50 border border-border/40 text-muted-foreground whitespace-nowrap">{s.keys}</kbd>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Properties Panel */}
             {showMeta && canEditNote && (
-                <div className="border-b border-border/40 bg-muted/10 px-8 py-3 flex flex-wrap items-center gap-6">
-                    {/* Category */}
+                <div className="border-b border-border/40 bg-muted/10 px-8 py-3 flex flex-wrap items-start gap-6">
+                    {/* Cover image */}
                     <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-medium">Cover</span>
+                        <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+                        <button onClick={() => coverInputRef.current?.click()}
+                            className="text-xs text-primary hover:underline flex items-center gap-1">
+                            {isUploadingCover ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
+                            {coverImage ? 'Change' : 'Add cover'}
+                        </button>
+                        {coverImage && (
+                            <button onClick={() => { setCoverImage(''); save({ coverImage: '' }) }} className="text-xs text-muted-foreground hover:text-destructive">
+                                <X className="w-3 h-3" />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Category */}
+                    <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs text-muted-foreground font-medium">Category</span>
                         <div className="flex gap-1 flex-wrap">
                             {CATEGORIES.map(c => (
-                                <button
-                                    key={c}
-                                    onClick={() => handleCategoryChange(c)}
-                                    className={cn(
-                                        'text-[11px] px-2 py-0.5 rounded font-medium transition-colors border',
-                                        category === c
-                                            ? 'bg-primary/10 text-primary border-primary/30'
-                                            : 'text-muted-foreground border-border/40 hover:bg-muted/30'
-                                    )}
-                                >{c}</button>
+                                <button key={c} onClick={() => { setCategory(c); save({ category: c }) }}
+                                    className={cn('text-[11px] px-2 py-0.5 rounded font-medium transition-colors border',
+                                        category === c ? 'bg-primary/10 text-primary border-primary/30' : 'text-muted-foreground border-border/40 hover:bg-muted/30')}>
+                                    {c}
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -286,15 +372,8 @@ export default function NoteEditorPage() {
                         <span className="text-xs text-muted-foreground font-medium">Color</span>
                         <div className="flex gap-1">
                             {COLORS.map(c => (
-                                <button
-                                    key={c.id}
-                                    onClick={() => handleColorChange(c.id)}
-                                    className={cn(
-                                        'w-4 h-4 rounded-full transition-transform',
-                                        c.bg,
-                                        color === c.id && 'ring-2 ring-offset-1 ring-primary scale-110'
-                                    )}
-                                />
+                                <button key={c.id} onClick={() => { setColor(c.id); save({ color: c.id }) }}
+                                    className={cn('w-4 h-4 rounded-full transition-transform', c.bg, color === c.id && 'ring-2 ring-offset-1 ring-primary scale-110')} />
                             ))}
                         </div>
                     </div>
@@ -305,69 +384,78 @@ export default function NoteEditorPage() {
                         {tags.map(tag => (
                             <span key={tag} className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-muted/40 border border-border/40 text-muted-foreground">
                                 #{tag}
-                                <button onClick={() => handleRemoveTag(tag)} className="hover:text-destructive">
-                                    <X className="w-2.5 h-2.5" />
-                                </button>
+                                <button onClick={() => handleRemoveTag(tag)} className="hover:text-destructive"><X className="w-2.5 h-2.5" /></button>
                             </span>
                         ))}
-                        <input
-                            value={tagInput}
-                            onChange={e => setTagInput(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); handleAddTag() }
-                            }}
-                            placeholder="Add tag..."
-                            className="text-xs bg-transparent border-none outline-none text-muted-foreground placeholder:text-muted-foreground/40 w-20"
-                        />
-                        {tagInput && (
-                            <button onClick={handleAddTag} className="text-primary">
-                                <Check className="w-3 h-3" />
-                            </button>
-                        )}
+                        <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); handleAddTag() } }}
+                            placeholder="Add tag..." className="text-xs bg-transparent border-none outline-none text-muted-foreground placeholder:text-muted-foreground/40 w-20" />
+                        {tagInput && <button onClick={handleAddTag} className="text-primary"><Check className="w-3 h-3" /></button>}
                     </div>
                 </div>
             )}
 
-            {/* Editor Canvas */}
-            <main className="flex-1 max-w-4xl w-full mx-auto px-6 md:px-12 py-10">
-                {/* Icon picker */}
-                {canEditNote ? (
-                    <input
-                        value={icon}
-                        onChange={e => { setIcon(e.target.value); scheduleAutoSave({ icon: e.target.value }) }}
-                        placeholder="📄"
-                        className="text-5xl bg-transparent border-none outline-none mb-4 w-16 cursor-text"
-                        maxLength={2}
-                    />
-                ) : (
-                    icon && <div className="text-5xl mb-4">{icon}</div>
+            {/* Main content area — splits into TOC + editor */}
+            <div className="flex flex-1 overflow-hidden">
+                {/* TOC Sidebar */}
+                {showToc && (
+                    <aside className="w-52 shrink-0 border-r border-border/40 overflow-y-auto bg-muted/5 hidden md:block">
+                        <div className="sticky top-0 px-3 pt-3 pb-1">
+                            <p className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground/50">Outline</p>
+                        </div>
+                        <TableOfContents items={tocItems} />
+                    </aside>
                 )}
 
-                {/* Title */}
-                {canEditNote ? (
-                    <div
-                        contentEditable
-                        suppressContentEditableWarning
-                        onInput={e => setTitle((e.target as HTMLDivElement).innerText)}
-                        onBlur={handleTitleBlur}
-                        data-placeholder="Untitled"
-                        className={cn(
-                            'text-4xl font-bold text-foreground leading-tight mb-8 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/30',
-                            'break-words'
+                {/* Editor canvas */}
+                <main className="flex-1 overflow-y-auto">
+                    {/* Cover image */}
+                    {coverImage && (
+                        <div className="relative w-full h-48 sm:h-64 overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+                            {canEditNote && (
+                                <button onClick={() => coverInputRef.current?.click()}
+                                    className="absolute bottom-3 right-3 text-xs px-2 py-1 rounded bg-background/80 backdrop-blur border border-border/40 text-muted-foreground hover:text-foreground">
+                                    Change cover
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="max-w-4xl w-full mx-auto px-6 md:px-12 py-10">
+                        {/* Icon */}
+                        {canEditNote ? (
+                            <input value={icon} onChange={e => { setIcon(e.target.value); scheduleAutoSave({ icon: e.target.value }) }}
+                                placeholder="📄" maxLength={2}
+                                className="text-5xl bg-transparent border-none outline-none mb-4 w-16 cursor-text" />
+                        ) : (
+                            icon && <div className="text-5xl mb-4">{icon}</div>
                         )}
-                        dangerouslySetInnerHTML={{ __html: title }}
-                    />
-                ) : (
-                    <h1 className="text-4xl font-bold text-foreground leading-tight mb-8">{title || 'Untitled'}</h1>
-                )}
 
-                {/* Block Editor */}
-                <BlockEditor
-                    content={content}
-                    onChange={canEditNote ? handleContentChange : undefined}
-                    readOnly={!canEditNote}
-                />
-            </main>
+                        {/* Title */}
+                        {canEditNote ? (
+                            <div contentEditable suppressContentEditableWarning
+                                onInput={e => setTitle((e.target as HTMLDivElement).innerText)}
+                                onBlur={handleTitleBlur}
+                                data-placeholder="Untitled"
+                                className="text-4xl font-bold text-foreground leading-tight mb-8 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/30 break-words"
+                                dangerouslySetInnerHTML={{ __html: title }}
+                            />
+                        ) : (
+                            <h1 className="text-4xl font-bold text-foreground leading-tight mb-8">{title || 'Untitled'}</h1>
+                        )}
+
+                        {/* Block Editor */}
+                        <BlockEditor
+                            content={content}
+                            onChange={canEditNote ? handleContentChange : undefined}
+                            readOnly={!canEditNote}
+                            onTocUpdate={setTocItems}
+                        />
+                    </div>
+                </main>
+            </div>
         </div>
     )
 }

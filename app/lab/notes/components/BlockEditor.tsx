@@ -1,4 +1,6 @@
-import { useEditor, EditorContent } from '@tiptap/react'
+'use client'
+
+import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -14,67 +16,72 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import { Underline } from '@tiptap/extension-underline'
 import { Highlight } from '@tiptap/extension-highlight'
 import { TextAlign } from '@tiptap/extension-text-align'
+import CharacterCount from '@tiptap/extension-character-count'
+import TableOfContentsExtension from '@tiptap/extension-table-of-contents'
 import { common, createLowlight } from 'lowlight'
-import { useEffect, useRef, useState } from 'react'
-import { 
+import { useEffect, useRef, useState, useCallback } from 'react'
+import {
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
     Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
+import { CalloutExtension } from './CalloutExtension'
 
-const lowlight = createLowlight(common);
+const lowlight = createLowlight(common)
 
-export function BlockEditor({
-    content,
-    onChange,
-    readOnly = false,
-}: {
+export interface TocEntry {
+    id: string
+    level: number
+    textContent: string
+    isActive?: boolean
+    isScrolledOver?: boolean
+}
+
+export interface BlockEditorProps {
     content: string
     onChange?: (html: string) => void
     readOnly?: boolean
-}) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isUploading, setIsUploading] = useState(false);
+    onTocUpdate?: (items: TocEntry[]) => void
+}
 
-    // Custom suggestion items that inject the fileInputRef for images
-    const slashSuggestionItems = ({ query }: { query: string }) => {
-        const items = getSuggestionItems({ query });
-        
-        // Add Image Upload command if it matches
+export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }: BlockEditorProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [isUploading, setIsUploading] = useState(false)
+
+    const slashSuggestionItems = useCallback(({ query }: { query: string }) => {
+        const items = getSuggestionItems({ query })
         if ('image'.startsWith(query.toLowerCase())) {
             items.push({
                 title: 'Image',
                 icon: <ImageIcon className="w-4 h-4" />,
                 command: ({ editor, range }: any) => {
-                    editor.chain().focus().deleteRange(range).run();
-                    if (fileInputRef.current) fileInputRef.current.click();
+                    editor.chain().focus().deleteRange(range).run()
+                    fileInputRef.current?.click()
                 },
-            } as any);
+            } as any)
         }
-        return items;
-    };
+        return items
+    }, [])
 
     const editor = useEditor({
         editable: !readOnly,
         extensions: [
             StarterKit.configure({
                 heading: { levels: [1, 2, 3] },
-                codeBlock: false, // disable default to use lowlight
+                codeBlock: false,
             }),
-            CodeBlockLowlight.configure({
-                lowlight,
-            }),
-            Table.configure({
-                resizable: true,
-            }),
+            CodeBlockLowlight.configure({ lowlight }),
+            Table.configure({ resizable: true }),
             TableRow,
             TableHeader,
             TableCell,
             Underline,
-            Highlight,
-            TextAlign.configure({
-                types: ['heading', 'paragraph'],
+            Highlight.configure({ multicolor: false }),
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            CharacterCount,
+            TableOfContentsExtension.configure({
+                onUpdate: (content: TocEntry[]) => onTocUpdate?.(content),
             }),
             Link.configure({
                 openOnClick: false,
@@ -85,174 +92,126 @@ export function BlockEditor({
             TaskList,
             TaskItem.configure({ nested: true }),
             Image.configure({ inline: true, allowBase64: true }),
+            CalloutExtension,
             Placeholder.configure({
-                placeholder: 'Type / for commands, or start writing...',
-                emptyEditorClass: 'is-editor-empty before:content-[attr(data-placeholder)] before:text-muted-foreground/50 before:float-left before:pointer-events-none before:h-0',
+                placeholder: "Type '/' for commands, or start writing...",
+                emptyEditorClass: 'is-editor-empty before:content-[attr(data-placeholder)] before:text-muted-foreground/40 before:float-left before:pointer-events-none before:h-0',
             }),
             SlashCommand.configure({
-                suggestion: {
-                    items: slashSuggestionItems,
-                    render: renderItems,
-                }
+                suggestion: { items: slashSuggestionItems, render: renderItems }
             }),
-            GlobalDragHandle.configure({
-                dragHandleWidth: 20,
-                scrollTreshold: 100,
-            })
+            GlobalDragHandle.configure({ dragHandleWidth: 20, scrollTreshold: 100 }),
         ],
-        content: content,
+        content,
         onUpdate: ({ editor }) => {
-            if (onChange) onChange(editor.getHTML())
+            onChange?.(editor.getHTML())
         },
         editorProps: {
             attributes: {
-                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none text-sm font-sans text-foreground/90 leading-relaxed',
+                class: 'prose prose-sm dark:prose-invert focus:outline-none max-w-none text-foreground/90 leading-relaxed',
             },
         },
     })
 
     useEffect(() => {
-        if (editor && content !== editor.getHTML()) {
-            if (content && !editor.isDestroyed) {
-                // To safely update content from outside without losing focus/cursor
-                const currentSelection = editor.state.selection;
-                editor.commands.setContent(content, { emitUpdate: false });
-                editor.commands.setTextSelection(currentSelection);
-            }
+        if (editor && content !== editor.getHTML() && !editor.isDestroyed) {
+            const sel = editor.state.selection
+            editor.commands.setContent(content, { emitUpdate: false })
+            editor.commands.setTextSelection(sel)
         }
     }, [content, editor])
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !editor) return;
-
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
+        const file = e.target.files?.[0]
+        if (!file || !editor) return
+        setIsUploading(true)
+        const formData = new FormData()
+        formData.append('file', file)
         try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData,
-            });
-            
+            const res = await fetch('/api/upload', { method: 'POST', body: formData })
             if (res.ok) {
-                const data = await res.json();
-                editor.chain().focus().setImage({ src: data.url }).run();
-            } else {
-                alert("Upload failed");
+                const data = await res.json()
+                editor.chain().focus().setImage({ src: data.url }).run()
             }
-        } catch (err) {
-            console.error(err);
-            alert("Upload error");
         } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = "";
+            setIsUploading(false)
+            if (fileInputRef.current) fileInputRef.current.value = ''
         }
-    };
+    }
 
     const setLink = () => {
-        const previousUrl = editor?.getAttributes('link').href
-        const url = window.prompt('URL', previousUrl)
+        const prev = editor?.getAttributes('link').href
+        const url = window.prompt('URL', prev)
         if (url === null) return
         if (url === '') {
             editor?.chain().focus().extendMarkRange('link').unsetLink().run()
-            return
+        } else {
+            editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
         }
-        editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
     }
+
+    // Expose word/char count
+    const wordCount = editor ? editor.storage.characterCount?.words() ?? 0 : 0
+    const charCount = editor ? editor.storage.characterCount?.characters() ?? 0 : 0
 
     if (!editor) return null
 
     return (
-        <div className={`w-full relative min-h-[400px] flex flex-col ${readOnly ? '' : 'p-4'}`}>
-            {/* Hidden file input for images */}
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleImageUpload} 
-                accept="image/*" 
-                className="hidden" 
-            />
+        <div className="w-full relative flex flex-col" data-block-editor>
+            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
 
             {isUploading && (
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded-md backdrop-blur-md">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Uploading image...
+                    <Loader2 className="w-3 h-3 animate-spin" /> Uploading...
                 </div>
             )}
 
-            {/* Contextual Bubble Menu (highlight text to see) */}
-            {editor && (
-                <BubbleMenu 
-                    editor={editor}
-                    className="flex items-center gap-1 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md"
-                >
-                    <button
-                        onClick={() => editor.chain().focus().toggleBold().run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('bold') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <Bold className="w-4 h-4" />
+            {/* Bubble Menu */}
+            <BubbleMenu editor={editor} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md flex-wrap max-w-xs">
+                {[
+                    { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold (Ctrl+B)' },
+                    { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic (Ctrl+I)' },
+                    { icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), active: 'underline', title: 'Underline (Ctrl+U)' },
+                    { icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), active: 'strike', title: 'Strikethrough' },
+                    { icon: Highlighter, action: () => editor.chain().focus().toggleHighlight().run(), active: 'highlight', title: 'Highlight' },
+                ].map(({ icon: Icon, action, active, title }) => (
+                    <button key={active} onClick={action} title={title}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                        <Icon className="w-3.5 h-3.5" />
                     </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleItalic().run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('italic') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <Italic className="w-4 h-4" />
+                ))}
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                {[
+                    { icon: AlignLeft, action: () => editor.chain().focus().setTextAlign('left').run(), active: { textAlign: 'left' } },
+                    { icon: AlignCenter, action: () => editor.chain().focus().setTextAlign('center').run(), active: { textAlign: 'center' } },
+                    { icon: AlignRight, action: () => editor.chain().focus().setTextAlign('right').run(), active: { textAlign: 'right' } },
+                ].map(({ icon: Icon, action, active }, i) => (
+                    <button key={i} onClick={action}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                        <Icon className="w-3.5 h-3.5" />
                     </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleUnderline().run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('underline') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <UnderlineIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleStrike().run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('strike') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <Strikethrough className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleHighlight().run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('highlight') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <Highlighter className="w-4 h-4" />
-                    </button>
-                    <div className="w-[1px] h-4 bg-border/50 mx-1" />
-                    <button
-                        onClick={() => editor.chain().focus().setTextAlign('left').run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive({ textAlign: 'left' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <AlignLeft className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().setTextAlign('center').run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive({ textAlign: 'center' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <AlignCenter className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().setTextAlign('right').run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive({ textAlign: 'right' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <AlignRight className="w-4 h-4" />
-                    </button>
-                    <div className="w-[1px] h-4 bg-border/50 mx-1" />
-                    <button
-                        onClick={setLink}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <LinkIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-                    >
-                        <Quote className="w-4 h-4" />
-                    </button>
-                </BubbleMenu>
-            )}
+                ))}
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <button onClick={setLink} title="Link (Ctrl+K)"
+                    className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                    <LinkIcon className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Blockquote"
+                    className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                    <Quote className="w-3.5 h-3.5" />
+                </button>
+            </BubbleMenu>
 
-            <EditorContent editor={editor} className="flex-1 w-full min-h-[350px] outline-none" />
+            <EditorContent editor={editor} className="flex-1 w-full outline-none" />
+
+            {/* Status bar */}
+            {!readOnly && (
+                <div className="flex items-center gap-4 pt-4 mt-4 border-t border-border/20 text-[11px] text-muted-foreground/50">
+                    <span>{wordCount} words</span>
+                    <span>{charCount} characters</span>
+                    <span>~{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
+                </div>
+            )}
         </div>
     )
 }
