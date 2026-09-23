@@ -7,10 +7,18 @@ import TaskItem from '@tiptap/extension-task-item'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { Table } from '@tiptap/extension-table'
+import { TableRow } from '@tiptap/extension-table-row'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { TableHeader } from '@tiptap/extension-table-header'
+import { Underline } from '@tiptap/extension-underline'
+import { Highlight } from '@tiptap/extension-highlight'
+import { TextAlign } from '@tiptap/extension-text-align'
 import { common, createLowlight } from 'lowlight'
 import { useEffect, useRef, useState } from 'react'
 import { 
-    Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon 
+    Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
+    Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
@@ -56,6 +64,17 @@ export function BlockEditor({
             }),
             CodeBlockLowlight.configure({
                 lowlight,
+            }),
+            Table.configure({
+                resizable: true,
+            }),
+            TableRow,
+            TableHeader,
+            TableCell,
+            Underline,
+            Highlight,
+            TextAlign.configure({
+                types: ['heading', 'paragraph'],
             }),
             Link.configure({
                 openOnClick: false,
@@ -181,10 +200,41 @@ export function BlockEditor({
                         <Italic className="w-4 h-4" />
                     </button>
                     <button
+                        onClick={() => editor.chain().focus().toggleUnderline().run()}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('underline') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
+                    >
+                        <UnderlineIcon className="w-4 h-4" />
+                    </button>
+                    <button
                         onClick={() => editor.chain().focus().toggleStrike().run()}
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive('strike') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
                     >
                         <Strikethrough className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleHighlight().run()}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('highlight') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
+                    >
+                        <Highlighter className="w-4 h-4" />
+                    </button>
+                    <div className="w-[1px] h-4 bg-border/50 mx-1" />
+                    <button
+                        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive({ textAlign: 'left' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
+                    >
+                        <AlignLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive({ textAlign: 'center' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
+                    >
+                        <AlignCenter className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive({ textAlign: 'right' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
+                    >
+                        <AlignRight className="w-4 h-4" />
                     </button>
                     <div className="w-[1px] h-4 bg-border/50 mx-1" />
                     <button
@@ -192,6 +242,12 @@ export function BlockEditor({
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
                     >
                         <LinkIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
+                    >
+                        <Quote className="w-4 h-4" />
                     </button>
                 </BubbleMenu>
             )}

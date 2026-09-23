@@ -3,7 +3,7 @@ import Suggestion from '@tiptap/suggestion'
 import { ReactRenderer } from '@tiptap/react'
 import tippy, { Instance as TippyInstance } from 'tippy.js'
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
-import { Heading1, Heading2, List, CheckSquare, Code, Image as ImageIcon } from 'lucide-react'
+import { Heading1, Heading2, List, CheckSquare, Code, Image as ImageIcon, Quote, Minus, Table as TableIcon } from 'lucide-react'
 
 // 1. Define the items available in the slash command menu
 export const getSuggestionItems = ({ query }: { query: string }) => {
@@ -20,6 +20,13 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
             icon: <Heading2 className="w-4 h-4" />,
             command: ({ editor, range }: any) => {
                 editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run()
+            },
+        },
+        {
+            title: 'Heading 3',
+            icon: <Heading2 className="w-4 h-4" />, // could use a separate icon
+            command: ({ editor, range }: any) => {
+                editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run()
             },
         },
         {
@@ -41,6 +48,27 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
             icon: <Code className="w-4 h-4" />,
             command: ({ editor, range }: any) => {
                 editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
+            },
+        },
+        {
+            title: 'Quote',
+            icon: <Quote className="w-4 h-4" />,
+            command: ({ editor, range }: any) => {
+                editor.chain().focus().deleteRange(range).toggleBlockquote().run()
+            },
+        },
+        {
+            title: 'Divider',
+            icon: <Minus className="w-4 h-4" />,
+            command: ({ editor, range }: any) => {
+                editor.chain().focus().deleteRange(range).setHorizontalRule().run()
+            },
+        },
+        {
+            title: 'Table',
+            icon: <TableIcon className="w-4 h-4" />,
+            command: ({ editor, range }: any) => {
+                editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
             },
         },
         // We will pass an external trigger for Image upload
