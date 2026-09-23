@@ -12,12 +12,23 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
+        
+        // Handle static curated notes
+        if (id.startsWith('note-')) {
+            const { NOTES } = await import('@/app/lab/notes/data/notes');
+            const staticNote = NOTES.flatMap(g => g.notes).find(n => n.id === id);
+            if (staticNote) {
+                return NextResponse.json({ note: staticNote });
+            }
+            return NextResponse.json({ error: "Static note not found" }, { status: 404 });
+        }
+
         if (!mongoose.isValidObjectId(id)) {
             return NextResponse.json({ error: "Note not found" }, { status: 404 });
         }
         await connectDB();
 
-        const note = await Note.findById(id).lean();
+        const note = await Note.findById(id).populate('parentId', 'title _id').lean();
         if (!note) {
             return NextResponse.json({ error: "Note not found" }, { status: 404 });
         }
@@ -63,6 +74,7 @@ export async function PUT(
                     authorId: session.userId,
                     authorUsername: session.username || "Admin",
                     authorRole: session.role || "admin",
+                    parentId: body.parentId ? new mongoose.Types.ObjectId(body.parentId) : undefined,
                 });
                 return NextResponse.json({
                     success: true,

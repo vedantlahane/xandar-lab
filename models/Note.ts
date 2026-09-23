@@ -40,6 +40,7 @@ export interface INote extends Document {
     isDeleted: boolean;
     dueDate?: Date;
     revisions?: { content: string; updatedAt: Date }[];
+    parentId?: mongoose.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -161,6 +162,11 @@ const NoteSchema = new Schema<INote>(
                 resolvedAt: { type: Date },
             },
         ],
+        parentId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Note',
+            index: true,
+        },
     },
     {
         timestamps: true,
@@ -170,5 +176,8 @@ const NoteSchema = new Schema<INote>(
 // Compound index for efficient user note listing & community note listing
 NoteSchema.index({ authorId: 1, visibility: 1, createdAt: -1 });
 NoteSchema.index({ visibility: 1, status: 1, createdAt: -1 });
+
+// Text index for global search
+NoteSchema.index({ title: 'text', content: 'text', tags: 'text' }, { weights: { title: 10, tags: 5, content: 1 } });
 
 export default models.Note || model<INote>("Note", NoteSchema);

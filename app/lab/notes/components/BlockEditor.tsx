@@ -18,15 +18,22 @@ import { Highlight } from '@tiptap/extension-highlight'
 import { TextAlign } from '@tiptap/extension-text-align'
 import CharacterCount from '@tiptap/extension-character-count'
 import TableOfContentsExtension from '@tiptap/extension-table-of-contents'
+import { Color } from '@tiptap/extension-color'
+import { TextStyle } from '@tiptap/extension-text-style'
+import Subscript from '@tiptap/extension-subscript'
+import Superscript from '@tiptap/extension-superscript'
+import Youtube from '@tiptap/extension-youtube'
 import { common, createLowlight } from 'lowlight'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import {
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
-    Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote
+    Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote,
+    Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Palette
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
 import { CalloutExtension } from './CalloutExtension'
+import { cn } from '@/lib/utils'
 
 const lowlight = createLowlight(common)
 
@@ -92,6 +99,11 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             TaskList,
             TaskItem.configure({ nested: true }),
             Image.configure({ inline: true, allowBase64: true }),
+            Youtube.configure({ inline: false, width: 640, height: 480 }),
+            Color,
+            TextStyle,
+            Subscript,
+            Superscript,
             CalloutExtension,
             Placeholder.configure({
                 placeholder: "Type '/' for commands, or start writing...",
@@ -167,13 +179,28 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             )}
 
             {/* Bubble Menu */}
-            <BubbleMenu editor={editor} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md flex-wrap max-w-xs">
+            <BubbleMenu editor={editor} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md flex-wrap max-w-sm">
+                {/* Color picker */}
+                <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-border/50">
+                    {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', 'inherit'].map((c) => (
+                        <button key={c} onClick={() => c === 'inherit' ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c).run()}
+                            className={cn('w-4 h-4 rounded-full transition-transform hover:scale-110', editor.isActive('textStyle', { color: c }) && 'ring-2 ring-primary ring-offset-1')}
+                            style={{ backgroundColor: c === 'inherit' ? 'transparent' : c }}
+                            title={c === 'inherit' ? 'Default Color' : c}
+                        >
+                            {c === 'inherit' && <span className="text-[10px] flex items-center justify-center h-full w-full">↺</span>}
+                        </button>
+                    ))}
+                </div>
                 {[
                     { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold (Ctrl+B)' },
                     { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic (Ctrl+I)' },
                     { icon: UnderlineIcon, action: () => editor.chain().focus().toggleUnderline().run(), active: 'underline', title: 'Underline (Ctrl+U)' },
                     { icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), active: 'strike', title: 'Strikethrough' },
                     { icon: Highlighter, action: () => editor.chain().focus().toggleHighlight().run(), active: 'highlight', title: 'Highlight' },
+                    { icon: Code, action: () => editor.chain().focus().toggleCode().run(), active: 'code', title: 'Inline Code' },
+                    { icon: SuperscriptIcon, action: () => editor.chain().focus().toggleSuperscript().run(), active: 'superscript', title: 'Superscript' },
+                    { icon: SubscriptIcon, action: () => editor.chain().focus().toggleSubscript().run(), active: 'subscript', title: 'Subscript' },
                 ].map(({ icon: Icon, action, active, title }) => (
                     <button key={active} onClick={action} title={title}
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
@@ -206,10 +233,22 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
 
             {/* Status bar */}
             {!readOnly && (
-                <div className="flex items-center gap-4 pt-4 mt-4 border-t border-border/20 text-[11px] text-muted-foreground/50">
-                    <span>{wordCount} words</span>
-                    <span>{charCount} characters</span>
-                    <span>~{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
+                <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/20 text-[11px] text-muted-foreground/50">
+                    <div className="flex items-center gap-4">
+                        <span>{wordCount} words</span>
+                        <span>{charCount} characters</span>
+                        <span>~{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}
+                            className="p-1 hover:text-foreground disabled:opacity-30 transition-colors" title="Undo">
+                            <Undo className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}
+                            className="p-1 hover:text-foreground disabled:opacity-30 transition-colors" title="Redo">
+                            <Redo className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

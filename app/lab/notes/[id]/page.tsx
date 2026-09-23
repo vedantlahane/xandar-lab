@@ -180,16 +180,63 @@ export default function NoteEditorPage() {
         }
     }
 
-    const handleExportMarkdown = () => {
-        // Simple HTML→Markdown using a DOM approach
-        const div = document.createElement('div')
-        div.innerHTML = content
-        const text = div.innerText
-        const blob = new Blob([text], { type: 'text/markdown' })
+    const handleExportMarkdown = async () => {
+        try {
+            const TurndownService = (await import('turndown')).default
+            // @ts-ignore
+            const { gfm } = await import('turndown-plugin-gfm')
+            
+            const turndownService = new TurndownService({
+                headingStyle: 'atx',
+                codeBlockStyle: 'fenced',
+                bulletListMarker: '-',
+            })
+            turndownService.use(gfm)
+            
+            const markdown = turndownService.turndown(content || '')
+            const fullMd = `# ${title || 'Untitled'}\n\n${markdown}`
+            
+            const blob = new Blob([fullMd], { type: 'text/markdown' })
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = `${title || 'note'}.md`
+            a.click()
+        } catch (e) {
+            console.error('Failed to export markdown:', e)
+        }
+    }
+
+    const handleExportHTML = () => {
+        const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${title || 'Untitled'}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; line-height: 1.6; max-w-3xl; margin: 0 auto; padding: 2rem; }
+        img { max-width: 100%; height: auto; }
+        pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        code { font-family: monospace; }
+        blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>${title || 'Untitled'}</h1>
+    ${content}
+</body>
+</html>`
+        const blob = new Blob([fullHtml], { type: 'text/html' })
         const a = document.createElement('a')
         a.href = URL.createObjectURL(blob)
-        a.download = `${title || 'note'}.md`
+        a.download = `${title || 'note'}.html`
         a.click()
+    }
+
+    const handleExportPDF = () => {
+        // We use window.print() and CSS @media print to style it
+        window.print()
     }
 
     const handleDelete = async () => {
@@ -237,15 +284,24 @@ export default function NoteEditorPage() {
     return (
         <div className={cn('min-h-screen bg-background flex flex-col', isFullscreen && 'fixed inset-0 z-[100]')}>
             {/* Top Bar */}
-            <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-2 border-b border-border/40 bg-background/90 backdrop-blur-md">
+            <header className="print:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-2 border-b border-border/40 bg-background/90 backdrop-blur-md">
                 <div className="flex items-center gap-3 min-w-0">
                     <Button variant="ghost" size="sm" onClick={() => router.push('/lab/notes')}
                         className="h-7 px-2 text-muted-foreground hover:text-foreground gap-1.5 shrink-0">
                         <ChevronLeft className="w-3.5 h-3.5" />
                         Notes
                     </Button>
-                    <span className="text-border/60 shrink-0">·</span>
-                    <span className="text-xs text-muted-foreground truncate max-w-[160px] hidden sm:block">{title || 'Untitled'}</span>
+                    {note?.parentId && (
+                        <>
+                            <span className="text-border/60 shrink-0">/</span>
+                            <button onClick={() => router.push(`/lab/notes/${note.parentId._id}`)}
+                                className="text-xs text-muted-foreground hover:text-foreground truncate max-w-[120px] transition-colors">
+                                {note.parentId.title}
+                            </button>
+                        </>
+                    )}
+                    <span className="text-border/60 shrink-0">/</span>
+                    <span className="text-xs text-foreground truncate max-w-[160px] hidden sm:block font-medium">{title || 'Untitled'}</span>
                 </div>
 
                 <div className="flex items-center gap-0.5">
@@ -273,11 +329,17 @@ export default function NoteEditorPage() {
                         {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
                     </Button>
 
-                    {/* Export */}
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                        onClick={handleExportMarkdown} title="Export as Markdown">
-                        <Download className="w-3.5 h-3.5" />
-                    </Button>
+                    {/* Export Dropdown */}
+                    <div className="relative group">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Export">
+                            <Download className="w-3.5 h-3.5" />
+                        </Button>
+                        <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col bg-background border border-border/50 rounded-lg shadow-xl overflow-hidden z-50 min-w-[120px]">
+                            <button onClick={handleExportMarkdown} className="text-xs text-left px-3 py-2 hover:bg-muted/50 text-foreground transition-colors">Markdown (.md)</button>
+                            <button onClick={handleExportHTML} className="text-xs text-left px-3 py-2 hover:bg-muted/50 text-foreground transition-colors">HTML (.html)</button>
+                            <button onClick={handleExportPDF} className="text-xs text-left px-3 py-2 hover:bg-muted/50 text-foreground transition-colors">PDF (Print)</button>
+                        </div>
+                    </div>
 
                     {/* Shortcuts */}
                     <Button variant="ghost" size="icon" className={cn('h-7 w-7', showShortcuts ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground')}
@@ -322,7 +384,7 @@ export default function NoteEditorPage() {
 
             {/* Shortcut Cheatsheet Panel */}
             {showShortcuts && (
-                <div className="border-b border-border/40 bg-muted/10 px-8 py-4">
+                <div className="print:hidden border-b border-border/40 bg-muted/10 px-8 py-4">
                     <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1.5">
                         {SHORTCUTS.map(s => (
                             <div key={s.keys} className="flex items-center justify-between gap-2 text-xs">
@@ -336,7 +398,7 @@ export default function NoteEditorPage() {
 
             {/* Properties Panel */}
             {showMeta && canEditNote && (
-                <div className="border-b border-border/40 bg-muted/10 px-8 py-3 flex flex-wrap items-start gap-6">
+                <div className="print:hidden border-b border-border/40 bg-muted/10 px-8 py-3 flex flex-wrap items-start gap-6">
                     {/* Cover image */}
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground font-medium">Cover</span>
@@ -399,7 +461,7 @@ export default function NoteEditorPage() {
             <div className="flex flex-1 overflow-hidden">
                 {/* TOC Sidebar */}
                 {showToc && (
-                    <aside className="w-52 shrink-0 border-r border-border/40 overflow-y-auto bg-muted/5 hidden md:block">
+                    <aside className="print:hidden w-52 shrink-0 border-r border-border/40 overflow-y-auto bg-muted/5 hidden md:block">
                         <div className="sticky top-0 px-3 pt-3 pb-1">
                             <p className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground/50">Outline</p>
                         </div>

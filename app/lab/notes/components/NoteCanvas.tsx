@@ -439,12 +439,8 @@ export default function NoteCanvas({
                                         key={note.id}
                                         id={note.id}
                                         isActive={isActive}
-                                        onClick={(id: string) => {
-                                            if (note.id && !note.id.startsWith('static-')) {
-                                                router.push(`/lab/notes/${note.id}`);
-                                            } else {
-                                                onNoteSelect(id, {} as React.MouseEvent);
-                                            }
+                                        onClick={() => {
+                                            router.push(`/lab/notes/${note.id}`);
                                         }}
                                         title={note.title}
                                         titleIcon={

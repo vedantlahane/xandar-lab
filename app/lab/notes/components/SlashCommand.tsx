@@ -6,7 +6,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import {
     Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, Code,
     Image as ImageIcon, Quote, Minus, Table as TableIcon,
-    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle,
+    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle, Video
 } from 'lucide-react'
 
 export const getSuggestionItems = ({ query }: { query: string }) => {
@@ -26,6 +26,14 @@ export const getSuggestionItems = ({ query }: { query: string }) => {
         { title: 'Tip Callout',    icon: <Lightbulb className="w-4 h-4 text-violet-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'tip' },     content: [{ type: 'text', text: '' }] }).run() },
         { title: 'Danger Callout', icon: <XCircle className="w-4 h-4 text-red-500" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'danger' },  content: [{ type: 'text', text: '' }] }).run() },
         { title: 'Success Callout',icon: <CheckCircle className="w-4 h-4 text-emerald-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'success' }, content: [{ type: 'text', text: '' }] }).run() },
+        { title: 'YouTube Video',  icon: <Video className="w-4 h-4" />, command: ({ editor, range }: any) => { 
+            const url = prompt('Enter YouTube URL:')
+            if (url) {
+                editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: url }).run() 
+            } else {
+                editor.chain().focus().deleteRange(range).run()
+            }
+        } },
     ].filter(item => item.title.toLowerCase().includes(query.toLowerCase())).slice(0, 12)
 }
 
