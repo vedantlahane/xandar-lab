@@ -10,7 +10,7 @@ import { TableOfContents } from '../components/TableOfContents'
 import {
     ArrowLeft, Globe, Lock, Star, Pin, Trash2, Tag, X,
     Check, Loader2, MoreHorizontal, AlertCircle, Maximize2, Minimize2,
-    BookOpen, Download, Keyboard, Image as ImageIcon, ChevronLeft
+    BookOpen, Download, Keyboard, Image as ImageIcon, ChevronLeft, Plus
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -367,6 +367,20 @@ export default function NoteEditorPage() {
                                     <Star className={cn('w-3.5 h-3.5', isCurated && 'fill-current')} />
                                 </Button>
                             )}
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                onClick={async () => {
+                                    const res = await fetch('/api/notes/new', {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ title: 'New Subpage', parentId: note.id })
+                                    })
+                                    if (res.ok) {
+                                        const data = await res.json()
+                                        router.push(`/lab/notes/${data.note.id}`)
+                                    }
+                                }} title="Create Subpage">
+                                <Plus className="w-3.5 h-3.5" />
+                            </Button>
                             <Button variant="ghost" size="icon" className={cn('h-7 w-7', showMeta ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground')}
                                 onClick={() => setShowMeta(p => !p)} title="Properties">
                                 <MoreHorizontal className="w-3.5 h-3.5" />
