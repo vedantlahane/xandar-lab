@@ -9,6 +9,7 @@ import { BlockEditor, TocEntry } from '../components/BlockEditor'
 import { TableOfContents } from '../components/TableOfContents'
 import { CommentsSection } from '../components/CommentsSection'
 import { TemplatesGallery } from '../components/TemplatesGallery'
+import { BacklinksSection } from '../components/BacklinksSection'
 import {
     ArrowLeft, Globe, Lock, Star, Pin, Trash2, Tag, X,
     Check, Loader2, MoreHorizontal, AlertCircle, Maximize2, Minimize2,
@@ -550,6 +551,7 @@ export default function NoteEditorPage() {
                             onTocUpdate={setTocItems}
                         />
 
+                        <BacklinksSection noteId={params.id as string} />
                         <CommentsSection noteId={params.id as string} />
                     </div>
                 </main>

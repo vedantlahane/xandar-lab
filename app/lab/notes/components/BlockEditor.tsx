@@ -14,6 +14,7 @@ import { MathExtension } from '@aarkue/tiptap-math-extension'
 import 'katex/dist/katex.min.css'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
+import { FontSize } from './extensions/FontSize'
 import { MentionSuggestion } from './MentionSuggestion'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
@@ -116,6 +117,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             Youtube.configure({ inline: false, width: 640, height: 480 }),
             Color,
             TextStyle,
+            FontSize,
             Subscript,
             Superscript,
             CalloutExtension,
@@ -205,6 +207,21 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             {c === 'inherit' && <span className="text-[10px] flex items-center justify-center h-full w-full">↺</span>}
                         </button>
                     ))}
+                </div>
+                {/* Font Size */}
+                <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-border/50">
+                    <button onClick={() => editor.chain().focus().setFontSize('0.875em').run()} title="Small Text"
+                        className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors', editor.isActive('textStyle', { fontSize: '0.875em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        S
+                    </button>
+                    <button onClick={() => editor.chain().focus().unsetFontSize().run()} title="Normal Text"
+                        className={cn('px-1.5 py-0.5 rounded text-xs font-medium transition-colors', !editor.isActive('textStyle', { fontSize: '0.875em' }) && !editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        M
+                    </button>
+                    <button onClick={() => editor.chain().focus().setFontSize('1.25em').run()} title="Large Text"
+                        className={cn('px-1.5 py-0.5 rounded text-sm font-medium transition-colors', editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        L
+                    </button>
                 </div>
                 {[
                     { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold (Ctrl+B)' },
