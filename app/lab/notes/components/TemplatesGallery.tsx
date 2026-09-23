@@ -76,16 +76,16 @@ const TEMPLATES = [
 
 export function TemplatesGallery({ onSelect, onClose }: { onSelect: (html: string) => void, onClose: () => void }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="bg-background border border-border/50 rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden flex flex-col">
-                <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+            <div className="bg-background border border-border/50 rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+                <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between shrink-0">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
                         <LayoutTemplate className="w-5 h-5" />
                         Note Templates
                     </h2>
                     <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
                 </div>
-                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto">
                     {TEMPLATES.map(t => {
                         const Icon = t.icon
                         return (

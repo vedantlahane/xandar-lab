@@ -195,7 +195,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             )}
 
             {/* Bubble Menu */}
-            <BubbleMenu editor={editor} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md flex-wrap max-w-sm">
+            <BubbleMenu editor={editor} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md flex-wrap max-w-[calc(100vw-2rem)] sm:max-w-sm">
                 {/* Color picker */}
                 <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-border/50">
                     {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', 'inherit'].map((c) => (

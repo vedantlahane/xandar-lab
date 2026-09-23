@@ -313,3 +313,9 @@
   border-radius: 2px;
   padding: 0.125em 0;
 }
+
+/* TipTap & Math Overflows */
+.ProseMirror pre { max-width: 100%; overflow-x: auto; }
+.ProseMirror img { max-width: 100%; height: auto; }
+.katex-display { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+

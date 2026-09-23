@@ -45,7 +45,7 @@ export const MentionList = forwardRef((props: any, ref) => {
     }))
 
     return (
-        <div className="bg-background border border-border/40 shadow-xl rounded-lg overflow-hidden flex flex-col w-64">
+        <div className="bg-background border border-border/40 shadow-xl rounded-lg overflow-y-auto max-h-64 flex flex-col w-64">
             {props.items.length ? (
                 props.items.map((item: any, index: number) => (
                     <button
