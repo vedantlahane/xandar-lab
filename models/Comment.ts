@@ -1,33 +1,43 @@
-import mongoose, { Schema, model, models } from 'mongoose';
+import mongoose, { Schema, model, models, Document } from "mongoose";
 
-export interface IComment {
-    _id: string;
-    postId: mongoose.Types.ObjectId;
+export interface IComment extends Document {
+    noteId: mongoose.Types.ObjectId;
     authorId: mongoose.Types.ObjectId;
+    authorUsername: string;
     content: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
-const CommentSchema = new Schema<IComment>({
-    postId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Post',
-        required: true,
-        index: true,
+const CommentSchema = new Schema<IComment>(
+    {
+        noteId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Note',
+            required: true,
+            index: true,
+        },
+        authorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+            index: true,
+        },
+        authorUsername: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        content: {
+            type: String,
+            required: true,
+        },
     },
-    authorId: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    content: {
-        type: String,
-        required: true,
-        trim: true,
-        maxlength: 500,
-    },
-}, { timestamps: true });
+    {
+        timestamps: true,
+    }
+);
 
-const Comment = models.Comment || model('Comment', CommentSchema);
-export default Comment;
+CommentSchema.index({ noteId: 1, createdAt: 1 });
+
+export default models.Comment || model<IComment>("Comment", CommentSchema);

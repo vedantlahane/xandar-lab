@@ -6,9 +6,15 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
-import Image from '@tiptap/extension-image'
+import ImageResize from 'tiptap-extension-resize-image'
 import Link from '@tiptap/extension-link'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import Mention from '@tiptap/extension-mention'
+import { MathExtension } from '@aarkue/tiptap-math-extension'
+import 'katex/dist/katex.min.css'
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
+import { MentionSuggestion } from './MentionSuggestion'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableCell } from '@tiptap/extension-table-cell'
@@ -28,7 +34,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import {
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
     Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote,
-    Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Palette
+    Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Palette, Smile
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
@@ -55,6 +61,7 @@ export interface BlockEditorProps {
 export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }: BlockEditorProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
     const slashSuggestionItems = useCallback(({ query }: { query: string }) => {
         const items = getSuggestionItems({ query })
@@ -98,7 +105,14 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             }),
             TaskList,
             TaskItem.configure({ nested: true }),
-            Image.configure({ inline: true, allowBase64: true }),
+            ImageResize.configure({ inline: true, allowBase64: true }),
+            MathExtension.configure({ evaluation: false }),
+            Mention.configure({
+                HTMLAttributes: {
+                    class: 'text-primary font-medium bg-primary/10 px-1 py-0.5 rounded-md cursor-pointer hover:bg-primary/20 transition-colors',
+                },
+                suggestion: MentionSuggestion,
+            }),
             Youtube.configure({ inline: false, width: 640, height: 480 }),
             Color,
             TextStyle,
@@ -227,6 +241,23 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
                     <Quote className="w-3.5 h-3.5" />
                 </button>
+                <div className="relative">
+                    <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} title="Emoji"
+                        className={`p-1.5 rounded-md transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                        <Smile className="w-3.5 h-3.5" />
+                    </button>
+                    {showEmojiPicker && (
+                        <div className="absolute top-full right-0 mt-2 z-50 shadow-2xl">
+                            <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+                            <div className="relative z-50">
+                                <Picker data={data} onEmojiSelect={(emoji: any) => {
+                                    editor.chain().focus().insertContent(emoji.native).run()
+                                    setShowEmojiPicker(false)
+                                }} theme="dark" />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </BubbleMenu>
 
             <EditorContent editor={editor} className="flex-1 w-full outline-none" />

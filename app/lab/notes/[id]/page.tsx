@@ -7,6 +7,8 @@ import { useAuth } from '@/components/auth/AuthContext'
 import { usePermissions } from '@/components/auth/hooks/usePermissions'
 import { BlockEditor, TocEntry } from '../components/BlockEditor'
 import { TableOfContents } from '../components/TableOfContents'
+import { CommentsSection } from '../components/CommentsSection'
+import { TemplatesGallery } from '../components/TemplatesGallery'
 import {
     ArrowLeft, Globe, Lock, Star, Pin, Trash2, Tag, X,
     Check, Loader2, MoreHorizontal, AlertCircle, Maximize2, Minimize2,
@@ -79,6 +81,7 @@ export default function NoteEditorPage() {
     const [showToc, setShowToc] = useState(false)
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [showShortcuts, setShowShortcuts] = useState(false)
+    const [showTemplates, setShowTemplates] = useState(false)
     const [tocItems, setTocItems] = useState<TocEntry[]>([])
     const [isUploadingCover, setIsUploadingCover] = useState(false)
 
@@ -468,7 +471,24 @@ export default function NoteEditorPage() {
                             placeholder="Add tag..." className="text-xs bg-transparent border-none outline-none text-muted-foreground placeholder:text-muted-foreground/40 w-20" />
                         {tagInput && <button onClick={handleAddTag} className="text-primary"><Check className="w-3 h-3" /></button>}
                     </div>
+
+                    {/* Templates Button */}
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setShowTemplates(true)}>
+                            Choose Template
+                        </Button>
+                    </div>
                 </div>
+            )}
+            
+            {showTemplates && (
+                <TemplatesGallery 
+                    onSelect={(html) => {
+                        setContent(html)
+                        scheduleAutoSave({ content: html })
+                    }}
+                    onClose={() => setShowTemplates(false)}
+                />
             )}
 
             {/* Main content area — splits into TOC + editor */}
@@ -529,6 +549,8 @@ export default function NoteEditorPage() {
                             readOnly={!canEditNote}
                             onTocUpdate={setTocItems}
                         />
+
+                        <CommentsSection noteId={params.id as string} />
                     </div>
                 </main>
             </div>
