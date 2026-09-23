@@ -10,10 +10,10 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
 import { useEffect, useRef, useState } from 'react'
 import { 
-    Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, 
-    Link as LinkIcon 
+    Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon 
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
+import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
 
 const lowlight = createLowlight(common);
 
@@ -75,6 +75,10 @@ export function BlockEditor({
                     items: slashSuggestionItems,
                     render: renderItems,
                 }
+            }),
+            GlobalDragHandle.configure({
+                dragHandleWidth: 20,
+                scrollTreshold: 100,
             })
         ],
         content: content,
