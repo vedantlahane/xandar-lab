@@ -2,6 +2,7 @@
 
 import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
+import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
