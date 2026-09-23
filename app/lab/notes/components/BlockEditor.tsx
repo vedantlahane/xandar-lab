@@ -1,5 +1,5 @@
 import { useEditor, EditorContent } from '@tiptap/react'
-import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus'
+import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
@@ -11,8 +11,9 @@ import { common, createLowlight } from 'lowlight'
 import { useEffect, useRef, useState } from 'react'
 import { 
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, 
-    Link as LinkIcon, Heading1, Heading2, List, CheckSquare, Code 
+    Link as LinkIcon 
 } from 'lucide-react'
+import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 
 const lowlight = createLowlight(common);
 
@@ -27,6 +28,24 @@ export function BlockEditor({
 }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    // Custom suggestion items that inject the fileInputRef for images
+    const slashSuggestionItems = ({ query }: { query: string }) => {
+        const items = getSuggestionItems({ query });
+        
+        // Add Image Upload command if it matches
+        if ('image'.startsWith(query.toLowerCase())) {
+            items.push({
+                title: 'Image',
+                icon: <ImageIcon className="w-4 h-4" />,
+                command: ({ editor, range }: any) => {
+                    editor.chain().focus().deleteRange(range).run();
+                    if (fileInputRef.current) fileInputRef.current.click();
+                },
+            } as any);
+        }
+        return items;
+    };
 
     const editor = useEditor({
         editable: !readOnly,
@@ -51,6 +70,12 @@ export function BlockEditor({
                 placeholder: 'Type / for commands, or start writing...',
                 emptyEditorClass: 'is-editor-empty before:content-[attr(data-placeholder)] before:text-muted-foreground/50 before:float-left before:pointer-events-none before:h-0',
             }),
+            SlashCommand.configure({
+                suggestion: {
+                    items: slashSuggestionItems,
+                    render: renderItems,
+                }
+            })
         ],
         content: content,
         onUpdate: ({ editor }) => {
@@ -127,6 +152,12 @@ export function BlockEditor({
                 className="hidden" 
             />
 
+            {isUploading && (
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded-md backdrop-blur-md">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Uploading image...
+                </div>
+            )}
+
             {/* Contextual Bubble Menu (highlight text to see) */}
             {editor && (
                 <BubbleMenu 
@@ -159,73 +190,6 @@ export function BlockEditor({
                         <LinkIcon className="w-4 h-4" />
                     </button>
                 </BubbleMenu>
-            )}
-
-            {/* Floating Menu for Slash Commands (empty line) */}
-            {editor && (
-                <FloatingMenu 
-                    editor={editor}
-                    className="flex flex-col gap-1 p-1.5 bg-background border border-border/50 shadow-xl rounded-xl w-48 backdrop-blur-md z-50"
-                >
-                    <div className="px-2 pb-1.5 pt-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Insert
-                    </div>
-                    <button
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm text-foreground/80 hover:bg-muted/30 hover:text-foreground transition-colors text-left"
-                    >
-                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted/40 text-muted-foreground">
-                            <Heading1 className="w-3.5 h-3.5" />
-                        </div>
-                        Heading 1
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm text-foreground/80 hover:bg-muted/30 hover:text-foreground transition-colors text-left"
-                    >
-                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted/40 text-muted-foreground">
-                            <Heading2 className="w-3.5 h-3.5" />
-                        </div>
-                        Heading 2
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleBulletList().run()}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm text-foreground/80 hover:bg-muted/30 hover:text-foreground transition-colors text-left"
-                    >
-                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted/40 text-muted-foreground">
-                            <List className="w-3.5 h-3.5" />
-                        </div>
-                        Bullet List
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleTaskList().run()}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm text-foreground/80 hover:bg-muted/30 hover:text-foreground transition-colors text-left"
-                    >
-                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted/40 text-muted-foreground">
-                            <CheckSquare className="w-3.5 h-3.5" />
-                        </div>
-                        Task List
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm text-foreground/80 hover:bg-muted/30 hover:text-foreground transition-colors text-left"
-                    >
-                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted/40 text-muted-foreground">
-                            <Code className="w-3.5 h-3.5" />
-                        </div>
-                        Code Block
-                    </button>
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm text-foreground/80 hover:bg-muted/30 hover:text-foreground transition-colors text-left"
-                    >
-                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted/40 text-muted-foreground">
-                            {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
-                        </div>
-                        Image
-                    </button>
-                </FloatingMenu>
             )}
 
             <EditorContent editor={editor} className="flex-1 w-full min-h-[350px] outline-none" />
