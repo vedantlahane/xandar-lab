@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ export function NoteEditorDrawer({
     onDeleted,
 }: NoteEditorDrawerProps) {
     const { isAdmin, isModerator } = usePermissions();
+    const router = useRouter();
     const isEdit = !!note?.id && (!note.isCurated || isAdmin || isModerator);
 
     const [title, setTitle] = useState(note?.title || "");
@@ -107,7 +109,12 @@ export function NoteEditorDrawer({
             }
 
             onSaved(data.note);
-            onClose();
+            // After creating, navigate to the full-page editor for the new note
+            if (!isEdit && data.note?.id) {
+                router.push(`/lab/notes/${data.note.id}`);
+            } else {
+                onClose();
+            }
         } catch (err: any) {
             setError(err.message || "An error occurred");
         } finally {
@@ -183,7 +190,7 @@ export function NoteEditorDrawer({
                 <div className="flex gap-2 items-end border-b border-border/40 pb-2 focus-within:border-primary transition-colors">
                     <input
                         type="text"
-                        placeholder="😀"
+                        placeholder="ðŸ˜€"
                         value={icon}
                         onChange={(e) => setIcon(e.target.value)}
                         maxLength={2}
@@ -338,3 +345,4 @@ export function NoteEditorDrawer({
         </BaseDrawer>
     );
 }
+

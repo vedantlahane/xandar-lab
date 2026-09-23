@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { NOTES as DEFAULT_STATIC_NOTES, NoteCategory } from "../data/notes";
 import {
     StickyNote, Pin, Calendar, Tag,
@@ -70,6 +71,7 @@ export default function NoteCanvas({
     onNoteSelect,
 }: NoteCanvasProps) {
     const { isAuthenticated, openLoginModal } = useAuth();
+    const router = useRouter();
     const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("All");
     const [pinnedFilter, setPinnedFilter] = useState<FilterPinned>("All");
     const [tagFilter, setTagFilter] = useState<string>("All");
@@ -437,7 +439,13 @@ export default function NoteCanvas({
                                         key={note.id}
                                         id={note.id}
                                         isActive={isActive}
-                                        onClick={onNoteSelect}
+                                        onClick={(id: string) => {
+                                            if (note.id && !note.id.startsWith('static-')) {
+                                                router.push(`/lab/notes/${note.id}`);
+                                            } else {
+                                                onNoteSelect(id, {} as React.MouseEvent);
+                                            }
+                                        }}
                                         title={note.title}
                                         titleIcon={
                                             <>
