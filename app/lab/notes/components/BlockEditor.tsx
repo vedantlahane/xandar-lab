@@ -36,7 +36,8 @@ import {
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
     Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote,
     Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Palette, Smile,
-    Table as TableIcon, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, Eraser, Type
+    Table as TableIcon, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, Eraser, Type,
+    Sigma, SquareTerminal
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
@@ -272,6 +273,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         { icon: Strikethrough, action: () => editor.chain().focus().toggleStrike().run(), active: 'strike', title: 'Strikethrough' },
                         { icon: Highlighter, action: () => editor.chain().focus().toggleHighlight().run(), active: 'highlight', title: 'Highlight' },
                         { icon: Code, action: () => editor.chain().focus().toggleCode().run(), active: 'code', title: 'Inline Code' },
+                        { icon: SubscriptIcon, action: () => editor.chain().focus().toggleSubscript().run(), active: 'subscript', title: 'Subscript' },
+                        { icon: SuperscriptIcon, action: () => editor.chain().focus().toggleSuperscript().run(), active: 'superscript', title: 'Superscript' },
                     ].map(({ icon: Icon, action, active, title }) => (
                         <button key={active} onClick={action} title={title}
                             className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
@@ -316,6 +319,14 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     <button onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Blockquote"
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
                         <Quote className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().toggleCodeBlock().run()} title="Code Block"
+                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('codeBlock') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                        <SquareTerminal className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().insertContent({ type: 'displayMath' }).run()} title="Math Equation"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <Sigma className="w-4 h-4" />
                     </button>
                     <button onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert Table"
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
