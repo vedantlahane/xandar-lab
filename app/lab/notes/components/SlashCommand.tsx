@@ -6,7 +6,8 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import {
     Heading1, Heading2, Heading3, Heading4, List, ListOrdered, CheckSquare, Code,
     Quote, Minus, Table as TableIcon, Video, Sigma,
-    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle, FlaskConical, Workflow, Server
+    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle, FlaskConical, Workflow, Server,
+    Github, Braces, Youtube
 } from 'lucide-react'
 
 // ─── Grouped command items ───────────────────────────────────────────────────
@@ -40,6 +41,9 @@ export const getSuggestionItems = ({ query }: { query: string }): CommandItem[] 
         { group: 'Blocks', title: 'Chemical',      shortcut: 'chem',      icon: <FlaskConical className="w-4 h-4 text-emerald-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'chemical', attrs: { smiles: 'C1=CC=C(C=C1)O' } }).run() },
         { group: 'Blocks', title: 'Mermaid Diagram', shortcut: 'mermaid', icon: <Workflow className="w-4 h-4 text-blue-500" />,     command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'mermaid' }).run() },
         { group: 'Blocks', title: 'API Tester',    shortcut: 'api',       icon: <Server className="w-4 h-4 text-orange-500" />,     command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'apiTester' }).run() },
+        { group: 'Blocks', title: 'JSON Viewer',   shortcut: 'json',      icon: <Braces className="w-4 h-4 text-yellow-500" />,    command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'jsonViewer' }).run() },
+        { group: 'Blocks', title: 'GitHub Embed',  shortcut: 'github',    icon: <Github className="w-4 h-4 text-zinc-500" />,      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'githubEmbed' }).run() },
+        { group: 'Blocks', title: 'Media Embed',   shortcut: 'embed',     icon: <Youtube className="w-4 h-4 text-red-500" />,      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'mediaEmbed' }).run() },
         // CALLOUTS
         { group: 'Callouts', title: 'Info Callout',    icon: <Info className="w-4 h-4 text-sky-500" />,        command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'info' },    content: [{ type: 'paragraph' }] }).run() },
         { group: 'Callouts', title: 'Warning Callout', icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'warning' }, content: [{ type: 'paragraph' }] }).run() },

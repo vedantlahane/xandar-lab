@@ -51,6 +51,9 @@ import { CalloutExtension } from './CalloutExtension'
 import { ChemicalExtension } from './ChemicalExtension'
 import { MermaidExtension } from './MermaidExtension'
 import { ApiTesterExtension } from './ApiTesterExtension'
+import { MediaEmbedExtension } from './MediaEmbedExtension'
+import { GithubExtension } from './GithubExtension'
+import { JsonViewerExtension } from './JsonViewerExtension'
 import { cn } from '@/lib/utils'
 
 const lowlight = createLowlight(common)
@@ -198,6 +201,9 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             ChemicalExtension,
             MermaidExtension,
             ApiTesterExtension,
+            MediaEmbedExtension,
+            GithubExtension,
+            JsonViewerExtension,
             FontFamily,
         ],
         content,
