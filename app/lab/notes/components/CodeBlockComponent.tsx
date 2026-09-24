@@ -72,6 +72,15 @@ export function CodeBlockComponent({ node, updateAttributes, extension }: any) {
                     <option value="ruby">Ruby</option>
                     <option value="markdown">Markdown</option>
                 </select>
+                
+                <input
+                    type="text"
+                    contentEditable={false}
+                    placeholder="filename.ext"
+                    value={node.attrs.filename || ''}
+                    onChange={e => updateAttributes({ filename: e.target.value })}
+                    className="flex-1 bg-transparent border-none text-xs text-muted-foreground outline-none px-2 font-mono hover:text-foreground focus:text-foreground transition-colors min-w-[80px]"
+                />
 
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" contentEditable={false}>
                     <button

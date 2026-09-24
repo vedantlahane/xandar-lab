@@ -41,7 +41,7 @@ import {
     Table as TableIcon, Eraser, Sigma, SquareTerminal, Ban, Minus,
     Youtube as YoutubeIcon, Info, Maximize2, Minimize2,
     Columns, Rows, Trash2, FlipVertical, FlipHorizontal, Merge, Split,
-    Search, X as XIcon, ChevronUp, ChevronDown, FlaskConical
+    Search, X as XIcon, ChevronUp, ChevronDown, FlaskConical, Workflow, Server
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -49,6 +49,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { HexColorPicker } from "react-colorful"
 import { CalloutExtension } from './CalloutExtension'
 import { ChemicalExtension } from './ChemicalExtension'
+import { MermaidExtension } from './MermaidExtension'
+import { ApiTesterExtension } from './ApiTesterExtension'
 import { cn } from '@/lib/utils'
 
 const lowlight = createLowlight(common)
@@ -142,6 +144,12 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 codeBlock: false,
             }),
             CodeBlockLowlight.extend({
+                addAttributes() {
+                    return {
+                        ...this.parent?.(),
+                        filename: { default: '' }
+                    }
+                },
                 addNodeView() {
                     return ReactNodeViewRenderer(CodeBlockComponent)
                 },
@@ -188,6 +196,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 suggestion: { items: slashSuggestionItems, render: renderItems }
             }),
             ChemicalExtension,
+            MermaidExtension,
+            ApiTesterExtension,
             FontFamily,
         ],
         content,
@@ -657,6 +667,18 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     <button onClick={() => { editor.chain().focus().insertContent({ type: 'chemical', attrs: { smiles: 'C1=CC=C(C=C1)O' } }).run() }} title="Chemical Diagram"
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
                         <FlaskConical className="w-4 h-4" />
+                    </button>
+
+                    {/* Mermaid */}
+                    <button onClick={() => { editor.chain().focus().insertContent({ type: 'mermaid' }).run() }} title="Mermaid Diagram"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <Workflow className="w-4 h-4" />
+                    </button>
+
+                    {/* API Tester */}
+                    <button onClick={() => { editor.chain().focus().insertContent({ type: 'apiTester' }).run() }} title="API Request"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <Server className="w-4 h-4" />
                     </button>
 
                     {/* Table */}
