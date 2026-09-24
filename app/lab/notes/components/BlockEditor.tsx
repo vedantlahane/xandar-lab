@@ -44,6 +44,7 @@ import {
     Search, X as XIcon, ChevronUp, ChevronDown,
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
 import { CalloutExtension } from './CalloutExtension'
 import { cn } from '@/lib/utils'
@@ -91,29 +92,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
     const [findQuery, setFindQuery] = useState('')
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
 
-    // ─── Close link popover on outside click ─────────────────────────────
-    useEffect(() => {
-        if (!showLinkInput) return
-        const handler = (e: MouseEvent) => {
-            if (linkContainerRef.current && !linkContainerRef.current.contains(e.target as Node)) {
-                setShowLinkInput(false)
-            }
-        }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
-    }, [showLinkInput])
 
-    // ─── Close youtube popover on outside click ──────────────────────────
-    useEffect(() => {
-        if (!showYoutubeInput) return
-        const handler = (e: MouseEvent) => {
-            if (youtubeContainerRef.current && !youtubeContainerRef.current.contains(e.target as Node)) {
-                setShowYoutubeInput(false)
-            }
-        }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
-    }, [showYoutubeInput])
 
     // ─── YouTube custom event from slash commands ────────────────────────
     useEffect(() => {
@@ -496,7 +475,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     ))}
                 </div>
 
-                {/* Text Color swatches + picker */}
+                {/* Text Color swatches + Custom Popover */}
                 <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
                     {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'].map((c) => (
                         <button key={c}
@@ -507,11 +486,20 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             title={c}
                         />
                     ))}
-                    <label className="relative w-5 h-5 rounded-full overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" title="Custom Color">
-                        <input type="color" value={editor.getAttributes('textStyle')?.color || '#000000'}
-                            onChange={e => editor.chain().focus().setColor(e.target.value).run()}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                    </label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <button className="relative w-5 h-5 rounded-full overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" title="Custom Color" />
+                        </PopoverTrigger>
+                        <PopoverContent className="p-2 w-auto flex gap-2" side="bottom" align="center">
+                            <input type="text" placeholder="#000000"
+                                onChange={e => {
+                                    if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                                        editor.chain().focus().setColor(e.target.value).run()
+                                    }
+                                }}
+                                className="w-24 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
+                        </PopoverContent>
+                    </Popover>
                     <button
                         onClick={() => editor.chain().focus().unsetColor().run()}
                         className="w-4 h-4 rounded-full flex items-center justify-center transition-transform hover:scale-125"
@@ -521,7 +509,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     </button>
                 </div>
 
-                {/* Highlight Color swatches (multicolor) + picker */}
+                {/* Highlight Color swatches (multicolor) + Popover */}
                 <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0" title="Highlight Color">
                     <Highlighter className="w-3.5 h-3.5 text-muted-foreground/60 mr-0.5" />
                     {HIGHLIGHT_COLORS.map(({ color, label }) => (
@@ -533,11 +521,20 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             title={`Highlight ${label}`}
                         />
                     ))}
-                    <label className="relative w-5 h-5 rounded-sm overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-yellow-300 via-green-300 to-blue-300" title="Custom Highlight">
-                        <input type="color" value="#fef08a"
-                            onChange={e => editor.chain().focus().toggleHighlight({ color: e.target.value }).run()}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                    </label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <button className="relative w-5 h-5 rounded-sm overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-yellow-300 via-green-300 to-blue-300" title="Custom Highlight" />
+                        </PopoverTrigger>
+                        <PopoverContent className="p-2 w-auto flex gap-2" side="bottom" align="center">
+                            <input type="text" placeholder="#fef08a"
+                                onChange={e => {
+                                    if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                                        editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
+                                    }
+                                }}
+                                className="w-24 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
+                        </PopoverContent>
+                    </Popover>
                     <button onClick={() => editor.chain().focus().unsetHighlight().run()} title="Remove Highlight"
                         className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors ml-0.5">
                         <Ban className="w-3 h-3" />
@@ -564,37 +561,36 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     </button>
                 </div>
 
-                {/* Insert section */}
+                    {/* Insert section */}
                 <div className="flex items-center gap-0.5 shrink-0">
                     {/* Link */}
-                    <div className="relative" ref={linkContainerRef}>
-                        <button onClick={() => {
-                            if (editor.isActive('link')) {
-                                editor.chain().focus().unsetLink().run()
-                            } else {
-                                setLinkUrl(editor.getAttributes('link').href || '')
-                                setShowLinkInput(v => !v)
-                            }
-                        }} title="Link (Ctrl+K)"
-                            className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                            <LinkIcon className="w-4 h-4" />
-                        </button>
-                        {showLinkInput && (
-                            <div className="absolute top-full mt-2 z-50 p-2 bg-popover text-popover-foreground border border-border shadow-xl rounded-lg flex gap-2 w-72 right-0">
-                                <input autoFocus type="url" placeholder="https://"
-                                    value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
-                                    onKeyDown={e => {
-                                        if (e.key === 'Enter') { editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run(); setShowLinkInput(false) }
-                                        if (e.key === 'Escape') setShowLinkInput(false)
-                                    }}
-                                    className="h-8 flex-1 text-sm bg-background px-2 rounded-md border border-border outline-none focus:border-primary" />
-                                <button type="button" onClick={() => { editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run(); setShowLinkInput(false) }}
-                                    className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap">
-                                    Save
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                    <Popover open={showLinkInput} onOpenChange={setShowLinkInput}>
+                        <PopoverTrigger asChild>
+                            <button onClick={() => {
+                                if (editor.isActive('link')) {
+                                    editor.chain().focus().unsetLink().run()
+                                } else {
+                                    setLinkUrl(editor.getAttributes('link').href || '')
+                                }
+                            }} title="Link (Ctrl+K)"
+                                className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                                <LinkIcon className="w-4 h-4" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-2 flex gap-2 w-72" side="bottom" align="start">
+                            <input autoFocus type="url" placeholder="https://"
+                                value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') { editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run(); setShowLinkInput(false) }
+                                    if (e.key === 'Escape') setShowLinkInput(false)
+                                }}
+                                className="h-8 flex-1 text-sm bg-background px-2 rounded-md border border-border outline-none focus:border-primary" />
+                            <button type="button" onClick={() => { editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run(); setShowLinkInput(false) }}
+                                className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap">
+                                Save
+                            </button>
+                        </PopoverContent>
+                    </Popover>
 
                     <button onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Blockquote"
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
@@ -609,13 +605,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <Minus className="w-4 h-4" />
                     </button>
 
-                    {/* Math — inserts inline math */}
-                    <button onClick={() => {
-                        editor.chain().focus().insertContent({
-                            type: 'inlineMath',
-                            attrs: { latex: 'E = mc^2' }
-                        }).run()
-                    }} title="Math / LaTeX"
+                    {/* Math */}
+                    <button onClick={() => { editor.chain().focus().insertContent({ type: 'inlineMath', attrs: { latex: 'E = mc^2' } }).run() }} title="Math / LaTeX"
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
                         <Sigma className="w-4 h-4" />
                     </button>
@@ -626,61 +617,58 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <TableIcon className="w-4 h-4" />
                     </button>
 
-                    {/* Callout dropdown */}
-                    <div className="relative">
-                        <button onClick={() => setShowCalloutMenu(v => !v)} title="Insert Callout"
-                            className={cn('p-1.5 rounded-md transition-colors', showCalloutMenu ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
-                            <Info className="w-4 h-4" />
-                        </button>
-                        {showCalloutMenu && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowCalloutMenu(false)} />
-                                <div className="absolute top-full right-0 mt-2 z-50 p-1 bg-popover border border-border shadow-xl rounded-lg min-w-[160px]">
-                                    {(['info', 'warning', 'tip', 'danger', 'success'] as const).map(type => (
-                                        <button key={type} type="button"
-                                            onClick={() => {
-                                                editor.chain().focus().insertContent({
-                                                    type: 'callout',
-                                                    attrs: { type },
-                                                    content: [{ type: 'paragraph' }]
-                                                }).run()
-                                                setShowCalloutMenu(false)
-                                            }}
-                                            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm rounded-md hover:bg-muted/50 transition-colors text-foreground capitalize">
-                                            <span className={cn('w-2 h-2 rounded-full', {
-                                                'bg-sky-500': type === 'info',
-                                                'bg-amber-500': type === 'warning',
-                                                'bg-violet-500': type === 'tip',
-                                                'bg-red-500': type === 'danger',
-                                                'bg-emerald-500': type === 'success',
-                                            })} />
-                                            {type}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Callout */}
+                    <Popover open={showCalloutMenu} onOpenChange={setShowCalloutMenu}>
+                        <PopoverTrigger asChild>
+                            <button title="Insert Callout"
+                                className={cn('p-1.5 rounded-md transition-colors', showCalloutMenu ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                                <Info className="w-4 h-4" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-1 min-w-[160px] w-auto" side="bottom" align="center">
+                            {(['info', 'warning', 'tip', 'danger', 'success'] as const).map(type => (
+                                <button key={type} type="button"
+                                    onClick={() => {
+                                        editor.chain().focus().insertContent({
+                                            type: 'callout',
+                                            attrs: { type },
+                                            content: [{ type: 'paragraph' }]
+                                        }).run()
+                                        setShowCalloutMenu(false)
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-1.5 text-sm rounded-md hover:bg-muted/50 transition-colors text-foreground capitalize">
+                                    <span className={cn('w-2 h-2 rounded-full', {
+                                        'bg-sky-500': type === 'info',
+                                        'bg-amber-500': type === 'warning',
+                                        'bg-violet-500': type === 'tip',
+                                        'bg-red-500': type === 'danger',
+                                        'bg-emerald-500': type === 'success',
+                                    })} />
+                                    {type}
+                                </button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
 
                     {/* YouTube embed */}
-                    <div className="relative" ref={youtubeContainerRef}>
-                        <button onClick={() => { setShowYoutubeInput(v => !v); setYoutubeUrl('') }} title="Embed YouTube"
-                            className={cn('p-1.5 rounded-md transition-colors', showYoutubeInput ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
-                            <YoutubeIcon className="w-4 h-4" />
-                        </button>
-                        {showYoutubeInput && (
-                            <div className="absolute top-full right-0 mt-2 z-50 p-2 bg-popover border border-border shadow-xl rounded-lg flex gap-2 w-80">
-                                <input autoFocus type="url" placeholder="YouTube URL..."
-                                    value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') insertYoutube(); if (e.key === 'Escape') setShowYoutubeInput(false) }}
-                                    className="h-8 flex-1 text-sm bg-background px-2 rounded-md border border-border outline-none focus:border-primary" />
-                                <button type="button" onClick={insertYoutube}
-                                    className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap">
-                                    Embed
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                    <Popover open={showYoutubeInput} onOpenChange={setShowYoutubeInput}>
+                        <PopoverTrigger asChild>
+                            <button title="Embed YouTube" onClick={() => setYoutubeUrl('')}
+                                className={cn('p-1.5 rounded-md transition-colors', showYoutubeInput ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                                <YoutubeIcon className="w-4 h-4" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-2 flex gap-2 w-80" side="bottom" align="center">
+                            <input autoFocus type="url" placeholder="YouTube URL..."
+                                value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') insertYoutube(); if (e.key === 'Escape') setShowYoutubeInput(false) }}
+                                className="h-8 flex-1 text-sm bg-background px-2 rounded-md border border-border outline-none focus:border-primary" />
+                            <button type="button" onClick={insertYoutube}
+                                className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap">
+                                Embed
+                            </button>
+                        </PopoverContent>
+                    </Popover>
 
                     {/* Image */}
                     <button onClick={() => fileInputRef.current?.click()} title="Insert Image"
@@ -689,23 +677,20 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     </button>
 
                     {/* Emoji */}
-                    <div className="relative">
-                        <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} title="Emoji"
-                            className={`p-1.5 rounded-md transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                            <Smile className="w-4 h-4" />
-                        </button>
-                        {showEmojiPicker && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-                                <div className="absolute top-full right-0 mt-2 z-50 shadow-2xl rounded-xl border border-border/50">
-                                    <Picker data={data} onEmojiSelect={(emoji: any) => {
-                                        editor.chain().focus().insertContent(emoji.native).run()
-                                        setShowEmojiPicker(false)
-                                    }} theme="auto" />
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                        <PopoverTrigger asChild>
+                            <button title="Emoji"
+                                className={`p-1.5 rounded-md transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                                <Smile className="w-4 h-4" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="end">
+                            <Picker data={data} onEmojiSelect={(emoji: any) => {
+                                editor.chain().focus().insertContent(emoji.native).run()
+                                setShowEmojiPicker(false)
+                            }} theme="auto" />
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
 

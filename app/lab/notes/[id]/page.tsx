@@ -10,6 +10,9 @@ import { TableOfContents } from '../components/TableOfContents'
 import { CommentsSection } from '../components/CommentsSection'
 import { TemplatesGallery } from '../components/TemplatesGallery'
 import { BacklinksSection } from '../components/BacklinksSection'
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
 import {
     ArrowLeft, Globe, Lock, Star, Pin, Trash2, Tag, X,
     Check, Loader2, MoreHorizontal, AlertCircle, Maximize2, Minimize2,
@@ -523,9 +526,16 @@ export default function NoteEditorPage() {
                     <div className="max-w-4xl w-full mx-auto px-6 md:px-12 py-10">
                         {/* Icon */}
                         {canEditNote ? (
-                            <input value={icon} onChange={e => { setIcon(e.target.value); scheduleAutoSave({ icon: e.target.value }) }}
-                                placeholder="📄" maxLength={2}
-                                className="text-5xl bg-transparent border-none outline-none mb-4 w-16 cursor-text" />
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button className="text-5xl bg-transparent hover:bg-muted/30 p-2 rounded-xl transition-colors mb-4 w-20 h-20 flex items-center justify-center">
+                                        {icon || '📄'}
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="start">
+                                    <Picker data={data} onEmojiSelect={(emoji: any) => { setIcon(emoji.native); scheduleAutoSave({ icon: emoji.native }) }} theme="auto" />
+                                </PopoverContent>
+                            </Popover>
                         ) : (
                             icon && <div className="text-5xl mb-4">{icon}</div>
                         )}

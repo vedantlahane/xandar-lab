@@ -321,7 +321,7 @@
 
 
 /* Drag Handle */
-.drag-handle { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; color: hsl(var(--muted-foreground)); cursor: grab; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 16"><path d="M3,2 A1,1 0 1,1 3,4 A1,1 0 1,1 3,2 Z M7,2 A1,1 0 1,1 7,4 A1,1 0 1,1 7,2 Z M3,7 A1,1 0 1,1 3,9 A1,1 0 1,1 3,7 Z M7,7 A1,1 0 1,1 7,9 A1,1 0 1,1 7,7 Z M3,12 A1,1 0 1,1 3,14 A1,1 0 1,1 3,12 Z M7,12 A1,1 0 1,1 7,14 A1,1 0 1,1 7,12 Z" fill="%23888888" /></svg>'); background-repeat: no-repeat; background-position: center; border-radius: 4px; transition: background-color 0.2s; }
+.drag-handle { position: absolute; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; color: hsl(var(--muted-foreground)); cursor: grab; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 16"><path d="M3,2 A1,1 0 1,1 3,4 A1,1 0 1,1 3,2 Z M7,2 A1,1 0 1,1 7,4 A1,1 0 1,1 7,2 Z M3,7 A1,1 0 1,1 3,9 A1,1 0 1,1 3,7 Z M7,7 A1,1 0 1,1 7,9 A1,1 0 1,1 7,7 Z M3,12 A1,1 0 1,1 3,14 A1,1 0 1,1 3,12 Z M7,12 A1,1 0 1,1 7,14 A1,1 0 1,1 7,12 Z" fill="%23888888" /></svg>'); background-repeat: no-repeat; background-position: center; border-radius: 4px; transition: background-color 0.2s; }
 .drag-handle:hover { background-color: hsl(var(--muted) / 0.5); }
 .drag-handle:active { cursor: grabbing; }
 .drag-handle.hide { opacity: 0; pointer-events: none; }

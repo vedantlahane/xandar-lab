@@ -15,6 +15,9 @@ import {
 import { usePermissions } from "@/components/auth/hooks/usePermissions";
 import { MarkdownContent } from "./MarkdownContent";
 import { BlockEditor } from "./BlockEditor";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 
 interface NoteEditorDrawerProps {
     note?: any | null;
@@ -188,14 +191,16 @@ export function NoteEditorDrawer({
 
                 {/* Title & Icon Input */}
                 <div className="flex gap-2 items-end border-b border-border/40 pb-2 focus-within:border-primary transition-colors">
-                    <input
-                        type="text"
-                        placeholder="😀"
-                        value={icon}
-                        onChange={(e) => setIcon(e.target.value)}
-                        maxLength={2}
-                        className="w-12 text-xl sm:text-2xl font-bold bg-transparent focus:outline-none text-center placeholder:text-muted-foreground/40"
-                    />
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <button className="w-12 h-10 text-xl sm:text-2xl flex items-center justify-center font-bold bg-transparent hover:bg-muted/50 rounded-md transition-colors shrink-0">
+                                {icon || '😀'}
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="start">
+                            <Picker data={data} onEmojiSelect={(emoji: any) => { setIcon(emoji.native) }} theme="auto" />
+                        </PopoverContent>
+                    </Popover>
                     <input
                         type="text"
                         placeholder="Note title..."
