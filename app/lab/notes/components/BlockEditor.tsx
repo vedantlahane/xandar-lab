@@ -1,6 +1,6 @@
 'use client'
 
-import { useEditor, EditorContent, useEditorState, ReactNodeViewRenderer } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -32,15 +32,13 @@ import Subscript from '@tiptap/extension-subscript'
 import Superscript from '@tiptap/extension-superscript'
 import Youtube from '@tiptap/extension-youtube'
 import FontFamily from '@tiptap/extension-font-family'
-import { Markdown } from 'tiptap-markdown'
 import { common, createLowlight } from 'lowlight'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import {
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
-    Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, Quote,
-    Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Palette, Smile,
-    Table as TableIcon, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, Eraser, Type,
-    Sigma, SquareTerminal
+    Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote,
+    Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Smile,
+    Table as TableIcon, CheckSquare, Eraser, Sigma, SquareTerminal, Ban, Minus
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
@@ -68,6 +66,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+    const [showLinkInput, setShowLinkInput] = useState(false)
+    const [linkUrl, setLinkUrl] = useState('')
 
     const slashSuggestionItems = useCallback(({ query }: { query: string }) => {
         const items = getSuggestionItems({ query })
@@ -88,7 +88,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
         editable: !readOnly,
         extensions: [
             StarterKit.configure({
-                heading: { levels: [1, 2, 3] },
+                heading: { levels: [1, 2, 3, 4, 5, 6] },
                 codeBlock: false,
             }),
             CodeBlockLowlight.extend({
@@ -101,7 +101,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             TableHeader,
             TableCell,
             Underline,
-            Highlight.configure({ multicolor: false }),
+            Highlight.configure({ multicolor: true }),
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
             CharacterCount,
             TableOfContentsExtension.configure({
@@ -177,22 +177,11 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
         }
     }
 
-    const setLink = () => {
-        const prev = editor?.getAttributes('link').href
-        const url = window.prompt('URL', prev)
-        if (url === null) return
-        if (url === '') {
-            editor?.chain().focus().extendMarkRange('link').unsetLink().run()
-        } else {
-            editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-        }
-    }
-
-    // Expose word/char count
     const wordCount = editor ? editor.storage.characterCount?.words() ?? 0 : 0
     const charCount = editor ? editor.storage.characterCount?.characters() ?? 0 : 0
-
+    
     if (!editor) return null
+    const currentFontSize = editor.getAttributes('textStyle')?.fontSize
 
     return (
         <div className="w-full relative flex flex-col" data-block-editor>
@@ -205,9 +194,9 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             )}
 
             {/* Static Toolbar (Advanced) */}
-            <div className="sticky top-0 z-20 flex items-center p-1.5 mb-6 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg flex-wrap gap-y-1.5 gap-x-1">
+            <div className="sticky top-0 z-20 flex items-center p-1.5 mb-6 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap gap-y-1.5 gap-x-1 shrink-0">
                 {/* History & Clear */}
-                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
                     <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)"
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground disabled:opacity-50">
                         <Undo className="w-4 h-4" />
@@ -223,13 +212,16 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
 
                 {/* Block Type Dropdown */}
-                <div className="flex items-center pr-2 border-r border-border/50">
+                <div className="flex items-center pr-2 border-r border-border/50 shrink-0">
                     <select
                         className="h-8 pl-2 pr-2 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md focus:ring-0 text-foreground cursor-pointer outline-none font-medium"
                         value={
                             editor.isActive('heading', { level: 1 }) ? 'h1' :
                             editor.isActive('heading', { level: 2 }) ? 'h2' :
                             editor.isActive('heading', { level: 3 }) ? 'h3' :
+                            editor.isActive('heading', { level: 4 }) ? 'h4' :
+                            editor.isActive('heading', { level: 5 }) ? 'h5' :
+                            editor.isActive('heading', { level: 6 }) ? 'h6' :
                             editor.isActive('bulletList') ? 'bullet' :
                             editor.isActive('orderedList') ? 'ordered' :
                             editor.isActive('taskList') ? 'task' :
@@ -241,6 +233,9 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             if (v === 'h1') editor.chain().focus().toggleHeading({ level: 1 }).run();
                             if (v === 'h2') editor.chain().focus().toggleHeading({ level: 2 }).run();
                             if (v === 'h3') editor.chain().focus().toggleHeading({ level: 3 }).run();
+                            if (v === 'h4') editor.chain().focus().toggleHeading({ level: 4 }).run();
+                            if (v === 'h5') editor.chain().focus().toggleHeading({ level: 5 }).run();
+                            if (v === 'h6') editor.chain().focus().toggleHeading({ level: 6 }).run();
                             if (v === 'bullet') editor.chain().focus().toggleBulletList().run();
                             if (v === 'ordered') editor.chain().focus().toggleOrderedList().run();
                             if (v === 'task') editor.chain().focus().toggleTaskList().run();
@@ -250,6 +245,9 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <option value="h1">Heading 1</option>
                         <option value="h2">Heading 2</option>
                         <option value="h3">Heading 3</option>
+                        <option value="h4">Heading 4</option>
+                        <option value="h5">Heading 5</option>
+                        <option value="h6">Heading 6</option>
                         <option value="bullet">Bullet List</option>
                         <option value="ordered">Numbered List</option>
                         <option value="task">Task List</option>
@@ -257,7 +255,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
 
                 {/* Font Family Dropdown */}
-                <div className="flex items-center pr-2 border-r border-border/50">
+                <div className="flex items-center pr-2 border-r border-border/50 shrink-0">
                     <select
                         className="h-8 pl-2 pr-2 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md focus:ring-0 text-foreground cursor-pointer outline-none font-medium"
                         value={editor.getAttributes('textStyle').fontFamily || 'Inter'}
@@ -276,23 +274,23 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
 
                 {/* Font Size */}
-                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
                     <button onClick={() => editor.chain().focus().setFontSize('0.875em').run()} title="Small Text"
-                        className={cn('px-2 py-1 rounded text-[10px] font-medium transition-colors', editor.isActive('textStyle', { fontSize: '0.875em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        className={cn('px-2 py-1 rounded text-[10px] font-medium transition-colors', currentFontSize === '0.875em' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         S
                     </button>
                     <button onClick={() => editor.chain().focus().unsetFontSize().run()} title="Normal Text"
-                        className={cn('px-2 py-1 rounded text-xs font-medium transition-colors', !editor.isActive('textStyle', { fontSize: '0.875em' }) && !editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        className={cn('px-2 py-1 rounded text-xs font-medium transition-colors', (!currentFontSize || currentFontSize === '1em') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         M
                     </button>
                     <button onClick={() => editor.chain().focus().setFontSize('1.25em').run()} title="Large Text"
-                        className={cn('px-2 py-1 rounded text-sm font-medium transition-colors', editor.isActive('textStyle', { fontSize: '1.25em' }) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
+                        className={cn('px-2 py-1 rounded text-sm font-medium transition-colors', currentFontSize === '1.25em' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         L
                     </button>
                 </div>
 
                 {/* Text Styles */}
-                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
                     {[
                         { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold (Ctrl+B)' },
                         { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic (Ctrl+I)' },
@@ -311,24 +309,25 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
 
                 {/* Color picker */}
-                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
                     {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', 'inherit'].map((c) => (
                         <button key={c} onClick={() => c === 'inherit' ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c).run()}
-                            className={cn('w-4 h-4 rounded-full transition-transform hover:scale-110', editor.isActive('textStyle', { color: c }) && 'ring-2 ring-primary ring-offset-1')}
+                            className={cn('w-4 h-4 rounded-full transition-transform hover:scale-110 flex items-center justify-center', editor.isActive('textStyle', { color: c }) && 'ring-2 ring-primary ring-offset-1')}
                             style={{ backgroundColor: c === 'inherit' ? 'transparent' : c }}
                             title={c === 'inherit' ? 'Default Color' : c}
                         >
-                            {c === 'inherit' && <span className="text-[10px] flex items-center justify-center h-full w-full">↺</span>}
+                            {c === 'inherit' && <Ban className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />}
                         </button>
                     ))}
                 </div>
 
                 {/* Alignment */}
-                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50">
+                <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
                     {[
                         { icon: AlignLeft, action: () => editor.chain().focus().setTextAlign('left').run(), active: { textAlign: 'left' }, title: 'Align Left' },
                         { icon: AlignCenter, action: () => editor.chain().focus().setTextAlign('center').run(), active: { textAlign: 'center' }, title: 'Align Center' },
                         { icon: AlignRight, action: () => editor.chain().focus().setTextAlign('right').run(), active: { textAlign: 'right' }, title: 'Align Right' },
+                        { icon: AlignJustify, action: () => editor.chain().focus().setTextAlign('justify').run(), active: { textAlign: 'justify' }, title: 'Align Justify' },
                     ].map(({ icon: Icon, action, active, title }, i) => (
                         <button key={i} onClick={action} title={title}
                             className={`p-1.5 rounded-md transition-colors ${editor.isActive(active) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
@@ -338,11 +337,46 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
 
                 {/* Insert Menu */}
-                <div className="flex items-center gap-0.5">
-                    <button onClick={setLink} title="Link (Ctrl+K)"
-                        className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                        <LinkIcon className="w-4 h-4" />
-                    </button>
+                <div className="flex items-center gap-0.5 shrink-0">
+                    <div className="relative">
+                        <button onClick={() => {
+                            if (editor.isActive('link')) {
+                                editor.chain().focus().unsetLink().run()
+                            } else {
+                                setLinkUrl(editor.getAttributes('link').href || '')
+                                setShowLinkInput(true)
+                            }
+                        }} title="Link (Ctrl+K)"
+                            className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                            <LinkIcon className="w-4 h-4" />
+                        </button>
+                        {showLinkInput && (
+                            <div className="absolute top-full left-0 mt-2 z-50 p-2 bg-popover text-popover-foreground border border-border shadow-lg rounded-md flex gap-2 w-72">
+                                <input
+                                    autoFocus
+                                    type="url"
+                                    placeholder="https://"
+                                    value={linkUrl}
+                                    onChange={e => setLinkUrl(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run()
+                                            setShowLinkInput(false)
+                                        }
+                                        if (e.key === 'Escape') setShowLinkInput(false)
+                                    }}
+                                    className="h-8 flex-1 text-sm bg-background px-2 rounded-md border border-border outline-none focus:border-primary"
+                                />
+                                <button onClick={() => {
+                                    editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run()
+                                    setShowLinkInput(false)
+                                }} className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors">
+                                    Save
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    
                     <button onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Blockquote"
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive('blockquote') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
                         <Quote className="w-4 h-4" />
@@ -351,7 +385,11 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         className={`p-1.5 rounded-md transition-colors ${editor.isActive('codeBlock') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
                         <SquareTerminal className="w-4 h-4" />
                     </button>
-                    <button onClick={() => editor.chain().focus().insertContent({ type: 'displayMath' }).run()} title="Math Equation"
+                    <button onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Divider"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <Minus className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().insertContent({ type: 'mathBlock' }).run()} title="Math Equation"
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
                         <Sigma className="w-4 h-4" />
                     </button>
@@ -369,9 +407,9 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             <Smile className="w-4 h-4" />
                         </button>
                         {showEmojiPicker && (
-                            <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 shadow-2xl rounded-xl overflow-hidden border border-border/50">
+                            <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 shadow-2xl rounded-xl overflow-hidden border border-border/50 bg-popover">
                                 <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-                                <div className="relative z-50 bg-zinc-950">
+                                <div className="relative z-50 bg-popover text-popover-foreground">
                                     <Picker data={data} onEmojiSelect={(emoji: any) => {
                                         editor.chain().focus().insertContent(emoji.native).run()
                                         setShowEmojiPicker(false)
@@ -386,7 +424,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             {/* Table Control Menu */}
             <BubbleMenu editor={editor} pluginKey="tableMenu" updateDelay={0} 
                 shouldShow={({ editor }) => editor.isActive('table')}
-                className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md mb-2">
+                className="flex items-center gap-0.5 p-1 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md mb-2 flex-wrap max-w-sm justify-center">
                 <button onClick={() => editor.chain().focus().addColumnBefore().run()} title="Add Column Before" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Col Left</button>
                 <button onClick={() => editor.chain().focus().addColumnAfter().run()} title="Add Column After" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Col Right</button>
                 <button onClick={() => editor.chain().focus().deleteColumn().run()} title="Delete Column" className="px-2 py-1 text-[10px] hover:bg-red-500/10 text-red-500 rounded font-medium whitespace-nowrap">Del Col</button>
@@ -394,6 +432,12 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 <button onClick={() => editor.chain().focus().addRowBefore().run()} title="Add Row Before" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Row Above</button>
                 <button onClick={() => editor.chain().focus().addRowAfter().run()} title="Add Row After" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Row Below</button>
                 <button onClick={() => editor.chain().focus().deleteRow().run()} title="Delete Row" className="px-2 py-1 text-[10px] hover:bg-red-500/10 text-red-500 rounded font-medium whitespace-nowrap">Del Row</button>
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <button onClick={() => editor.chain().focus().toggleHeaderRow().run()} title="Toggle Header Row" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Tog Hdr Row</button>
+                <button onClick={() => editor.chain().focus().toggleHeaderColumn().run()} title="Toggle Header Column" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Tog Hdr Col</button>
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <button onClick={() => editor.chain().focus().mergeCells().run()} title="Merge Cells" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Merge</button>
+                <button onClick={() => editor.chain().focus().splitCell().run()} title="Split Cell" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Split</button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 <button onClick={() => editor.chain().focus().deleteTable().run()} title="Delete Table" className="px-2 py-1 text-[10px] hover:bg-red-500/20 text-red-600 rounded font-bold whitespace-nowrap">Del Table</button>
             </BubbleMenu>
@@ -404,7 +448,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     if (editor.isActive('table')) return false; // Prevent showing over table
                     return from !== to && !editor.isActive('image');
                 }}
-                className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
+                className="flex items-center gap-0.5 p-1 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
                 {[
                     { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold' },
                     { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic' },
@@ -418,11 +462,6 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <Icon className="w-3.5 h-3.5" />
                     </button>
                 ))}
-                <div className="w-px h-4 bg-border/50 mx-0.5" />
-                <button onClick={setLink} title="Link"
-                    className={`p-1.5 rounded-md transition-colors ${editor.isActive('link') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
-                    <LinkIcon className="w-3.5 h-3.5" />
-                </button>
             </BubbleMenu>
 
             <EditorContent editor={editor} className="flex-1 w-full outline-none" />
@@ -434,16 +473,6 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <span>{wordCount} words</span>
                         <span>{charCount} characters</span>
                         <span>~{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}
-                            className="p-1 hover:text-foreground disabled:opacity-30 transition-colors" title="Undo">
-                            <Undo className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}
-                            className="p-1 hover:text-foreground disabled:opacity-30 transition-colors" title="Redo">
-                            <Redo className="w-3.5 h-3.5" />
-                        </button>
                     </div>
                 </div>
             )}

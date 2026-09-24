@@ -278,14 +278,14 @@
   background: color-mix(in srgb, var(--card) 78%, transparent);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
-}.tiptap table {
+}.ProseMirror table {
   border-collapse: collapse;
   margin: 0;
   overflow: hidden;
   table-layout: fixed;
   width: 100%;
 }
-.tiptap table td, .tiptap table th {
+.ProseMirror table td, .ProseMirror table th {
   border: 1px solid var(--border);
   box-sizing: border-box;
   min-width: 1em;
@@ -293,12 +293,12 @@
   position: relative;
   vertical-align: top;
 }
-.tiptap table th {
+.ProseMirror table th {
   background-color: var(--muted);
   font-weight: 600;
   text-align: left;
 }
-.tiptap table .column-resize-handle {
+.ProseMirror table .column-resize-handle {
   background-color: var(--primary);
   bottom: -2px;
   pointer-events: none;
@@ -307,7 +307,7 @@
   top: 0;
   width: 4px;
 }
-.tiptap mark {
+.ProseMirror mark {
   background-color: var(--primary);
   color: var(--primary-foreground);
   border-radius: 2px;
