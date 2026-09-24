@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useState, useMemo } from 'react'
 import { FileJson, Check, Pencil, AlertCircle } from 'lucide-react'
 import JsonView from '@uiw/react-json-view'
+import TextareaAutosize from 'react-textarea-autosize'
 import { cn } from '@/lib/utils'
 
 function JsonViewerNodeView({ node, updateAttributes, editor }: any) {
@@ -41,11 +42,12 @@ function JsonViewerNodeView({ node, updateAttributes, editor }: any) {
                                 <Check className="w-3 h-3" /> Save
                             </button>
                         </div>
-                        <textarea
+                        <TextareaAutosize
                             autoFocus
                             value={inputVal}
                             onChange={(e) => setInputVal(e.target.value)}
-                            className="w-full min-h-[200px] p-4 text-sm font-mono bg-transparent outline-none resize-y text-foreground"
+                            minRows={10}
+                            className="w-full p-4 text-sm font-mono bg-transparent outline-none resize-none text-foreground"
                             placeholder='{\n  "key": "value"\n}'
                         />
                     </div>

@@ -2,6 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useState } from 'react'
 import { Play, Loader2, ChevronDown, ChevronRight, Server } from 'lucide-react'
+import TextareaAutosize from 'react-textarea-autosize'
 import { cn } from '@/lib/utils'
 
 function ApiTesterNodeView({ node, updateAttributes, editor }: any) {
@@ -130,11 +131,12 @@ function ApiTesterNodeView({ node, updateAttributes, editor }: any) {
                             {(isEditable || headers !== '{}') && (
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Headers (JSON)</label>
-                                    <textarea 
+                                    <TextareaAutosize 
                                         value={headers}
                                         onChange={e => setHeaders(e.target.value)}
                                         readOnly={!isEditable}
-                                        className="w-full h-24 p-2.5 text-xs font-mono bg-muted/30 border border-border/50 rounded-lg outline-none focus:border-primary resize-y"
+                                        minRows={4}
+                                        className="w-full p-2.5 text-xs font-mono bg-muted/30 border border-border/50 rounded-lg outline-none focus:border-primary resize-none"
                                         placeholder='{\n  "Authorization": "Bearer token"\n}'
                                     />
                                 </div>
@@ -142,11 +144,12 @@ function ApiTesterNodeView({ node, updateAttributes, editor }: any) {
                             {(isEditable || body) && (method === 'POST' || method === 'PUT' || method === 'PATCH') && (
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Body</label>
-                                    <textarea 
+                                    <TextareaAutosize 
                                         value={body}
                                         onChange={e => setBody(e.target.value)}
                                         readOnly={!isEditable}
-                                        className="w-full h-24 p-2.5 text-xs font-mono bg-muted/30 border border-border/50 rounded-lg outline-none focus:border-primary resize-y"
+                                        minRows={4}
+                                        className="w-full p-2.5 text-xs font-mono bg-muted/30 border border-border/50 rounded-lg outline-none focus:border-primary resize-none"
                                         placeholder='{\n  "key": "value"\n}'
                                     />
                                 </div>
@@ -177,10 +180,11 @@ function ApiTesterNodeView({ node, updateAttributes, editor }: any) {
                                             Error: {error}
                                         </div>
                                     ) : (
-                                        <textarea
+                                        <TextareaAutosize
                                             readOnly
                                             value={response}
-                                            className="w-full h-48 max-h-[400px] p-4 text-sm font-mono bg-transparent text-emerald-400 outline-none resize-y"
+                                            maxRows={30}
+                                            className="w-full p-4 text-sm font-mono bg-transparent text-emerald-400 outline-none resize-none"
                                         />
                                     )}
                                 </div>

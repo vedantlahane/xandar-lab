@@ -2,6 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useState, useRef, useEffect } from 'react'
 import { Sparkles, Play, StopCircle, RefreshCw, X, Bot, User } from 'lucide-react'
+import TextareaAutosize from 'react-textarea-autosize'
 import { cn } from '@/lib/utils'
 
 function AIPromptNodeView({ node, updateAttributes, editor }: any) {
@@ -92,11 +93,11 @@ function AIPromptNodeView({ node, updateAttributes, editor }: any) {
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col gap-2">
                         {isEditable ? (
-                            <textarea
+                            <TextareaAutosize
                                 value={prompt}
                                 onChange={e => setPrompt(e.target.value)}
                                 placeholder="Ask AI to generate, rewrite, or explain..."
-                                className="w-full min-h-[40px] text-sm bg-transparent outline-none resize-y placeholder:text-muted-foreground/50 pt-1.5"
+                                className="w-full text-sm bg-transparent outline-none resize-none placeholder:text-muted-foreground/50 pt-1.5"
                                 onKeyDown={e => {
                                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                                         e.preventDefault()

@@ -2,6 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useState } from 'react'
 import { HelpCircle, Pencil, Check, Plus, Trash2, XCircle, CheckCircle } from 'lucide-react'
+import TextareaAutosize from 'react-textarea-autosize'
 import { cn } from '@/lib/utils'
 
 function QuizNodeView({ node, updateAttributes, editor }: any) {
@@ -73,12 +74,13 @@ function QuizNodeView({ node, updateAttributes, editor }: any) {
                         <div className="p-4 space-y-6">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Question</label>
-                                <textarea
+                                <TextareaAutosize
                                     autoFocus
                                     value={draftQuestion}
                                     onChange={(e) => setDraftQuestion(e.target.value)}
+                                    minRows={3}
                                     placeholder="e.g. Which design pattern is used by React hooks?"
-                                    className="w-full h-20 p-3 text-sm bg-muted/30 border border-border/50 rounded-lg outline-none focus:border-primary resize-none"
+                                    className="w-full p-3 text-sm bg-muted/30 border border-border/50 rounded-lg outline-none focus:border-primary resize-none"
                                 />
                             </div>
 

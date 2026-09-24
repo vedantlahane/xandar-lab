@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useState, useEffect, useRef } from 'react'
 import mermaid from 'mermaid'
 import { Pencil, Check } from 'lucide-react'
+import TextareaAutosize from 'react-textarea-autosize'
 
 // Initialize mermaid
 if (typeof document !== 'undefined') {
@@ -93,10 +94,11 @@ function MermaidNodeView({ node, updateAttributes, editor }: any) {
                                 <Check className="w-3 h-3" /> Save
                             </button>
                         </div>
-                        <textarea
+                        <TextareaAutosize
                             value={inputVal}
                             onChange={(e) => setInputVal(e.target.value)}
-                            className="w-full min-h-[150px] p-4 text-sm font-mono bg-transparent outline-none resize-y"
+                            minRows={5}
+                            className="w-full p-4 text-sm font-mono bg-transparent outline-none resize-none"
                             placeholder="graph TD&#10;  A-->B;"
                             autoFocus
                         />

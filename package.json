@@ -79,6 +79,7 @@
     "react": "19.2.3",
     "react-colorful": "^5.8.1",
     "react-dom": "19.2.3",
+    "react-textarea-autosize": "^8.5.9",
     "tailwind-merge": "^3.4.0",
     "tippy.js": "^6.3.7",
     "tiptap-extension-global-drag-handle": "^0.1.18",

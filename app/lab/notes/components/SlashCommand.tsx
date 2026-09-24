@@ -66,7 +66,7 @@ export const getSuggestionItems = ({ query }: { query: string }): CommandItem[] 
     const q = query.toLowerCase()
     return all.filter(item =>
         item.title.toLowerCase().includes(q) || item.group.toLowerCase().includes(q)
-    ).slice(0, 15)
+    )
 }
 
 // ─── CommandList component ───────────────────────────────────────────────────
