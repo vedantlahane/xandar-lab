@@ -88,6 +88,16 @@ export default function NoteEditorPage() {
     const [showTemplates, setShowTemplates] = useState(false)
     const [tocItems, setTocItems] = useState<TocEntry[]>([])
     const [isUploadingCover, setIsUploadingCover] = useState(false)
+    
+    // Theme for Emoji Picker
+    const [theme, setTheme] = useState<'light' | 'dark'>('light')
+    useEffect(() => {
+        const checkTheme = () => setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        checkTheme();
+        const observer = new MutationObserver(checkTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, [])
 
     const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
@@ -533,7 +543,7 @@ export default function NoteEditorPage() {
                                     </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="start">
-                                    <Picker data={data} onEmojiSelect={(emoji: any) => { setIcon(emoji.native); scheduleAutoSave({ icon: emoji.native }) }} theme="auto" />
+                                    <Picker data={data} onEmojiSelect={(emoji: any) => { setIcon(emoji.native); scheduleAutoSave({ icon: emoji.native }) }} theme={theme} />
                                 </PopoverContent>
                             </Popover>
                         ) : (

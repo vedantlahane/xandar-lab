@@ -47,8 +47,8 @@ import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { HexColorPicker } from "react-colorful"
-import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
 import { CalloutExtension } from './CalloutExtension'
+import { ChemicalExtension } from './ChemicalExtension'
 import { cn } from '@/lib/utils'
 
 const lowlight = createLowlight(common)
@@ -93,6 +93,18 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
     const [showFindBar, setShowFindBar] = useState(false)
     const [findQuery, setFindQuery] = useState('')
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
+    
+    // Theme for Emoji Picker
+    const [theme, setTheme] = useState<'light' | 'dark'>('light')
+    useEffect(() => {
+        const checkTheme = () => {
+            setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+        }
+        checkTheme()
+        const observer = new MutationObserver(checkTheme)
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => observer.disconnect()
+    }, [])
 
 
 
@@ -175,7 +187,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             SlashCommand.configure({
                 suggestion: { items: slashSuggestionItems, render: renderItems }
             }),
-            GlobalDragHandle.configure({ dragHandleWidth: 20, scrollTreshold: 100 }),
+            ChemicalExtension,
             FontFamily,
         ],
         content,
@@ -498,7 +510,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <PopoverTrigger asChild>
                             <button className="relative w-5 h-5 rounded-full overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" title="Custom Color" />
                         </PopoverTrigger>
-                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center">
+                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" onOpenAutoFocus={e => e.preventDefault()}>
                             <HexColorPicker
                                 color={editor.getAttributes('textStyle').color || '#000000'}
                                 onChange={color => editor.chain().focus().setColor(color).run()}
@@ -541,7 +553,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <PopoverTrigger asChild>
                             <button className="relative w-5 h-5 rounded-sm overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-yellow-300 via-green-300 to-blue-300" title="Custom Highlight" />
                         </PopoverTrigger>
-                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center">
+                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" onOpenAutoFocus={e => e.preventDefault()}>
                             <HexColorPicker
                                 color={editor.getAttributes('highlight').color || '#fef08a'}
                                 onChange={color => editor.chain().focus().toggleHighlight({ color }).run()}
@@ -712,7 +724,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             <Picker data={data} onEmojiSelect={(emoji: any) => {
                                 editor.chain().focus().insertContent(emoji.native).run()
                                 setShowEmojiPicker(false)
-                            }} theme="auto" />
+                            }} theme={theme} />
                         </PopoverContent>
                     </Popover>
                 </div>
@@ -758,7 +770,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             {/* ── Table Bubble Menu ─────────────────────────────────────── */}
             <BubbleMenu editor={editor} pluginKey="tableMenu" updateDelay={0}
                 shouldShow={({ editor }) => editor.isActive('table')}
-                className="flex flex-wrap items-center gap-0.5 p-1.5 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md max-w-sm">
+                className="flex flex-wrap items-center gap-0.5 p-1.5 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md max-w-sm z-50">
                 {/* Column ops */}
                 <button onClick={() => editor.chain().focus().addColumnBefore().run()} title="Add Column Left"
                     className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
@@ -815,7 +827,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             <span>Color</span>
                         </button>
                     </PopoverTrigger>
-                    <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center">
+                    <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" onOpenAutoFocus={e => e.preventDefault()}>
                         <HexColorPicker
                             color={editor.getAttributes('tableCell')?.backgroundColor || '#ffffff'}
                             onChange={color => editor.chain().focus().setCellAttribute('backgroundColor', color).run()}
@@ -849,7 +861,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     if (editor.isActive('table')) return false
                     return from !== to && !editor.isActive('image')
                 }}
-                className="flex items-center gap-0.5 p-1 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
+                className="flex items-center gap-0.5 p-1 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md z-50">
                 {[
                     { icon: Bold,          action: () => editor.chain().focus().toggleBold().run(),      active: 'bold',      title: 'Bold' },
                     { icon: Italic,        action: () => editor.chain().focus().toggleItalic().run(),    active: 'italic',    title: 'Italic' },

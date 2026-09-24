@@ -1,7 +1,7 @@
 // app/lab/notes/components/NoteEditorDrawer.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BaseDrawer } from "@/app/lab/components/shared/BaseDrawer";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,16 @@ export function NoteEditorDrawer({
     const [category, setCategory] = useState<NoteCategory>(note?.category || "Learning");
     const [notebookId, setNotebookId] = useState<string>(note?.notebookId || "");
     const [color, setColor] = useState<NoteColor>(note?.color || "default");
+    
+    // Theme for Emoji Picker
+    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    useEffect(() => {
+        const checkTheme = () => setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        checkTheme();
+        const observer = new MutationObserver(checkTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
     const [visibility, setVisibility] = useState<"private" | "public">(note?.visibility || "private");
     const [tags, setTags] = useState<string[]>(note?.tags || []);
     const [tagInput, setTagInput] = useState("");
@@ -198,7 +208,7 @@ export function NoteEditorDrawer({
                             </button>
                         </PopoverTrigger>
                         <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="start">
-                            <Picker data={data} onEmojiSelect={(emoji: any) => { setIcon(emoji.native) }} theme="auto" />
+                            <Picker data={data} onEmojiSelect={(emoji: any) => { setIcon(emoji.native) }} theme={theme} />
                         </PopoverContent>
                     </Popover>
                     <input
