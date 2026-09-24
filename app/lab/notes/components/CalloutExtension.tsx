@@ -1,4 +1,4 @@
-// Custom TipTap Callout Node
+// Custom TipTap Callout Node — supports full block content
 import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react'
 import { useState } from 'react'
@@ -28,6 +28,7 @@ function CalloutNodeView({ node, updateAttributes }: any) {
                     contentEditable={false}
                     onClick={() => setShowPicker(p => !p)}
                     className={cn('mt-0.5 shrink-0 transition-opacity hover:opacity-70', style.text)}
+                    title="Change callout type"
                 >
                     <Icon className="w-4 h-4" />
                 </button>
@@ -52,7 +53,8 @@ function CalloutNodeView({ node, updateAttributes }: any) {
                         })}
                     </div>
                 )}
-                <NodeViewContent className="flex-1 outline-none text-foreground/90 leading-relaxed min-h-[1.5em]" />
+                {/* NodeViewContent with block content support */}
+                <NodeViewContent className="flex-1 outline-none text-foreground/90 leading-relaxed min-h-[1.5em] prose prose-sm dark:prose-invert max-w-none" />
             </div>
         </NodeViewWrapper>
     )
@@ -61,7 +63,8 @@ function CalloutNodeView({ node, updateAttributes }: any) {
 export const CalloutExtension = Node.create({
     name: 'callout',
     group: 'block',
-    content: 'inline*',
+    // Changed from 'inline*' to 'block+' to support full block content
+    content: 'block+',
     defining: true,
 
     addAttributes() {
@@ -91,7 +94,7 @@ export const CalloutExtension = Node.create({
             'Mod-Shift-c': () => this.editor.commands.insertContent({
                 type: this.name,
                 attrs: { type: 'info' },
-                content: [{ type: 'text', text: '' }],
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }],
             }),
         }
     },

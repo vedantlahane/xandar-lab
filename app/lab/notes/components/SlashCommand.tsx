@@ -4,40 +4,61 @@ import { ReactRenderer } from '@tiptap/react'
 import tippy, { Instance as TippyInstance } from 'tippy.js'
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import {
-    Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare, Code,
-    Image as ImageIcon, Quote, Minus, Table as TableIcon,
-    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle, Video
+    Heading1, Heading2, Heading3, Heading4, List, ListOrdered, CheckSquare, Code,
+    Quote, Minus, Table as TableIcon, Video, Sigma,
+    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle,
 } from 'lucide-react'
 
-export const getSuggestionItems = ({ query }: { query: string }) => {
-    return [
-        { title: 'Heading 1',      icon: <Heading1 className="w-4 h-4" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run() },
-        { title: 'Heading 2',      icon: <Heading2 className="w-4 h-4" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run() },
-        { title: 'Heading 3',      icon: <Heading3 className="w-4 h-4" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run() },
-        { title: 'Bullet List',    icon: <List className="w-4 h-4" />,           command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleBulletList().run() },
-        { title: 'Numbered List',  icon: <ListOrdered className="w-4 h-4" />,   command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleOrderedList().run() },
-        { title: 'Task List',      icon: <CheckSquare className="w-4 h-4" />,   command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleTaskList().run() },
-        { title: 'Code Block',     icon: <Code className="w-4 h-4" />,          command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run() },
-        { title: 'Quote',          icon: <Quote className="w-4 h-4" />,         command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleBlockquote().run() },
-        { title: 'Divider',        icon: <Minus className="w-4 h-4" />,         command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
-        { title: 'Table',          icon: <TableIcon className="w-4 h-4" />,     command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
-        { title: 'Info Callout',   icon: <Info className="w-4 h-4 text-sky-500" />,     command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'info' },    content: [{ type: 'text', text: '' }] }).run() },
-        { title: 'Warning Callout',icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'warning' }, content: [{ type: 'text', text: '' }] }).run() },
-        { title: 'Tip Callout',    icon: <Lightbulb className="w-4 h-4 text-violet-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'tip' },     content: [{ type: 'text', text: '' }] }).run() },
-        { title: 'Danger Callout', icon: <XCircle className="w-4 h-4 text-red-500" />,      command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'danger' },  content: [{ type: 'text', text: '' }] }).run() },
-        { title: 'Success Callout',icon: <CheckCircle className="w-4 h-4 text-emerald-500" />, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'success' }, content: [{ type: 'text', text: '' }] }).run() },
-        { title: 'YouTube Video',  icon: <Video className="w-4 h-4" />, command: ({ editor, range }: any) => { 
-            const url = prompt('Enter YouTube URL:')
-            if (url) {
-                editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: url }).run() 
-            } else {
-                editor.chain().focus().deleteRange(range).run()
-            }
-        } },
-    ].filter(item => item.title.toLowerCase().includes(query.toLowerCase())).slice(0, 12)
+// ─── Grouped command items ───────────────────────────────────────────────────
+
+type CommandItem = {
+    title: string
+    shortcut?: string
+    icon: React.ReactNode
+    group: string
+    command: (props: { editor: any; range: any }) => void
 }
 
-// CommandList component
+export const getSuggestionItems = ({ query }: { query: string }): CommandItem[] => {
+    const all: CommandItem[] = [
+        // TEXT
+        { group: 'Text', title: 'Normal Text',     shortcut: '',          icon: <span className="font-medium text-xs">¶</span>,   command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setParagraph().run() },
+        { group: 'Text', title: 'Heading 1',        shortcut: '#',        icon: <Heading1 className="w-4 h-4" />,                   command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run() },
+        { group: 'Text', title: 'Heading 2',        shortcut: '##',       icon: <Heading2 className="w-4 h-4" />,                   command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run() },
+        { group: 'Text', title: 'Heading 3',        shortcut: '###',      icon: <Heading3 className="w-4 h-4" />,                   command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run() },
+        { group: 'Text', title: 'Heading 4',        shortcut: '####',     icon: <Heading4 className="w-4 h-4" />,                   command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 4 }).run() },
+        // LISTS
+        { group: 'Lists', title: 'Bullet List',    shortcut: '-',         icon: <List className="w-4 h-4" />,                       command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleBulletList().run() },
+        { group: 'Lists', title: 'Numbered List',  shortcut: '1.',        icon: <ListOrdered className="w-4 h-4" />,                command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleOrderedList().run() },
+        { group: 'Lists', title: 'Task List',      shortcut: '[]',        icon: <CheckSquare className="w-4 h-4" />,                command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleTaskList().run() },
+        // BLOCKS
+        { group: 'Blocks', title: 'Code Block',    shortcut: '```',       icon: <Code className="w-4 h-4" />,                       command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run() },
+        { group: 'Blocks', title: 'Quote',         shortcut: '>',         icon: <Quote className="w-4 h-4" />,                      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleBlockquote().run() },
+        { group: 'Blocks', title: 'Divider',       shortcut: '---',       icon: <Minus className="w-4 h-4" />,                      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
+        { group: 'Blocks', title: 'Table',         shortcut: '',          icon: <TableIcon className="w-4 h-4" />,                  command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+        { group: 'Blocks', title: 'Math / LaTeX',  shortcut: '$$',        icon: <Sigma className="w-4 h-4" />,                      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'inlineMath', attrs: { latex: '\\sum_{i=1}^{n} x_i' } }).run() },
+        // CALLOUTS
+        { group: 'Callouts', title: 'Info Callout',    icon: <Info className="w-4 h-4 text-sky-500" />,        command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'info' },    content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }] }).run() },
+        { group: 'Callouts', title: 'Warning Callout', icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'warning' }, content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }] }).run() },
+        { group: 'Callouts', title: 'Tip Callout',     icon: <Lightbulb className="w-4 h-4 text-violet-500" />,  command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'tip' },     content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }] }).run() },
+        { group: 'Callouts', title: 'Danger Callout',  icon: <XCircle className="w-4 h-4 text-red-500" />,       command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'danger' },  content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }] }).run() },
+        { group: 'Callouts', title: 'Success Callout', icon: <CheckCircle className="w-4 h-4 text-emerald-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'success' }, content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }] }).run() },
+        // MEDIA
+        { group: 'Media', title: 'YouTube Video', icon: <Video className="w-4 h-4" />, command: ({ editor, range }) => {
+            // Dispatch a custom event so BlockEditor can show its YouTube dialog
+            editor.chain().focus().deleteRange(range).run()
+            document.dispatchEvent(new CustomEvent('editor:insert-youtube', { detail: { editor } }))
+        }},
+    ]
+
+    const q = query.toLowerCase()
+    return all.filter(item =>
+        item.title.toLowerCase().includes(q) || item.group.toLowerCase().includes(q)
+    ).slice(0, 15)
+}
+
+// ─── CommandList component ───────────────────────────────────────────────────
+
 export const CommandList = forwardRef(({ items, command }: any, ref: any) => {
     const [selectedIndex, setSelectedIndex] = useState(0)
 
@@ -59,19 +80,40 @@ export const CommandList = forwardRef(({ items, command }: any, ref: any) => {
 
     if (!items.length) return null
 
+    // Group items
+    const groups: Record<string, CommandItem[]> = {}
+    items.forEach((item: CommandItem) => {
+        if (!groups[item.group]) groups[item.group] = []
+        groups[item.group].push(item)
+    })
+
+    let flatIndex = 0
+
     return (
-        <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-2xl backdrop-blur-md min-w-[220px]">
-            <div className="p-1 max-h-72 overflow-y-auto">
-                <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">Blocks</p>
-                {items.map((item: any, index: number) => (
-                    <button
-                        key={item.title}
-                        onClick={() => selectItem(index)}
-                        className={`flex items-center gap-2.5 w-full text-left px-2.5 py-2 rounded-lg text-sm transition-colors ${index === selectedIndex ? 'bg-primary/8 text-foreground' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}`}
-                    >
-                        <span className="w-5 h-5 flex items-center justify-center shrink-0">{item.icon}</span>
-                        <span className="font-medium">{item.title}</span>
-                    </button>
+        <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-2xl backdrop-blur-md min-w-[240px]">
+            <div className="p-1 max-h-80 overflow-y-auto">
+                {Object.entries(groups).map(([groupName, groupItems]) => (
+                    <div key={groupName}>
+                        <p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                            {groupName}
+                        </p>
+                        {groupItems.map((item: CommandItem) => {
+                            const currentIndex = flatIndex++
+                            return (
+                                <button
+                                    key={item.title}
+                                    onClick={() => selectItem(currentIndex)}
+                                    className={`flex items-center gap-2.5 w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors ${currentIndex === selectedIndex ? 'bg-primary/10 text-foreground' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}`}
+                                >
+                                    <span className="w-5 h-5 flex items-center justify-center shrink-0">{item.icon}</span>
+                                    <span className="font-medium flex-1">{item.title}</span>
+                                    {item.shortcut && (
+                                        <span className="text-[10px] font-mono text-muted-foreground/40 shrink-0">{item.shortcut}</span>
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
                 ))}
             </div>
         </div>
