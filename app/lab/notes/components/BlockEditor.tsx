@@ -148,6 +148,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             StarterKit.configure({
                 heading: { levels: [1, 2, 3, 4, 5, 6] },
                 codeBlock: false,
+                link: false,
+                underline: false,
             }),
             CodeBlockLowlight.extend({
                 addAttributes() {
