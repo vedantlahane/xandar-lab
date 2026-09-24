@@ -54,6 +54,8 @@ import { ApiTesterExtension } from './ApiTesterExtension'
 import { MediaEmbedExtension } from './MediaEmbedExtension'
 import { GithubExtension } from './GithubExtension'
 import { JsonViewerExtension } from './JsonViewerExtension'
+import { FlashcardExtension } from './FlashcardExtension'
+import { QuizExtension } from './QuizExtension'
 import { cn } from '@/lib/utils'
 
 const lowlight = createLowlight(common)
@@ -204,6 +206,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             MediaEmbedExtension,
             GithubExtension,
             JsonViewerExtension,
+            FlashcardExtension,
+            QuizExtension,
             FontFamily,
         ],
         content,

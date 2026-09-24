@@ -7,7 +7,7 @@ import {
     Heading1, Heading2, Heading3, Heading4, List, ListOrdered, CheckSquare, Code,
     Quote, Minus, Table as TableIcon, Video, Sigma,
     Info, AlertTriangle, Lightbulb, XCircle, CheckCircle, FlaskConical, Workflow, Server,
-    Github, Braces, Youtube
+    Github, Braces, Youtube, BookOpen, HelpCircle
 } from 'lucide-react'
 
 // ─── Grouped command items ───────────────────────────────────────────────────
@@ -44,6 +44,9 @@ export const getSuggestionItems = ({ query }: { query: string }): CommandItem[] 
         { group: 'Blocks', title: 'JSON Viewer',   shortcut: 'json',      icon: <Braces className="w-4 h-4 text-yellow-500" />,    command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'jsonViewer' }).run() },
         { group: 'Blocks', title: 'GitHub Embed',  shortcut: 'github',    icon: <Github className="w-4 h-4 text-zinc-500" />,      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'githubEmbed' }).run() },
         { group: 'Blocks', title: 'Media Embed',   shortcut: 'embed',     icon: <Youtube className="w-4 h-4 text-red-500" />,      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'mediaEmbed' }).run() },
+        // LEARNING
+        { group: 'Learning', title: 'Flashcard', shortcut: 'flashcard', icon: <BookOpen className="w-4 h-4 text-indigo-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'flashcard' }).run() },
+        { group: 'Learning', title: 'Quiz (MCQ)', shortcut: 'quiz', icon: <HelpCircle className="w-4 h-4 text-pink-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'quiz' }).run() },
         // CALLOUTS
         { group: 'Callouts', title: 'Info Callout',    icon: <Info className="w-4 h-4 text-sky-500" />,        command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'info' },    content: [{ type: 'paragraph' }] }).run() },
         { group: 'Callouts', title: 'Warning Callout', icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'warning' }, content: [{ type: 'paragraph' }] }).run() },

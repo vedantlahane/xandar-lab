@@ -337,6 +337,13 @@
     padding-right: 22px;
 }
 
+/* 3D Flip Utilities */
+.perspective-1000 { perspective: 1000px; }
+.transform-style-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-180 { transform: rotateY(180deg); }
+.balance-text { text-wrap: balance; }
+
 /* scrollbar-hide utility (replaces tailwind-scrollbar-hide plugin) */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
