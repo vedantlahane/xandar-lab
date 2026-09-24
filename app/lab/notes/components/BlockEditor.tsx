@@ -45,6 +45,8 @@ import {
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { HexColorPicker } from "react-colorful"
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
 import { CalloutExtension } from './CalloutExtension'
 import { cn } from '@/lib/utils'
@@ -385,8 +387,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
 
                 {/* Block Type */}
                 <div className="flex items-center pr-2 border-r border-border/50 shrink-0">
-                    <select
-                        className="h-8 pl-2 pr-6 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md text-foreground cursor-pointer outline-none font-medium appearance-none"
+                    <Select
                         value={
                             editor.isActive('heading', { level: 1 }) ? 'h1' :
                             editor.isActive('heading', { level: 2 }) ? 'h2' :
@@ -399,8 +400,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             editor.isActive('taskList') ? 'task' :
                             'p'
                         }
-                        onChange={(e) => {
-                            const v = e.target.value
+                        onValueChange={(v) => {
                             if (v === 'p') editor.chain().focus().setParagraph().run()
                             else if (v === 'h1') editor.chain().focus().toggleHeading({ level: 1 }).run()
                             else if (v === 'h2') editor.chain().focus().toggleHeading({ level: 2 }).run()
@@ -413,36 +413,44 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             else if (v === 'task') editor.chain().focus().toggleTaskList().run()
                         }}
                     >
-                        <option value="p">Normal</option>
-                        <option value="h1">Heading 1</option>
-                        <option value="h2">Heading 2</option>
-                        <option value="h3">Heading 3</option>
-                        <option value="h4">Heading 4</option>
-                        <option value="h5">Heading 5</option>
-                        <option value="h6">Heading 6</option>
-                        <option value="bullet">• Bullet</option>
-                        <option value="ordered">1. Numbered</option>
-                        <option value="task">☐ Task</option>
-                    </select>
+                        <SelectTrigger className="h-8 text-xs border-border/50 bg-background hover:bg-muted/50 w-[110px]">
+                            <SelectValue placeholder="Normal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="p">Normal</SelectItem>
+                            <SelectItem value="h1">Heading 1</SelectItem>
+                            <SelectItem value="h2">Heading 2</SelectItem>
+                            <SelectItem value="h3">Heading 3</SelectItem>
+                            <SelectItem value="h4">Heading 4</SelectItem>
+                            <SelectItem value="h5">Heading 5</SelectItem>
+                            <SelectItem value="h6">Heading 6</SelectItem>
+                            <SelectItem value="bullet">• Bullet</SelectItem>
+                            <SelectItem value="ordered">1. Numbered</SelectItem>
+                            <SelectItem value="task">☐ Task</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Font Family */}
                 <div className="flex items-center pr-2 border-r border-border/50 shrink-0">
-                    <select
-                        className="h-8 pl-2 pr-6 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md text-foreground cursor-pointer outline-none font-medium appearance-none"
+                    <Select
                         value={editor.getAttributes('textStyle').fontFamily || 'Inter'}
-                        onChange={(e) => {
-                            const v = e.target.value
+                        onValueChange={(v) => {
                             if (v === 'Inter') editor.chain().focus().unsetFontFamily().run()
                             else editor.chain().focus().setFontFamily(v).run()
                         }}
                     >
-                        <option value="Inter">Default</option>
-                        <option value="serif">Serif</option>
-                        <option value="monospace">Mono</option>
-                        <option value="Georgia, serif">Georgia</option>
-                        <option value="system-ui">System</option>
-                    </select>
+                        <SelectTrigger className="h-8 text-xs border-border/50 bg-background hover:bg-muted/50 w-[90px]">
+                            <SelectValue placeholder="Default" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Inter">Default</SelectItem>
+                            <SelectItem value="serif">Serif</SelectItem>
+                            <SelectItem value="monospace">Mono</SelectItem>
+                            <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                            <SelectItem value="system-ui">System</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Font Size S/M/L/XL */}
@@ -490,14 +498,22 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <PopoverTrigger asChild>
                             <button className="relative w-5 h-5 rounded-full overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" title="Custom Color" />
                         </PopoverTrigger>
-                        <PopoverContent className="p-2 w-auto flex gap-2" side="bottom" align="center">
-                            <input type="text" placeholder="#000000"
-                                onChange={e => {
-                                    if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                                        editor.chain().focus().setColor(e.target.value).run()
-                                    }
-                                }}
-                                className="w-24 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
+                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center">
+                            <HexColorPicker
+                                color={editor.getAttributes('textStyle').color || '#000000'}
+                                onChange={color => editor.chain().focus().setColor(color).run()}
+                            />
+                            <div className="flex gap-2 items-center">
+                                <span className="text-xs font-medium text-muted-foreground w-8">Hex</span>
+                                <input type="text" placeholder="#000000"
+                                    value={editor.getAttributes('textStyle').color || ''}
+                                    onChange={e => {
+                                        if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                                            editor.chain().focus().setColor(e.target.value).run()
+                                        }
+                                    }}
+                                    className="flex-1 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
+                            </div>
                         </PopoverContent>
                     </Popover>
                     <button
@@ -525,14 +541,22 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <PopoverTrigger asChild>
                             <button className="relative w-5 h-5 rounded-sm overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-yellow-300 via-green-300 to-blue-300" title="Custom Highlight" />
                         </PopoverTrigger>
-                        <PopoverContent className="p-2 w-auto flex gap-2" side="bottom" align="center">
-                            <input type="text" placeholder="#fef08a"
-                                onChange={e => {
-                                    if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                                        editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
-                                    }
-                                }}
-                                className="w-24 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
+                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center">
+                            <HexColorPicker
+                                color={editor.getAttributes('highlight').color || '#fef08a'}
+                                onChange={color => editor.chain().focus().toggleHighlight({ color }).run()}
+                            />
+                            <div className="flex gap-2 items-center">
+                                <span className="text-xs font-medium text-muted-foreground w-8">Hex</span>
+                                <input type="text" placeholder="#fef08a"
+                                    value={editor.getAttributes('highlight').color || ''}
+                                    onChange={e => {
+                                        if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                                            editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
+                                        }
+                                    }}
+                                    className="flex-1 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
+                            </div>
                         </PopoverContent>
                     </Popover>
                     <button onClick={() => editor.chain().focus().unsetHighlight().run()} title="Remove Highlight"
@@ -784,13 +808,30 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 {/* Cell color */}
-                <label className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer" title="Cell Background">
-                    <span className="w-3 h-3 rounded-sm bg-gradient-to-br from-sky-300 via-emerald-300 to-amber-300 border border-black/10 shrink-0" />
-                    <span>Color</span>
-                    <input type="color" value="#ffffff"
-                        onChange={e => editor.chain().focus().setCellAttribute('backgroundColor', e.target.value).run()}
-                        className="w-0 h-0 opacity-0 absolute" />
-                </label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <button className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer" title="Cell Background">
+                            <span className="w-3 h-3 rounded-sm bg-gradient-to-br from-sky-300 via-emerald-300 to-amber-300 border border-black/10 shrink-0" />
+                            <span>Color</span>
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center">
+                        <HexColorPicker
+                            color={editor.getAttributes('tableCell')?.backgroundColor || '#ffffff'}
+                            onChange={color => editor.chain().focus().setCellAttribute('backgroundColor', color).run()}
+                        />
+                        <div className="flex gap-2 items-center">
+                            <span className="text-xs font-medium text-muted-foreground w-8">Hex</span>
+                            <input type="text" placeholder="#ffffff"
+                                onChange={e => {
+                                    if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                                        editor.chain().focus().setCellAttribute('backgroundColor', e.target.value).run()
+                                    }
+                                }}
+                                className="flex-1 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
+                        </div>
+                    </PopoverContent>
+                </Popover>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 <button onClick={() => editor.chain().focus().fixTables().run()} title="Fix Tables"
                     className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
