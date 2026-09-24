@@ -356,8 +356,28 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
             </div>
 
+            {/* Table Control Menu */}
+            <BubbleMenu editor={editor} pluginKey="tableMenu" updateDelay={0} 
+                shouldShow={({ editor }) => editor.isActive('table')}
+                className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md mb-2">
+                <button onClick={() => editor.chain().focus().addColumnBefore().run()} title="Add Column Before" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Col Left</button>
+                <button onClick={() => editor.chain().focus().addColumnAfter().run()} title="Add Column After" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Col Right</button>
+                <button onClick={() => editor.chain().focus().deleteColumn().run()} title="Delete Column" className="px-2 py-1 text-[10px] hover:bg-red-500/10 text-red-500 rounded font-medium whitespace-nowrap">Del Col</button>
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <button onClick={() => editor.chain().focus().addRowBefore().run()} title="Add Row Before" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Row Above</button>
+                <button onClick={() => editor.chain().focus().addRowAfter().run()} title="Add Row After" className="px-2 py-1 text-[10px] hover:bg-muted/50 rounded font-medium whitespace-nowrap text-muted-foreground hover:text-foreground">Add Row Below</button>
+                <button onClick={() => editor.chain().focus().deleteRow().run()} title="Delete Row" className="px-2 py-1 text-[10px] hover:bg-red-500/10 text-red-500 rounded font-medium whitespace-nowrap">Del Row</button>
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <button onClick={() => editor.chain().focus().deleteTable().run()} title="Delete Table" className="px-2 py-1 text-[10px] hover:bg-red-500/20 text-red-600 rounded font-bold whitespace-nowrap">Del Table</button>
+            </BubbleMenu>
+
             {/* Contextual Hover Menu (Notion Style) */}
-            <BubbleMenu editor={editor} className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
+            <BubbleMenu editor={editor} pluginKey="textMenu" 
+                shouldShow={({ editor, view, state, from, to }) => {
+                    if (editor.isActive('table')) return false; // Prevent showing over table
+                    return from !== to && !editor.isActive('image');
+                }}
+                className="flex items-center gap-0.5 p-1 bg-background border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
                 {[
                     { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: 'bold', title: 'Bold' },
                     { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: 'italic', title: 'Italic' },
