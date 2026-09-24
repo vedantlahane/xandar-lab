@@ -6,7 +6,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import {
     Heading1, Heading2, Heading3, Heading4, List, ListOrdered, CheckSquare, Code,
     Quote, Minus, Table as TableIcon, Video, Sigma,
-    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle,
+    Info, AlertTriangle, Lightbulb, XCircle, CheckCircle, FlaskConical
 } from 'lucide-react'
 
 // ─── Grouped command items ───────────────────────────────────────────────────
@@ -37,6 +37,7 @@ export const getSuggestionItems = ({ query }: { query: string }): CommandItem[] 
         { group: 'Blocks', title: 'Divider',       shortcut: '---',       icon: <Minus className="w-4 h-4" />,                      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
         { group: 'Blocks', title: 'Table',         shortcut: '',          icon: <TableIcon className="w-4 h-4" />,                  command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
         { group: 'Blocks', title: 'Math / LaTeX',  shortcut: '$$',        icon: <Sigma className="w-4 h-4" />,                      command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'inlineMath', attrs: { latex: '\\sum_{i=1}^{n} x_i' } }).run() },
+        { group: 'Blocks', title: 'Chemical',      shortcut: 'chem',      icon: <FlaskConical className="w-4 h-4 text-emerald-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'chemical', attrs: { smiles: 'C1=CC=C(C=C1)O' } }).run() },
         // CALLOUTS
         { group: 'Callouts', title: 'Info Callout',    icon: <Info className="w-4 h-4 text-sky-500" />,        command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'info' },    content: [{ type: 'paragraph' }] }).run() },
         { group: 'Callouts', title: 'Warning Callout', icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'callout', attrs: { type: 'warning' }, content: [{ type: 'paragraph' }] }).run() },

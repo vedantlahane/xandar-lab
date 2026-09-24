@@ -41,7 +41,7 @@ import {
     Table as TableIcon, Eraser, Sigma, SquareTerminal, Ban, Minus,
     Youtube as YoutubeIcon, Info, Maximize2, Minimize2,
     Columns, Rows, Trash2, FlipVertical, FlipHorizontal, Merge, Split,
-    Search, X as XIcon, ChevronUp, ChevronDown,
+    Search, X as XIcon, ChevronUp, ChevronDown, FlaskConical
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -510,10 +510,13 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <PopoverTrigger asChild>
                             <button className="relative w-5 h-5 rounded-full overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" title="Custom Color" />
                         </PopoverTrigger>
-                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" onOpenAutoFocus={e => e.preventDefault()}>
+                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" 
+                            onOpenAutoFocus={e => e.preventDefault()}
+                            onCloseAutoFocus={e => e.preventDefault()}
+                        >
                             <HexColorPicker
                                 color={editor.getAttributes('textStyle').color || '#000000'}
-                                onChange={color => editor.chain().focus().setColor(color).run()}
+                                onChange={color => editor.chain().setColor(color).run()}
                             />
                             <div className="flex gap-2 items-center">
                                 <span className="text-xs font-medium text-muted-foreground w-8">Hex</span>
@@ -521,7 +524,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                                     value={editor.getAttributes('textStyle').color || ''}
                                     onChange={e => {
                                         if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                                            editor.chain().focus().setColor(e.target.value).run()
+                                            editor.chain().setColor(e.target.value).run()
                                         }
                                     }}
                                     className="flex-1 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
@@ -553,10 +556,13 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <PopoverTrigger asChild>
                             <button className="relative w-5 h-5 rounded-sm overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-yellow-300 via-green-300 to-blue-300" title="Custom Highlight" />
                         </PopoverTrigger>
-                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" onOpenAutoFocus={e => e.preventDefault()}>
+                        <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" 
+                            onOpenAutoFocus={e => e.preventDefault()}
+                            onCloseAutoFocus={e => e.preventDefault()}
+                        >
                             <HexColorPicker
                                 color={editor.getAttributes('highlight').color || '#fef08a'}
-                                onChange={color => editor.chain().focus().toggleHighlight({ color }).run()}
+                                onChange={color => editor.chain().toggleHighlight({ color }).run()}
                             />
                             <div className="flex gap-2 items-center">
                                 <span className="text-xs font-medium text-muted-foreground w-8">Hex</span>
@@ -564,7 +570,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                                     value={editor.getAttributes('highlight').color || ''}
                                     onChange={e => {
                                         if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                                            editor.chain().focus().toggleHighlight({ color: e.target.value }).run()
+                                            editor.chain().toggleHighlight({ color: e.target.value }).run()
                                         }
                                     }}
                                     className="flex-1 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />
@@ -647,6 +653,12 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <Sigma className="w-4 h-4" />
                     </button>
 
+                    {/* Chemical */}
+                    <button onClick={() => { editor.chain().focus().insertContent({ type: 'chemical', attrs: { smiles: 'C1=CC=C(C=C1)O' } }).run() }} title="Chemical Diagram"
+                        className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                        <FlaskConical className="w-4 h-4" />
+                    </button>
+
                     {/* Table */}
                     <button onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert Table"
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
@@ -720,7 +732,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                                 <Smile className="w-4 h-4" />
                             </button>
                         </PopoverTrigger>
-                        <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="end">
+                        <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="center" sideOffset={8}>
                             <Picker data={data} onEmojiSelect={(emoji: any) => {
                                 editor.chain().focus().insertContent(emoji.native).run()
                                 setShowEmojiPicker(false)
@@ -827,17 +839,20 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             <span>Color</span>
                         </button>
                     </PopoverTrigger>
-                    <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" onOpenAutoFocus={e => e.preventDefault()}>
+                    <PopoverContent className="p-3 w-auto flex flex-col gap-3" side="bottom" align="center" 
+                        onOpenAutoFocus={e => e.preventDefault()}
+                        onCloseAutoFocus={e => e.preventDefault()}
+                    >
                         <HexColorPicker
                             color={editor.getAttributes('tableCell')?.backgroundColor || '#ffffff'}
-                            onChange={color => editor.chain().focus().setCellAttribute('backgroundColor', color).run()}
+                            onChange={color => editor.chain().setCellAttribute('backgroundColor', color).run()}
                         />
                         <div className="flex gap-2 items-center">
                             <span className="text-xs font-medium text-muted-foreground w-8">Hex</span>
                             <input type="text" placeholder="#ffffff"
                                 onChange={e => {
                                     if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                                        editor.chain().focus().setCellAttribute('backgroundColor', e.target.value).run()
+                                        editor.chain().setCellAttribute('backgroundColor', e.target.value).run()
                                     }
                                 }}
                                 className="flex-1 h-8 px-2 text-sm border border-border rounded-md outline-none focus:border-primary" />

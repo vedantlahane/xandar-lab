@@ -207,7 +207,7 @@ export function NoteEditorDrawer({
                                 {icon || '😀'}
                             </button>
                         </PopoverTrigger>
-                        <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="start">
+                        <PopoverContent className="p-0 border-none shadow-none w-auto" side="bottom" align="center" sideOffset={8}>
                             <Picker data={data} onEmojiSelect={(emoji: any) => { setIcon(emoji.native) }} theme={theme} />
                         </PopoverContent>
                     </Popover>
