@@ -330,9 +330,9 @@
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Editor Focus Mode */
-[data-focus-mode] .ProseMirror > * { opacity: 0.3; transition: opacity 0.2s; }
-[data-focus-mode] .ProseMirror > *:focus-within,
-[data-focus-mode] .ProseMirror > *.ProseMirror-selectednode { opacity: 1; }
+[data-block-editor="focus-mode"] .ProseMirror > * { opacity: 0.3; transition: opacity 0.2s; }
+[data-block-editor="focus-mode"] .ProseMirror > *:focus-within,
+[data-block-editor="focus-mode"] .ProseMirror > *.ProseMirror-selectednode { opacity: 1; }
 
 /* Find highlight */
 .search-result { background-color: oklch(0.9 0.16 95 / 0.6); border-radius: 2px; }

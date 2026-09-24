@@ -33,15 +33,15 @@ import Superscript from '@tiptap/extension-superscript'
 import Youtube from '@tiptap/extension-youtube'
 import FontFamily from '@tiptap/extension-font-family'
 import { common, createLowlight } from 'lowlight'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import {
     Image as ImageIcon, Loader2, Bold, Italic, Strikethrough, Link as LinkIcon,
     Underline as UnderlineIcon, Highlighter, AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote,
     Superscript as SuperscriptIcon, Subscript as SubscriptIcon, Code, Undo, Redo, Smile,
     Table as TableIcon, Eraser, Sigma, SquareTerminal, Ban, Minus,
     Youtube as YoutubeIcon, Info, Maximize2, Minimize2,
-    PlusSquare, Columns, Rows, Trash2, FlipVertical, FlipHorizontal, Merge, Split,
-    Search, X as XIcon,
+    Columns, Rows, Trash2, FlipVertical, FlipHorizontal, Merge, Split,
+    Search, X as XIcon, ChevronUp, ChevronDown, ColumnsIcon, RowsIcon,
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
@@ -74,14 +74,6 @@ const HIGHLIGHT_COLORS = [
     { color: '#fed7aa', label: 'Orange' },
 ]
 
-const CALLOUT_TYPES = [
-    { type: 'info',    label: 'Info',    icon: Info,          color: 'text-sky-500' },
-    { type: 'warning', label: 'Warning', icon: Info,          color: 'text-amber-500' },
-    { type: 'tip',     label: 'Tip',     icon: Info,          color: 'text-violet-500' },
-    { type: 'danger',  label: 'Danger',  icon: Info,          color: 'text-red-500' },
-    { type: 'success', label: 'Success', icon: Info,          color: 'text-emerald-500' },
-] as const
-
 export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }: BlockEditorProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const linkContainerRef = useRef<HTMLDivElement>(null)
@@ -97,8 +89,9 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
     const [isFocusMode, setIsFocusMode] = useState(false)
     const [showFindBar, setShowFindBar] = useState(false)
     const [findQuery, setFindQuery] = useState('')
+    const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
 
-    // Close link popover when clicking outside
+    // ─── Close link popover on outside click ─────────────────────────────
     useEffect(() => {
         if (!showLinkInput) return
         const handler = (e: MouseEvent) => {
@@ -110,7 +103,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
         return () => document.removeEventListener('mousedown', handler)
     }, [showLinkInput])
 
-    // Close youtube popover when clicking outside
+    // ─── Close youtube popover on outside click ──────────────────────────
     useEffect(() => {
         if (!showYoutubeInput) return
         const handler = (e: MouseEvent) => {
@@ -122,7 +115,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
         return () => document.removeEventListener('mousedown', handler)
     }, [showYoutubeInput])
 
-    // Listen for YouTube insert event from slash commands
+    // ─── YouTube custom event from slash commands ────────────────────────
     useEffect(() => {
         const handler = () => {
             setShowYoutubeInput(true)
@@ -212,8 +205,93 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             attributes: {
                 class: 'prose prose-sm dark:prose-invert focus:outline-none max-w-none text-foreground/90 leading-relaxed',
             },
+            // ─── Image drag & drop ───────────────────────────────────────
+            handleDrop: (view, event, _slice, moved) => {
+                if (!moved && event.dataTransfer?.files?.length) {
+                    const file = event.dataTransfer.files[0]
+                    if (file && file.type.startsWith('image/')) {
+                        event.preventDefault()
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        setIsUploading(true)
+                        fetch('/api/upload', { method: 'POST', body: formData })
+                            .then(res => res.ok ? res.json() : null)
+                            .then(data => {
+                                if (data?.url) {
+                                    const { schema } = view.state
+                                    const node = schema.nodes.image?.create({ src: data.url })
+                                    if (node) {
+                                        const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })
+                                        if (pos) {
+                                            const tr = view.state.tr.insert(pos.pos, node)
+                                            view.dispatch(tr)
+                                        }
+                                    }
+                                }
+                            })
+                            .finally(() => setIsUploading(false))
+                        return true
+                    }
+                }
+                return false
+            },
+            handlePaste: (view, event) => {
+                const items = event.clipboardData?.items
+                if (items) {
+                    for (let i = 0; i < items.length; i++) {
+                        if (items[i].type.startsWith('image/')) {
+                            const file = items[i].getAsFile()
+                            if (file) {
+                                event.preventDefault()
+                                const formData = new FormData()
+                                formData.append('file', file)
+                                setIsUploading(true)
+                                fetch('/api/upload', { method: 'POST', body: formData })
+                                    .then(res => res.ok ? res.json() : null)
+                                    .then(data => {
+                                        if (data?.url) {
+                                            const { tr, schema } = view.state
+                                            const node = schema.nodes.image?.create({ src: data.url })
+                                            if (node) {
+                                                view.dispatch(tr.replaceSelectionWith(node))
+                                            }
+                                        }
+                                    })
+                                    .finally(() => setIsUploading(false))
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false
+            },
         },
     })
+
+    // ─── Keyboard shortcuts (Ctrl+K link, Ctrl+F find) ───────────────────
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault()
+                if (editor) {
+                    if (editor.isActive('link')) {
+                        editor.chain().focus().unsetLink().run()
+                    } else {
+                        setLinkUrl(editor.getAttributes('link').href || '')
+                        setShowLinkInput(true)
+                    }
+                }
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault()
+                setShowFindBar(v => !v)
+                setFindQuery('')
+                setCurrentMatchIndex(0)
+            }
+        }
+        document.addEventListener('keydown', handler)
+        return () => document.removeEventListener('keydown', handler)
+    }, [editor])
 
     useEffect(() => {
         if (editor && content !== editor.getHTML() && !editor.isDestroyed) {
@@ -248,23 +326,49 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
         setYoutubeUrl('')
     }
 
+    // ─── Find: compute matches from ProseMirror doc ──────────────────────
+    const findMatches = useMemo(() => {
+        if (!editor || !findQuery || findQuery.length < 1) return []
+        const matches: { from: number; to: number }[] = []
+        const q = findQuery.toLowerCase()
+        editor.state.doc.descendants((node, pos) => {
+            if (node.isText && node.text) {
+                const text = node.text.toLowerCase()
+                let idx = 0
+                while ((idx = text.indexOf(q, idx)) !== -1) {
+                    matches.push({ from: pos + idx, to: pos + idx + q.length })
+                    idx += q.length
+                }
+            }
+        })
+        return matches
+    }, [editor, findQuery, editor?.state.doc])
+
+    const goToMatch = useCallback((index: number) => {
+        if (!editor || findMatches.length === 0) return
+        const wrappedIndex = ((index % findMatches.length) + findMatches.length) % findMatches.length
+        setCurrentMatchIndex(wrappedIndex)
+        const match = findMatches[wrappedIndex]
+        editor.chain().focus().setTextSelection(match).scrollIntoView().run()
+    }, [editor, findMatches])
+
     const wordCount = editor ? editor.storage.characterCount?.words() ?? 0 : 0
     const charCount = editor ? editor.storage.characterCount?.characters() ?? 0 : 0
 
     if (!editor) return null
 
-    // Font size: only highlight if there's actual content and a known fontSize
+    // Font size active state
     const hasCursor = !editor.state.selection.empty || editor.state.doc.textContent.length > 0
     const currentFontSize = hasCursor ? (editor.getAttributes('textStyle')?.fontSize ?? null) : undefined
 
-    // Alignment: 'left' is default so isActive returns false — derive it
+    // Alignment active state — 'left' is default so isActive returns false
     const isAlignCenter  = editor.isActive({ textAlign: 'center' })
     const isAlignRight   = editor.isActive({ textAlign: 'right' })
     const isAlignJustify = editor.isActive({ textAlign: 'justify' })
     const isAlignLeft    = !isAlignCenter && !isAlignRight && !isAlignJustify
 
     return (
-        <div className={cn('w-full relative flex flex-col', isFocusMode && 'focus-mode')} data-block-editor={isFocusMode ? 'focus-mode' : undefined}>
+        <div className={cn('w-full relative flex flex-col')} data-block-editor={isFocusMode ? 'focus-mode' : undefined}>
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
 
             {isUploading && (
@@ -273,40 +377,8 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
             )}
 
-            {/* ── Find Bar ──────────────────────────────────────────────── */}
-            {showFindBar && (
-                <div className="sticky top-0 z-30 flex items-center gap-2 p-2 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg mb-2">
-                    <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <input
-                        autoFocus
-                        type="text"
-                        placeholder="Find in document..."
-                        value={findQuery}
-                        onChange={e => setFindQuery(e.target.value)}
-                        onKeyDown={e => {
-                            if (e.key === 'Escape') { setShowFindBar(false); setFindQuery('') }
-                            if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault() }
-                        }}
-                        className="flex-1 text-sm bg-transparent outline-none text-foreground placeholder:text-muted-foreground/40"
-                    />
-                    {findQuery && (
-                        <span className="text-xs text-muted-foreground">
-                            {(() => {
-                                const text = editor.getText()
-                                const matches = Array.from(text.matchAll(new RegExp(findQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')))
-                                return matches.length > 0 ? `${matches.length} match${matches.length > 1 ? 'es' : ''}` : 'No matches'
-                            })()}
-                        </span>
-                    )}
-                    <button onClick={() => { setShowFindBar(false); setFindQuery('') }}
-                        className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
-                        <XIcon className="w-3.5 h-3.5" />
-                    </button>
-                </div>
-            )}
-
             {/* ── Main Toolbar ──────────────────────────────────────────── */}
-            <div className="sticky top-0 z-20 flex items-center p-1.5 mb-4 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg overflow-x-auto scrollbar-hide flex-nowrap gap-x-0.5 shrink-0">
+            <div className="sticky top-0 z-20 flex items-center p-1.5 mb-4 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap gap-y-1 gap-x-0.5 shrink-0">
 
                 {/* History & Utilities */}
                 <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
@@ -322,7 +394,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
                         <Eraser className="w-4 h-4" />
                     </button>
-                    <button onClick={() => { setShowFindBar(v => !v); setFindQuery('') }} title="Find (Ctrl+F)"
+                    <button onClick={() => { setShowFindBar(v => !v); setFindQuery(''); setCurrentMatchIndex(0) }} title="Find (Ctrl+F)"
                         className={cn('p-1.5 rounded-md transition-colors', showFindBar ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>
                         <Search className="w-4 h-4" />
                     </button>
@@ -389,12 +461,12 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <option value="Inter">Default</option>
                         <option value="serif">Serif</option>
                         <option value="monospace">Mono</option>
-                        <option value="'Georgia', serif">Georgia</option>
+                        <option value="Georgia, serif">Georgia</option>
                         <option value="system-ui">System</option>
                     </select>
                 </div>
 
-                {/* Font Size S/M/L */}
+                {/* Font Size S/M/L/XL */}
                 <div className="flex items-center pr-2 border-r border-border/50 shrink-0">
                     <button onClick={() => editor.chain().focus().setFontSize('0.875em').run()} title="Small"
                         className={cn('px-2 py-1 rounded text-[10px] font-medium transition-colors', currentFontSize === '0.875em' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}>S</button>
@@ -493,8 +565,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             <LinkIcon className="w-4 h-4" />
                         </button>
                         {showLinkInput && (
-                            <div className="absolute top-full mt-2 z-50 p-2 bg-popover text-popover-foreground border border-border shadow-xl rounded-lg flex gap-2 w-72"
-                                style={{ left: 'min(0px, calc(100vw - 300px))' }}>
+                            <div className="absolute top-full mt-2 z-50 p-2 bg-popover text-popover-foreground border border-border shadow-xl rounded-lg flex gap-2 w-72 right-0">
                                 <input autoFocus type="url" placeholder="https://"
                                     value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
                                     onKeyDown={e => {
@@ -523,7 +594,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         <Minus className="w-4 h-4" />
                     </button>
 
-                    {/* Math — inserts inline math since extension only has inlineMath node */}
+                    {/* Math — inserts inline math */}
                     <button onClick={() => {
                         editor.chain().focus().insertContent({
                             type: 'inlineMath',
@@ -549,14 +620,14 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         {showCalloutMenu && (
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setShowCalloutMenu(false)} />
-                                <div className="absolute top-full left-0 mt-2 z-50 p-1 bg-popover border border-border shadow-xl rounded-lg min-w-[160px]">
+                                <div className="absolute top-full right-0 mt-2 z-50 p-1 bg-popover border border-border shadow-xl rounded-lg min-w-[160px]">
                                     {(['info', 'warning', 'tip', 'danger', 'success'] as const).map(type => (
                                         <button key={type} type="button"
                                             onClick={() => {
                                                 editor.chain().focus().insertContent({
                                                     type: 'callout',
                                                     attrs: { type },
-                                                    content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }] }]
+                                                    content: [{ type: 'paragraph' }]
                                                 }).run()
                                                 setShowCalloutMenu(false)
                                             }}
@@ -610,9 +681,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                         </button>
                         {showEmojiPicker && (
                             <>
-                                {/* Backdrop */}
                                 <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-                                {/* Picker — no overflow-hidden so skin tone panel renders correctly */}
                                 <div className="absolute top-full right-0 mt-2 z-50 shadow-2xl rounded-xl border border-border/50">
                                     <Picker data={data} onEmojiSelect={(emoji: any) => {
                                         editor.chain().focus().insertContent(emoji.native).run()
@@ -625,45 +694,82 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 </div>
             </div>
 
+            {/* ── Find Bar (below toolbar, not overlapping) ─────────────── */}
+            {showFindBar && (
+                <div className="flex items-center gap-2 p-2 mb-3 bg-background/95 backdrop-blur-md border border-border/50 shadow-sm rounded-lg">
+                    <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <input
+                        autoFocus
+                        type="text"
+                        placeholder="Find in document..."
+                        value={findQuery}
+                        onChange={e => { setFindQuery(e.target.value); setCurrentMatchIndex(0) }}
+                        onKeyDown={e => {
+                            if (e.key === 'Escape') { setShowFindBar(false); setFindQuery('') }
+                            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); goToMatch(currentMatchIndex + 1) }
+                            if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); goToMatch(currentMatchIndex - 1) }
+                        }}
+                        className="flex-1 text-sm bg-transparent outline-none text-foreground placeholder:text-muted-foreground/40 min-w-0"
+                    />
+                    {findQuery && (
+                        <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                            {findMatches.length > 0 ? `${currentMatchIndex + 1}/${findMatches.length}` : 'No matches'}
+                        </span>
+                    )}
+                    <button onClick={() => goToMatch(currentMatchIndex - 1)} disabled={findMatches.length === 0} title="Previous (Shift+Enter)"
+                        className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
+                        <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => goToMatch(currentMatchIndex + 1)} disabled={findMatches.length === 0} title="Next (Enter)"
+                        className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => { setShowFindBar(false); setFindQuery('') }}
+                        className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
+                        <XIcon className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            )}
+
             {/* ── Table Bubble Menu ─────────────────────────────────────── */}
             <BubbleMenu editor={editor} pluginKey="tableMenu" updateDelay={0}
                 shouldShow={({ editor }) => editor.isActive('table')}
                 className="flex items-center gap-0.5 p-1 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
                 {/* Column ops */}
                 <button onClick={() => editor.chain().focus().addColumnBefore().run()} title="Add Column Left"
-                    className="p-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                    <Columns className="w-3.5 h-3.5" /><span className="hidden sm:inline">+Col L</span>
+                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
+                    <Columns className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => editor.chain().focus().addColumnAfter().run()} title="Add Column Right"
-                    className="p-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                    <Columns className="w-3.5 h-3.5" /><span className="hidden sm:inline">+Col R</span>
+                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
+                    <Columns className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => editor.chain().focus().deleteColumn().run()} title="Delete Column"
-                    className="p-1.5 hover:bg-red-500/10 rounded text-red-500 transition-colors" >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    className="p-1.5 hover:bg-red-500/10 rounded text-red-400 hover:text-red-500 transition-colors">
+                    <Columns className="w-3.5 h-3.5" />
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 {/* Row ops */}
                 <button onClick={() => editor.chain().focus().addRowBefore().run()} title="Add Row Above"
-                    className="p-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                    <Rows className="w-3.5 h-3.5" /><span className="hidden sm:inline">+Row ↑</span>
+                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
+                    <Rows className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => editor.chain().focus().addRowAfter().run()} title="Add Row Below"
-                    className="p-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                    <Rows className="w-3.5 h-3.5" /><span className="hidden sm:inline">+Row ↓</span>
+                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
+                    <Rows className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => editor.chain().focus().deleteRow().run()} title="Delete Row"
-                    className="p-1.5 hover:bg-red-500/10 rounded text-red-500 transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    className="p-1.5 hover:bg-red-500/10 rounded text-red-400 hover:text-red-500 transition-colors">
+                    <Rows className="w-3.5 h-3.5" />
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 {/* Header toggles */}
                 <button onClick={() => editor.chain().focus().toggleHeaderRow().run()} title="Toggle Header Row"
-                    className="p-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
+                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
                     <FlipHorizontal className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => editor.chain().focus().toggleHeaderColumn().run()} title="Toggle Header Column"
-                    className="p-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
+                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
                     <FlipVertical className="w-3.5 h-3.5" />
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
