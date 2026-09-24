@@ -18,7 +18,7 @@ export function CodeBlockComponent({ node, updateAttributes, extension }: any) {
                     contentEditable={false}
                     value={node.attrs.language || 'text'}
                     onChange={e => updateAttributes({ language: e.target.value })}
-                    className="text-xs bg-transparent border-none text-muted-foreground outline-none cursor-pointer hover:text-foreground transition-colors"
+                    className="text-xs bg-background border border-border/50 rounded text-foreground outline-none cursor-pointer hover:bg-muted/50 p-1 transition-colors"
                 >
                     <option value="null">auto</option>
                     <option value="text">plaintext</option>

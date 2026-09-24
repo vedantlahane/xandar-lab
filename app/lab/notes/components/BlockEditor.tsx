@@ -139,7 +139,6 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             }),
             GlobalDragHandle.configure({ dragHandleWidth: 20, scrollTreshold: 100 }),
             FontFamily,
-            Markdown,
         ],
         content,
         onUpdate: ({ editor }) => {
@@ -226,7 +225,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 {/* Block Type Dropdown */}
                 <div className="flex items-center pr-2 border-r border-border/50">
                     <select
-                        className="h-8 pl-2 pr-6 py-1 text-xs bg-transparent hover:bg-muted/50 border-none rounded-md focus:ring-0 text-foreground cursor-pointer outline-none appearance-none font-medium"
+                        className="h-8 pl-2 pr-2 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md focus:ring-0 text-foreground cursor-pointer outline-none font-medium"
                         value={
                             editor.isActive('heading', { level: 1 }) ? 'h1' :
                             editor.isActive('heading', { level: 2 }) ? 'h2' :
@@ -260,7 +259,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 {/* Font Family Dropdown */}
                 <div className="flex items-center pr-2 border-r border-border/50">
                     <select
-                        className="h-8 pl-2 pr-6 py-1 text-xs bg-transparent hover:bg-muted/50 border-none rounded-md focus:ring-0 text-foreground cursor-pointer outline-none appearance-none font-medium"
+                        className="h-8 pl-2 pr-2 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md focus:ring-0 text-foreground cursor-pointer outline-none font-medium"
                         value={editor.getAttributes('textStyle').fontFamily || 'Inter'}
                         onChange={(e) => {
                             const v = e.target.value;
