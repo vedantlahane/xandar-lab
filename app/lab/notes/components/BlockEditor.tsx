@@ -41,7 +41,7 @@ import {
     Table as TableIcon, Eraser, Sigma, SquareTerminal, Ban, Minus,
     Youtube as YoutubeIcon, Info, Maximize2, Minimize2,
     Columns, Rows, Trash2, FlipVertical, FlipHorizontal, Merge, Split,
-    Search, X as XIcon, ChevronUp, ChevronDown, FlaskConical, Workflow, Server
+    Search, X as XIcon, ChevronUp, ChevronDown, FlaskConical, Workflow, Server, Sparkles
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -56,6 +56,7 @@ import { GithubExtension } from './GithubExtension'
 import { JsonViewerExtension } from './JsonViewerExtension'
 import { FlashcardExtension } from './FlashcardExtension'
 import { QuizExtension } from './QuizExtension'
+import { AIPromptExtension } from './AIPromptExtension'
 import { cn } from '@/lib/utils'
 
 const lowlight = createLowlight(common)
@@ -208,6 +209,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             JsonViewerExtension,
             FlashcardExtension,
             QuizExtension,
+            AIPromptExtension,
             FontFamily,
         ],
         content,
@@ -665,6 +667,12 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     <button onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Divider"
                         className="p-1.5 rounded-md transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground">
                         <Minus className="w-4 h-4" />
+                    </button>
+
+                    {/* AI Prompt */}
+                    <button onClick={() => { editor.chain().focus().insertContent({ type: 'aiPrompt' }).run() }} title="AI Assistant"
+                        className="p-1.5 rounded-md transition-colors text-indigo-500 hover:bg-indigo-500/10 hover:text-indigo-600">
+                        <Sparkles className="w-4 h-4" />
                     </button>
 
                     {/* Math */}

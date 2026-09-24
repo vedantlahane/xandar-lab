@@ -7,7 +7,7 @@ import {
     Heading1, Heading2, Heading3, Heading4, List, ListOrdered, CheckSquare, Code,
     Quote, Minus, Table as TableIcon, Video, Sigma,
     Info, AlertTriangle, Lightbulb, XCircle, CheckCircle, FlaskConical, Workflow, Server,
-    Github, Braces, Youtube, BookOpen, HelpCircle
+    Github, Braces, Youtube, BookOpen, HelpCircle, Sparkles
 } from 'lucide-react'
 
 // ─── Grouped command items ───────────────────────────────────────────────────
@@ -22,6 +22,8 @@ type CommandItem = {
 
 export const getSuggestionItems = ({ query }: { query: string }): CommandItem[] => {
     const all: CommandItem[] = [
+        // AI
+        { group: 'AI', title: 'Ask AI', shortcut: 'ai', icon: <Sparkles className="w-4 h-4 text-indigo-500" />, command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'aiPrompt' }).run() },
         // TEXT
         { group: 'Text', title: 'Normal Text',     shortcut: '',          icon: <span className="font-medium text-xs">¶</span>,   command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setParagraph().run() },
         { group: 'Text', title: 'Heading 1',        shortcut: '#',        icon: <Heading1 className="w-4 h-4" />,                   command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run() },
