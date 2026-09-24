@@ -2,7 +2,7 @@ import { Extension } from '@tiptap/core'
 import Suggestion from '@tiptap/suggestion'
 import { ReactRenderer } from '@tiptap/react'
 import tippy, { Instance as TippyInstance } from 'tippy.js'
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import {
     Heading1, Heading2, Heading3, Heading4, List, ListOrdered, CheckSquare, Code,
     Quote, Minus, Table as TableIcon, Video, Sigma,
@@ -61,6 +61,7 @@ export const getSuggestionItems = ({ query }: { query: string }): CommandItem[] 
 
 export const CommandList = forwardRef(({ items, command }: any, ref: any) => {
     const [selectedIndex, setSelectedIndex] = useState(0)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
 
     const selectItem = (index: number) => {
         const item = items[index]
@@ -68,6 +69,15 @@ export const CommandList = forwardRef(({ items, command }: any, ref: any) => {
     }
 
     useEffect(() => setSelectedIndex(0), [items])
+
+    useEffect(() => {
+        const container = scrollContainerRef.current
+        if (!container) return
+        const selected = container.querySelector('[data-selected="true"]') as HTMLElement
+        if (selected) {
+            selected.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+        }
+    }, [selectedIndex])
 
     useImperativeHandle(ref, () => ({
         onKeyDown: ({ event }: { event: KeyboardEvent }) => {
@@ -91,7 +101,7 @@ export const CommandList = forwardRef(({ items, command }: any, ref: any) => {
 
     return (
         <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-2xl backdrop-blur-md min-w-[240px]">
-            <div className="p-1 max-h-80 overflow-y-auto">
+            <div ref={scrollContainerRef} className="p-1 max-h-80 overflow-y-auto">
                 {Object.entries(groups).map(([groupName, groupItems]) => (
                     <div key={groupName}>
                         <p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
@@ -102,6 +112,7 @@ export const CommandList = forwardRef(({ items, command }: any, ref: any) => {
                             return (
                                 <button
                                     key={item.title}
+                                    data-selected={currentIndex === selectedIndex ? 'true' : undefined}
                                     onClick={() => selectItem(currentIndex)}
                                     className={`flex items-center gap-2.5 w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors ${currentIndex === selectedIndex ? 'bg-primary/10 text-foreground' : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}`}
                                 >

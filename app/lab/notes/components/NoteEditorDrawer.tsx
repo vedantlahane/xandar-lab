@@ -190,7 +190,7 @@ export function NoteEditorDrawer({
                 <div className="flex gap-2 items-end border-b border-border/40 pb-2 focus-within:border-primary transition-colors">
                     <input
                         type="text"
-                        placeholder="ðŸ˜€"
+                        placeholder="😀"
                         value={icon}
                         onChange={(e) => setIcon(e.target.value)}
                         maxLength={2}

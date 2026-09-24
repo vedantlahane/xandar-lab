@@ -41,7 +41,7 @@ import {
     Table as TableIcon, Eraser, Sigma, SquareTerminal, Ban, Minus,
     Youtube as YoutubeIcon, Info, Maximize2, Minimize2,
     Columns, Rows, Trash2, FlipVertical, FlipHorizontal, Merge, Split,
-    Search, X as XIcon, ChevronUp, ChevronDown, ColumnsIcon, RowsIcon,
+    Search, X as XIcon, ChevronUp, ChevronDown,
 } from 'lucide-react'
 import { SlashCommand, getSuggestionItems, renderItems } from './SlashCommand'
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
@@ -407,7 +407,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 {/* Block Type */}
                 <div className="flex items-center pr-2 border-r border-border/50 shrink-0">
                     <select
-                        className="h-8 pl-2 pr-1 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md text-foreground cursor-pointer outline-none font-medium"
+                        className="h-8 pl-2 pr-6 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md text-foreground cursor-pointer outline-none font-medium appearance-none"
                         value={
                             editor.isActive('heading', { level: 1 }) ? 'h1' :
                             editor.isActive('heading', { level: 2 }) ? 'h2' :
@@ -450,7 +450,7 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                 {/* Font Family */}
                 <div className="flex items-center pr-2 border-r border-border/50 shrink-0">
                     <select
-                        className="h-8 pl-2 pr-1 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md text-foreground cursor-pointer outline-none font-medium"
+                        className="h-8 pl-2 pr-6 py-1 text-xs bg-background hover:bg-muted/50 border border-border/50 rounded-md text-foreground cursor-pointer outline-none font-medium appearance-none"
                         value={editor.getAttributes('textStyle').fontFamily || 'Inter'}
                         onChange={(e) => {
                             const v = e.target.value
@@ -496,22 +496,32 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                     ))}
                 </div>
 
-                {/* Text Color swatches */}
+                {/* Text Color swatches + picker */}
                 <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0">
-                    {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', 'inherit'].map((c) => (
+                    {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'].map((c) => (
                         <button key={c}
-                            onClick={() => c === 'inherit' ? editor.chain().focus().unsetColor().run() : editor.chain().focus().setColor(c).run()}
+                            onClick={() => editor.chain().focus().setColor(c).run()}
                             className={cn('w-4 h-4 rounded-full transition-transform hover:scale-125 flex items-center justify-center border border-black/10',
                                 editor.isActive('textStyle', { color: c }) && 'ring-2 ring-primary ring-offset-1')}
-                            style={{ backgroundColor: c === 'inherit' ? 'transparent' : c }}
-                            title={c === 'inherit' ? 'Default Color' : c}
-                        >
-                            {c === 'inherit' && <Ban className="w-3 h-3 text-muted-foreground" />}
-                        </button>
+                            style={{ backgroundColor: c }}
+                            title={c}
+                        />
                     ))}
+                    <label className="relative w-5 h-5 rounded-full overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" title="Custom Color">
+                        <input type="color" value={editor.getAttributes('textStyle')?.color || '#000000'}
+                            onChange={e => editor.chain().focus().setColor(e.target.value).run()}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                    </label>
+                    <button
+                        onClick={() => editor.chain().focus().unsetColor().run()}
+                        className="w-4 h-4 rounded-full flex items-center justify-center transition-transform hover:scale-125"
+                        title="Default Color"
+                    >
+                        <Ban className="w-3 h-3 text-muted-foreground" />
+                    </button>
                 </div>
 
-                {/* Highlight Color swatches (multicolor) */}
+                {/* Highlight Color swatches (multicolor) + picker */}
                 <div className="flex items-center gap-0.5 pr-2 border-r border-border/50 shrink-0" title="Highlight Color">
                     <Highlighter className="w-3.5 h-3.5 text-muted-foreground/60 mr-0.5" />
                     {HIGHLIGHT_COLORS.map(({ color, label }) => (
@@ -523,6 +533,11 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
                             title={`Highlight ${label}`}
                         />
                     ))}
+                    <label className="relative w-5 h-5 rounded-sm overflow-hidden cursor-pointer border border-border/50 hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-yellow-300 via-green-300 to-blue-300" title="Custom Highlight">
+                        <input type="color" value="#fef08a"
+                            onChange={e => editor.chain().focus().toggleHighlight({ color: e.target.value }).run()}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                    </label>
                     <button onClick={() => editor.chain().focus().unsetHighlight().run()} title="Remove Highlight"
                         className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors ml-0.5">
                         <Ban className="w-3 h-3" />
@@ -734,58 +749,71 @@ export function BlockEditor({ content, onChange, readOnly = false, onTocUpdate }
             {/* ── Table Bubble Menu ─────────────────────────────────────── */}
             <BubbleMenu editor={editor} pluginKey="tableMenu" updateDelay={0}
                 shouldShow={({ editor }) => editor.isActive('table')}
-                className="flex items-center gap-0.5 p-1 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md">
+                className="flex flex-wrap items-center gap-0.5 p-1.5 bg-popover border border-border/50 shadow-xl rounded-lg backdrop-blur-md max-w-sm">
                 {/* Column ops */}
                 <button onClick={() => editor.chain().focus().addColumnBefore().run()} title="Add Column Left"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <Columns className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <Columns className="w-3 h-3" /><span>+Col←</span>
                 </button>
                 <button onClick={() => editor.chain().focus().addColumnAfter().run()} title="Add Column Right"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <Columns className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <Columns className="w-3 h-3" /><span>+Col→</span>
                 </button>
                 <button onClick={() => editor.chain().focus().deleteColumn().run()} title="Delete Column"
-                    className="p-1.5 hover:bg-red-500/10 rounded text-red-400 hover:text-red-500 transition-colors">
-                    <Columns className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-red-500/10 rounded text-red-400 hover:text-red-500 transition-colors flex items-center gap-1">
+                    <Columns className="w-3 h-3" /><span>−Col</span>
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 {/* Row ops */}
                 <button onClick={() => editor.chain().focus().addRowBefore().run()} title="Add Row Above"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <Rows className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <Rows className="w-3 h-3" /><span>+Row↑</span>
                 </button>
                 <button onClick={() => editor.chain().focus().addRowAfter().run()} title="Add Row Below"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <Rows className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <Rows className="w-3 h-3" /><span>+Row↓</span>
                 </button>
                 <button onClick={() => editor.chain().focus().deleteRow().run()} title="Delete Row"
-                    className="p-1.5 hover:bg-red-500/10 rounded text-red-400 hover:text-red-500 transition-colors">
-                    <Rows className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-red-500/10 rounded text-red-400 hover:text-red-500 transition-colors flex items-center gap-1">
+                    <Rows className="w-3 h-3" /><span>−Row</span>
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 {/* Header toggles */}
                 <button onClick={() => editor.chain().focus().toggleHeaderRow().run()} title="Toggle Header Row"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <FlipHorizontal className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <FlipHorizontal className="w-3 h-3" /><span>H-Row</span>
                 </button>
                 <button onClick={() => editor.chain().focus().toggleHeaderColumn().run()} title="Toggle Header Column"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <FlipVertical className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <FlipVertical className="w-3 h-3" /><span>H-Col</span>
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
                 {/* Merge/Split */}
                 <button onClick={() => editor.chain().focus().mergeCells().run()} title="Merge Cells"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <Merge className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <Merge className="w-3 h-3" /><span>Merge</span>
                 </button>
                 <button onClick={() => editor.chain().focus().splitCell().run()} title="Split Cell"
-                    className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
-                    <Split className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                    <Split className="w-3 h-3" /><span>Split</span>
                 </button>
                 <div className="w-px h-4 bg-border/50 mx-0.5" />
+                {/* Cell color */}
+                <label className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer" title="Cell Background">
+                    <span className="w-3 h-3 rounded-sm bg-gradient-to-br from-sky-300 via-emerald-300 to-amber-300 border border-black/10 shrink-0" />
+                    <span>Color</span>
+                    <input type="color" value="#ffffff"
+                        onChange={e => editor.chain().focus().setCellAttribute('backgroundColor', e.target.value).run()}
+                        className="w-0 h-0 opacity-0 absolute" />
+                </label>
+                <div className="w-px h-4 bg-border/50 mx-0.5" />
+                <button onClick={() => editor.chain().focus().fixTables().run()} title="Fix Tables"
+                    className="p-1 px-1.5 text-[10px] hover:bg-muted/50 rounded text-muted-foreground hover:text-foreground transition-colors">
+                    Fix
+                </button>
                 <button onClick={() => editor.chain().focus().deleteTable().run()} title="Delete Table"
-                    className="p-1.5 hover:bg-red-500/20 rounded text-red-600 transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    className="p-1 px-1.5 text-[10px] hover:bg-red-500/20 rounded text-red-500 hover:text-red-600 transition-colors flex items-center gap-1">
+                    <Trash2 className="w-3 h-3" /><span>Del</span>
                 </button>
             </BubbleMenu>
 
