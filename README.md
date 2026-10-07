@@ -1,6 +1,6 @@
-ï»¿# Xandar-Lab ğŸ§ª
+# Xandar-Lab ??
 
-**A modular learning workspace for developers â€” designed as a lab, not a checklist.**
+**A modular learning workspace for developers — designed as a lab, not a checklist.**
 
 Xandar-Lab brings together structured notes, interactive documentation, contextual practice, and career tracking into a single environment. It helps learners focus on *how understanding evolves*, not just what gets completed.
 
@@ -8,7 +8,7 @@ Xandar-Lab brings together structured notes, interactive documentation, contextu
 
 ---
 
-## âœ¨ Philosophy
+## ? Philosophy
 
 | Principle | Meaning |
 |-----------|---------|
@@ -29,74 +29,104 @@ Xandar-Lab provides a unified lab-style learning system where concepts, notes, a
 
 ---
 
-## ğŸš€ Current Features
+## ?? Current Features
 
 Xandar-Lab is actively developed and currently features several robust modules:
 
-- **ğŸ” Authentication**: JWT + NextAuth v5, multi-device sessions, avatar gradients.
-- **ğŸ§  Practice & Interviews**: Topic-wise DSA problem tracking, attempt lineage, and AI-powered realistic interview simulations.
-- **ğŸ’¡ Ideas Forge**: LLM-powered idea generation with domain signals, rating, and pipelines.
-- **ğŸ’¼ Jobs Tracking**: Curated job listings, application status, portals, and personal notes.
-- **ğŸ“˜ Docs & Explanations**: Interactive documentation with feedback metrics.
-- **ğŸ“ Notes & Experiments**: Markdown-based notes and code experiment sandboxes.
-- **ğŸ† Hackathons**: Event tracking and project portfolio builder.
-- **ğŸ‘¥ Community**: Social feed, posts, and polymorphic content sharing.
-- **ğŸ§© Extensions**: Chrome extensions (Clipper, Harvester) for capturing and syncing web content right into the lab.
+- **?? Authentication**: JWT + NextAuth v5, Google OAuth, multi-device sessions, avatar gradients, email via Nodemailer.
+- **?? Practice & Interviews**: Topic-wise DSA problem tracking, attempt lineage, adaptive difficulty, and AI-powered realistic interview simulations.
+- **?? Ideas Forge**: LLM-powered idea generation with Tavily domain signals, de-duplication, rating, and scheduled pipelines.
+- **?? Jobs Tracking**: Curated job listings, application status, portals, and personal notes per role.
+- **?? Docs & Explanations**: Interactive documentation with feedback metrics.
+- **?? Notes & Experiments**: Rich Tiptap-based notes with math/code support, and code experiment sandboxes.
+- **?? Hackathons**: Event tracking and project portfolio builder.
+- **?? Community**: Social feed, polymorphic posts (Attempt / Idea / Note), comments, and activity logs.
+- **?? Public Profiles**: Shareable user profile pages at `/lab/u/[username]`.
+- **?? Extensions**: Chrome extensions (Clipper, Harvester) for capturing and syncing web content directly into the lab.
 
 ---
 
-## ğŸ“‚ Project Structure
+## ?? Project Structure
 
-`
+```
 xandar-lab/
-â”œâ”€â”€ app/
-â”‚   â”œâ”€â”€ api/                     # Backend API Routes (Auth, Ideas, Practice, etc.)
-â”‚   â”œâ”€â”€ lab/                     # Core lab workspace
-â”‚   â”‚   â”œâ”€â”€ practice/            # ğŸ¯ DSA Practice & Interviews
-â”‚   â”‚   â”œâ”€â”€ jobs/                # ğŸ’¼ Job tracking & Portals
-â”‚   â”‚   â”œâ”€â”€ docs/                # ğŸ“˜ Interactive docs & Explanations
-â”‚   â”‚   â”œâ”€â”€ notes/               # ğŸ“ Notes & Reflections
-â”‚   â”‚   â”œâ”€â”€ experiments/         # ğŸ§ª Sandboxes
-â”‚   â”‚   â”œâ”€â”€ hackathons/          # ğŸ† Hackathons tracking
-â”‚   â”‚   â”œâ”€â”€ ideas/               # ğŸ’¡ AI Idea Forge
-â”‚   â”‚   â”œâ”€â”€ community/           # ğŸ‘¥ Community Feed
-â”‚   â”‚   â””â”€â”€ profile/             # ğŸ‘¤ User Profile & Stats
-â”‚   â””â”€â”€ page.tsx                 # Landing page
-â”œâ”€â”€ components/                  # Shared UI components & Auth
-â”œâ”€â”€ lib/                         # Utilities (AI, Ideas pipeline, DB, etc.)
-â”œâ”€â”€ models/                      # MongoDB Database Schemas
-â”œâ”€â”€ extensions/                  # Chrome Extensions (Clipper, Harvester)
-â””â”€â”€ scripts/                     # Seeders & utility scripts
-`
++-- app/
+¦   +-- api/                     # Backend API Routes
+¦   ¦   +-- auth/                # Authentication endpoints
+¦   ¦   +-- attempts/            # Practice attempts & history
+¦   ¦   +-- community/           # Community feed / posts
+¦   ¦   +-- docs/                # Document CRUD
+¦   ¦   +-- experiments/         # Experiment management
+¦   ¦   +-- explanations/        # Explanation data
+¦   ¦   +-- ideas/               # Idea pipelines, generation & stats
+¦   ¦   +-- ingest/              # Extension ingestion endpoints
+¦   ¦   +-- interviews/          # Simulation messages & scoring
+¦   ¦   +-- jobs/                # Job status & portals
+¦   ¦   +-- notes/               # Notes CRUD
+¦   ¦   +-- notebooks/           # Notebook grouping
+¦   ¦   +-- portals/             # Job portal management
+¦   ¦   +-- problems/            # DSA problem catalog
+¦   ¦   +-- stats/               # User dashboard info
+¦   ¦   +-- suggestions/         # Adaptive difficulty suggestions
+¦   ¦   +-- upload/              # File/asset uploads
+¦   ¦   +-- users/               # User management
+¦   ¦   +-- admin/               # Admin utilities
+¦   ¦   +-- analytics/           # Analytics endpoints
+¦   ¦   +-- seed/                # Database seeders
+¦   +-- community/               # ?? Community (feed & posts)
+¦   +-- lab/                     # Core lab workspace
+¦   ¦   +-- practice/            # ?? DSA Practice & Interviews
+¦   ¦   +-- jobs/                # ?? Job tracking & Portals
+¦   ¦   +-- docs/                # ?? Interactive docs & Explanations
+¦   ¦   +-- notes/               # ?? Notes & Reflections
+¦   ¦   +-- experiments/         # ?? Sandboxes
+¦   ¦   +-- hackathons/          # ?? Hackathons tracking
+¦   ¦   +-- ideas/               # ?? AI Idea Forge
+¦   ¦   +-- profile/             # ?? User Profile & Stats
+¦   ¦   +-- u/[username]/        # ?? Public User Profiles
+¦   +-- page.tsx                 # Landing page
++-- components/                  # Shared UI components & Auth
++-- lib/                         # Utilities (AI, Ideas pipeline, DB, RBAC, etc.)
++-- models/                      # MongoDB Database Schemas
++-- extensions/                  # Chrome Extensions (Clipper, Harvester)
++-- scripts/                     # Seeders & utility scripts
++-- types/                       # Global TypeScript type declarations
+```
 
 ---
 
-## ğŸ› ï¸ Tech Stack
+## ??? Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| **Framework** | Next.js (App Router) |
+| **Framework** | Next.js 16 (App Router) |
 | **Language** | TypeScript 5 |
 | **Styling** | Tailwind CSS 4 |
 | **Animations** | Framer Motion 12+ |
+| **Rich Text Editor** | Tiptap 3 (math, code, tables, drag-handle) |
 | **Database** | MongoDB with Mongoose 9 |
-| **Auth** | NextAuth v5 with JWT & bcryptjs |
+| **Auth** | NextAuth v5 with JWT, bcryptjs & Google OAuth |
+| **Email** | Nodemailer (SMTP) |
 | **Icons** | Lucide React |
-| **AI Processing**| LangChain + OpenAI + Tavily |
+| **UI Primitives** | Radix UI |
+| **AI Processing** | LangChain + LangGraph + OpenAI + Tavily |
+| **Rendering** | KaTeX (math), Mermaid (diagrams), highlight.js (code) |
 
 ---
 
-## ğŸƒ Getting Started
+## ?? Getting Started
 
 ### Prerequisites
 - Node.js 18+
 - MongoDB instance (local or Atlas)
 - OpenAI API key (for Ideas & Interviews)
-- Tavily API key (for Idea signals)
+- Tavily API key (for Idea domain signals)
+- Google OAuth credentials (for social login)
+- SMTP server credentials (for email)
 
 ### Installation
 
-`ash
+```bash
 # Clone the repository
 git clone https://github.com/vedantlahane/xandar-lab.git
 cd xandar-lab
@@ -106,46 +136,66 @@ npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Edit .env.local with appropriate keys
+# Edit .env.local with your keys
 
 # Run development server
 npm run dev
-`
+```
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
 
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB connection string |
+| `JWT_SECRET` | Secret for JWT signing |
+| `AUTH_SECRET` | NextAuth session secret |
+| `AUTH_URL` | Base URL for NextAuth (e.g. `http://localhost:3000`) |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `EMAIL_SERVER` | SMTP connection string |
+| `EMAIL_FROM` | Sender email address |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `TAVILY_API_KEY` | Tavily search API key |
+| `IDEAFORGE_OPENAI_MODEL` | Model to use (e.g. `gpt-4o`) |
+| `CRON_SECRET` | Secret for protecting cron endpoints |
+
 ---
 
-## ğŸ—ºï¸ Roadmap & Status
+## ??? Roadmap & Status
 
-### âœ… Completed & Active
-- Authentication (NextAuth + JWT, Profile & Sessions)
-- Practice Module (Attempt Lineage, Canvas, Drawer)
+### ? Completed & Active
+- Authentication (NextAuth + JWT + Google OAuth, Profile & Sessions)
+- Practice Module (Attempt Lineage, Canvas, Drawer, Adaptive Difficulty)
 - Interviews Module (AI-driven feedback & simulations)
-- Ideas Forge (End-to-end AI idea pipeline & rating)
+- Ideas Forge (End-to-end AI idea pipeline, de-duplication & rating)
 - Jobs & Portals Tracking
-- Community Feed (Post sharing & Voting)
-- Docs, Notes, Hackathons & Experiments 
+- Community Feed (Polymorphic posts, comments & activity logs)
+- Docs, Notes (Tiptap), Hackathons & Experiments
 - Chrome Extensions (Clipper, Harvester)
+- Public User Profiles (`/lab/u/[username]`)
+- RBAC (Role-based access control)
 
-### ğŸ“‹ Planned (Next Up)
+### ?? Planned (Next Up)
 - Real-time collaboration on shared labs
 - Advanced analytics (engagement, learning velocity)
-- Complete cross-module linking capability (e.g., Note â†” Practice â†” Idea)
+- Complete cross-module linking (Note ? Practice ? Idea)
 - Data portability (Export/Import)
+- Inline code execution in Experiments sandbox
 
 ---
 
-## ğŸ“„ License
+## ?? License
 
 This project is under active development.
 
 ---
 
-## ğŸ‘‹ Author
+## ?? Author
 
 Built by [**Vedant Lahane**](https://github.com/vedantlahane)
-as a long-term learning system â€” not just a project.
+as a long-term learning system — not just a project.
 
 ---
 
